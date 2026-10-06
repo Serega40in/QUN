@@ -149,22 +149,59 @@ fun QunApp() {
 }
 
 @Composable
-private fun AuthScreen(onSession: (AuthSession) -> Unit, onError: (String) -> Unit, error: String?) {
+private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Unit, onError: (String) -> Unit, error: String?) {
     var phone by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
     var sent by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
+    var logoTaps by remember { mutableIntStateOf(0) }
+    var lastTapAt by remember { mutableLongStateOf(0L) }
+    var adminMode by remember { mutableStateOf(false) }
+    var adminCode by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
 
     Column(Modifier.fillMaxSize().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.weight(1f))
-        Box(Modifier.size(78.dp).background(Navy, CircleShape), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier.size(78.dp).background(Navy, CircleShape).clickable {
+                val now = System.currentTimeMillis()
+                logoTaps = if (now - lastTapAt < 1500) logoTaps + 1 else 1
+                lastTapAt = now
+                if (logoTaps >= 5) { adminMode = true; logoTaps = 0 }
+            },
+            contentAlignment = Alignment.Center
+        ) {
             Text("К", color = Color.White, fontSize = 36.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(20.dp))
         Text("QUN", color = Navy, fontSize = 32.sp, fontWeight = FontWeight.Bold)
         Text("связь нового поколения", color = Emerald)
         Spacer(Modifier.height(38.dp))
+        if (adminMode) {
+            Text("Админ-доступ", color = Navy, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(8.dp))
+            Text("Секретный вход", color = Color.Gray, fontSize = 13.sp)
+            Spacer(Modifier.height(14.dp))
+            OutlinedTextField(
+                adminCode,
+                { adminCode = it.filter(Char::isDigit).take(6) },
+                Modifier.fillMaxWidth(),
+                label = { Text("Код доступа") },
+                placeholder = { Text("6 цифр") },
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp)
+            )
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = { onAdmin(adminCode) },
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+                enabled = adminCode.length == 6,
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Navy)
+            ) { Text("Войти как администратор", fontSize = 16.sp) }
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = { adminMode = false; adminCode = "" }) { Text("Вернуться", color = Emerald) }
+        } else {
         OutlinedTextField(phone, { phone = it }, Modifier.fillMaxWidth(), label = { Text("Номер телефона") },
             placeholder = { Text("+7 900 000-00-00") }, singleLine = true, shape = RoundedCornerShape(16.dp))
         if (sent) {
@@ -185,6 +222,7 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onError: (String) -> Un
         }, modifier = Modifier.fillMaxWidth().height(54.dp), enabled = !busy, shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Navy)) {
             Text(if (busy) "Подождите…" else if (sent) "Войти в QUN" else "Получить код", fontSize = 16.sp)
+        }
         }
         error?.let { Spacer(Modifier.height(12.dp)); Text(it.take(180), color = Color(0xFFB3261E), fontSize = 12.sp) }
         Spacer(Modifier.weight(1f))
