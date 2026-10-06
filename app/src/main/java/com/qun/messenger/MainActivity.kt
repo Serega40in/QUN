@@ -49,6 +49,7 @@ private val http = HttpClient(Android) {
 @Serializable data class Profile(val id: String, val username: String? = null, val display_name: String = "")
 @Serializable data class MemberRow(val conversation_id: String, val user_id: String)
 @Serializable data class Message(val id: String, val conversation_id: String, val sender_id: String, val body: String, val created_at: String)
+@Serializable data class AdminMessage(val id: String, val sender: String, val body: String, val created_at: String)
 
 private class QunApi {
     suspend fun sendOtp(phone: String) {
@@ -116,6 +117,26 @@ private class QunApi {
         }
         check(r.status.isSuccess()) { r.bodyAsText() }
         return r.body()
+    }
+
+    suspend fun adminRequest(action: String, code: String, name: String, body: String? = null): String {
+        val payload = mutableMapOf<String, String>("action" to action, "code" to code, "name" to name)
+        if (body != null) payload["body"] = body
+        val r = http.post("$SUPABASE_URL/functions/v1/qun-admin-chat") {
+            contentType(ContentType.Application.Json)
+            setBody(payload)
+        }
+        check(r.status.isSuccess()) { r.bodyAsText() }
+        return r.bodyAsText()
+    }
+
+    suspend fun adminMessages(code: String, name: String): List<AdminMessage> {
+        val raw = adminRequest("messages", code, name)
+        return json.decodeFromString<Map<String, List<AdminMessage>>>(raw)["messages"] ?: emptyList()
+    }
+
+    suspend fun adminSend(code: String, name: String, body: String) {
+        adminRequest("send", code, name, body)
     }
 
     suspend fun sendMessage(token: String, conversationId: String, sender: String, body: String) {
@@ -384,54 +405,72 @@ private fun ChatScreen(session: AuthSession, me: Profile, conversationId: String
 
 @Composable
 private fun AdminHomeScreen(name: String, onLogout: () -> Unit) {
-    val admins = listOf("Сергей", "Георгий", "Павел", "Наталья", "Олег")
+    val codes = mapOf("Сергей" to "740281", "Георгий" to "531947", "Павел" to "826314", "Наталья" to "419625", "Олег" to "683752")
+    val code = codes[name] ?: ""
+    var messages by remember { mutableStateOf<List<AdminMessage>>(emptyList()) }
+    var draft by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(name) {
+        while (true) {
+            try { messages = api.adminMessages(code, name); error = null }
+            catch (e: Exception) { error = e.message ?: "Не удалось загрузить сообщения" }
+            delay(2000)
+        }
+    }
+
     Scaffold(
         topBar = {
-            Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("QUN", color = Navy, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                    Text("Админ · $name", color = Emerald, fontSize = 13.sp)
+                    Text("Командный чат · $name", color = Emerald, fontSize = 13.sp)
                 }
                 TextButton(onClick = onLogout) { Text("Выйти", color = Emerald) }
             }
+        },
+        bottomBar = {
+            Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.Bottom) {
+                OutlinedTextField(draft, { draft = it }, Modifier.weight(1f), placeholder = { Text("Сообщение команде") },
+                    maxLines = 4, shape = RoundedCornerShape(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        val text = draft.trim()
+                        draft = ""
+                        scope.launch {
+                            try { api.adminSend(code, name, text); messages = api.adminMessages(code, name); error = null }
+                            catch (e: Exception) { error = e.message ?: "Сообщение не отправлено" }
+                        }
+                    },
+                    enabled = draft.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Navy),
+                    shape = CircleShape,
+                    contentPadding = PaddingValues(14.dp)
+                ) { Text("↑", fontSize = 20.sp) }
+            }
         }
     ) { padding ->
-        LazyColumn(
-            Modifier.fillMaxSize().padding(padding).background(Soft),
-            contentPadding = PaddingValues(18.dp)
-        ) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding).background(Soft),
+            contentPadding = PaddingValues(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item {
-                Text("Добро пожаловать, $name", color = Navy, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text("Командный чат", color = Navy, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text("Общий тестовый чат QUN • сообщения видят все администраторы", color = Color.Gray, fontSize = 12.sp)
                 Spacer(Modifier.height(8.dp))
-                Text(
-                    "Временный скрытый админ-вход для тестирования QUN, пока SMS-авторизация проходит модерацию.",
-                    color = Color.Gray, fontSize = 13.sp
-                )
-                Spacer(Modifier.height(24.dp))
-                Text("Команда QUN", color = Navy, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(10.dp))
             }
-            items(admins) { admin ->
-                Card(
-                    Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(46.dp).background(Navy, CircleShape), contentAlignment = Alignment.Center) {
-                            Text(admin.take(1), color = Color.White, fontWeight = FontWeight.Bold)
+            items(messages, key = { it.id }) { message ->
+                val mine = message.sender == name
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = if (mine) Arrangement.End else Arrangement.Start) {
+                    Surface(color = if (mine) Navy else Color.White, shape = RoundedCornerShape(18.dp), shadowElevation = 1.dp) {
+                        Column(Modifier.widthIn(max = 310.dp).padding(horizontal = 14.dp, vertical = 9.dp)) {
+                            if (!mine) Text(message.sender, color = Emerald, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            Text(message.body, color = if (mine) Color.White else Navy, fontSize = 15.sp)
                         }
-                        Spacer(Modifier.width(12.dp))
-                        Text(admin, color = Navy, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
-            item {
-                Spacer(Modifier.height(18.dp))
-                Text(
-                    "⚠ Временный локальный dev-вход. Он не создаёт Supabase-сессию и пока не заменяет обычную авторизацию по SMS.",
-                    color = Color(0xFF7A5B00), fontSize = 12.sp
-                )
-            }
+            error?.let { err -> item { Text(err.take(180), color = Color(0xFFB3261E), fontSize = 12.sp) } }
         }
     }
 }
