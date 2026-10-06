@@ -24,24 +24,37 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: "8.13"
-      - name: Build debug APK
-        run: gradle assembleDebug
-      - name: Publish update files
+      - name: Prepare persistent release keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.QUN_KEYSTORE_B64 }}
+          STORE_PASSWORD: ${{ secrets.QUN_KEYSTORE_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_B64" || { echo "Missing QUN_KEYSTORE_B64"; exit 1; }
+          test -n "$STORE_PASSWORD" || { echo "Missing QUN_KEYSTORE_PASSWORD"; exit 1; }
+          echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/qun-release.jks"
+          keytool -list -keystore "$RUNNER_TEMP/qun-release.jks" -storepass "$STORE_PASSWORD" >/dev/null
+      - name: Build signed release APK
+        env:
+          QUN_KEYSTORE_PATH: ${{ runner.temp }}/qun-release.jks
+          QUN_KEYSTORE_PASSWORD: ${{ secrets.QUN_KEYSTORE_PASSWORD }}
+          QUN_KEY_ALIAS: ${{ secrets.QUN_KEY_ALIAS }}
+          QUN_KEY_PASSWORD: ${{ secrets.QUN_KEY_PASSWORD }}
+        run: gradle assembleRelease
+      - name: Publish signed update
         run: |
           mkdir -p docs/downloads
-          cp app/build/outputs/apk/debug/app-debug.apk docs/downloads/QUN-latest.apk
-          VERSION_NAME=$(grep 'versionName =' app/build.gradle.kts | sed -E 's/.*\"([^\"]+)\".*/\1/')
-          VERSION_CODE=$(grep 'versionCode =' app/build.gradle.kts | sed -E 's/[^0-9]*([0-9]+).*/\1/')
+          cp app/build/outputs/apk/release/app-release.apk docs/downloads/QUN-latest.apk
+          VERSION_NAME=$(grep "versionName =" app/build.gradle.kts | sed -E "s/.*\"([^\"]+)\".*/\1/")
+          VERSION_CODE=$(grep "versionCode =" app/build.gradle.kts | sed -E "s/[^0-9]*([0-9]+).*/\1/")
           cat > docs/update.json <<EOF
-          {"versionCode":$VERSION_CODE,"versionName":"$VERSION_NAME","apkUrl":"https://raw.githubusercontent.com/Serega40in/QUN/main/docs/downloads/QUN-latest.apk","notes":"Новая версия QUN: улучшения, исправления и новые возможности."}
+          {"versionCode":$VERSION_CODE,"versionName":"$VERSION_NAME","apkUrl":"https://raw.githubusercontent.com/Serega40in/QUN/main/docs/downloads/QUN-latest.apk","notes":"QUN $VERSION_NAME — стабильное release-обновление."}
           EOF
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/downloads/QUN-latest.apk docs/update.json
-          git diff --cached --quiet || (git commit -m "chore: publish QUN update $VERSION_NAME" && git push)
-
-      - name: Upload APK
+          git diff --cached --quiet || (git commit -m "chore: publish signed QUN update $VERSION_NAME" && git push)
+      - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
-          name: QUN-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: QUN-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
