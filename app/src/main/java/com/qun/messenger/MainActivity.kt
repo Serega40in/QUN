@@ -373,3 +373,57 @@ private fun ChatScreen(session: AuthSession, me: Profile, conversationId: String
         }
     }
 }
+
+@Composable
+private fun AdminHomeScreen(name: String, onLogout: () -> Unit) {
+    val admins = listOf("Сергей", "Георгий", "Павел", "Наталья", "Олег")
+    Scaffold(
+        topBar = {
+            Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("QUN", color = Navy, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                    Text("Админ · $name", color = Emerald, fontSize = 13.sp)
+                }
+                TextButton(onClick = onLogout) { Text("Выйти", color = Emerald) }
+            }
+        }
+    ) { padding ->
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding).background(Soft),
+            contentPadding = PaddingValues(18.dp)
+        ) {
+            item {
+                Text("Добро пожаловать, $name", color = Navy, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Временный скрытый админ-вход для тестирования QUN, пока SMS-авторизация проходит модерацию.",
+                    color = Color.Gray, fontSize = 13.sp
+                )
+                Spacer(Modifier.height(24.dp))
+                Text("Команда QUN", color = Navy, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(10.dp))
+            }
+            items(admins) { admin ->
+                Card(
+                    Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(46.dp).background(Navy, CircleShape), contentAlignment = Alignment.Center) {
+                            Text(admin.take(1), color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Text(admin, color = Navy, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+            item {
+                Spacer(Modifier.height(18.dp))
+                Text(
+                    "⚠ Временный локальный dev-вход. Он не создаёт Supabase-сессию и пока не заменяет обычную авторизацию по SMS.",
+                    color = Color(0xFF7A5B00), fontSize = 12.sp
+                )
+            }
+        }
+    }
+}
