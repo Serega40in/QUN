@@ -1,0 +1,1 @@
+QUN 0.7.0 release build trigger. Persistent release signing is configured in GitHub Actions.
