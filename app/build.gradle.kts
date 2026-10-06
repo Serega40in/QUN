@@ -12,9 +12,29 @@ android {
         applicationId = "com.qun.messenger"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "0.6.0"
+        versionCode = 7
+        versionName = "0.7.0"
     }
+
+    signingConfigs {
+        create("release") {
+            val storeFilePath = System.getenv("QUN_KEYSTORE_PATH")
+            if (!storeFilePath.isNullOrBlank()) {
+                storeFile = file(storeFilePath)
+                storePassword = System.getenv("QUN_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("QUN_KEY_ALIAS")
+                keyPassword = System.getenv("QUN_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
