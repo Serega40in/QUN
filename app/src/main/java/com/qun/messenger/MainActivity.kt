@@ -1,6 +1,9 @@
 package com.qun.messenger
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -24,6 +27,8 @@ import io.ktor.client.engine.android.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import androidx.core.content.FileProvider
+import java.io.File
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.delay
@@ -50,6 +55,7 @@ private val http = HttpClient(Android) {
 @Serializable data class MemberRow(val conversation_id: String, val user_id: String)
 @Serializable data class Message(val id: String, val conversation_id: String, val sender_id: String, val body: String, val created_at: String)
 @Serializable data class AdminMessage(val id: String, val sender: String, val body: String, val created_at: String)
+@Serializable data class UpdateInfo(val versionCode: Int, val versionName: String, val apkUrl: String, val notes: String = "")
 
 private class QunApi {
     suspend fun sendOtp(phone: String) {
@@ -137,6 +143,18 @@ private class QunApi {
 
     suspend fun adminSend(code: String, name: String, body: String) {
         adminRequest("send", code, name, body)
+    }
+
+    suspend fun checkUpdate(): UpdateInfo {
+        val r = http.get("https://raw.githubusercontent.com/Serega40in/QUN/main/docs/update.json")
+        check(r.status.isSuccess()) { r.bodyAsText() }
+        return json.decodeFromString(r.bodyAsText())
+    }
+
+    suspend fun downloadApk(url: String, destination: File) {
+        val r = http.get(url)
+        check(r.status.isSuccess()) { r.bodyAsText() }
+        destination.writeBytes(r.bodyAsBytes())
     }
 
     suspend fun sendMessage(token: String, conversationId: String, sender: String, body: String) {
@@ -260,6 +278,89 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Un
     }
 }
 
+
+@Composable
+private fun UpdateButton(onError: (String) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
+    var busy by remember { mutableStateOf(false) }
+    var status by remember { mutableStateOf<String?>(null) }
+    var update by remember { mutableStateOf<UpdateInfo?>(null) }
+
+    Button(
+        onClick = {
+            scope.launch {
+                busy = true
+                status = "Проверяем новую версию…"
+                try {
+                    val info = api.checkUpdate()
+                    val current = context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode
+                    if (info.versionCode.toLong() <= current) status = "Установлена последняя версия"
+                    else { update = info; status = "Доступна QUN " + info.versionName }
+                } catch (e: Exception) {
+                    status = "Не удалось проверить обновление"
+                    onError(e.message ?: "Ошибка обновления")
+                } finally { busy = false }
+            }
+        },
+        enabled = !busy,
+        colors = ButtonDefaults.buttonColors(containerColor = Emerald),
+        shape = RoundedCornerShape(14.dp)
+    ) { Text(if (busy) "Проверяем…" else "Проверить обновление") }
+
+    update?.let { info ->
+        AlertDialog(
+            onDismissRequest = { update = null },
+            title = { Text("Новая версия QUN " + info.versionName) },
+            text = {
+                Column {
+                    Text(info.notes.ifBlank { "Доступно обновление QUN." })
+                    Spacer(Modifier.height(10.dp))
+                    Text("После скачивания Android попросит подтвердить установку.", color = Color.Gray, fontSize = 12.sp)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    update = null
+                    scope.launch {
+                        busy = true
+                        status = "Скачиваем QUN " + info.versionName + "…"
+                        try {
+                            val file = File(context.cacheDir, "QUN-" + info.versionName + ".apk")
+                            api.downloadApk(info.apkUrl, file)
+                            if (android.os.Build.VERSION.SDK_INT >= 26 && !context.packageManager.canRequestPackageInstalls()) {
+                                val settings = Intent(
+                                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                    Uri.parse("package:" + context.packageName)
+                                )
+                                context.startActivity(settings)
+                                status = "Разрешите установку из QUN и снова нажмите обновление"
+                            } else {
+                                val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(uri, "application/vnd.android.package-archive")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(intent)
+                                status = "Открываем установщик…"
+                            }
+                        } catch (e: Exception) {
+                            status = "Ошибка установки"
+                            onError(e.message ?: "Не удалось установить обновление")
+                        } finally { busy = false }
+                    }
+                }) { Text("Обновить") }
+            },
+            dismissButton = { TextButton(onClick = { update = null }) { Text("Позже") } }
+        )
+    }
+
+    status?.let {
+        Spacer(Modifier.height(6.dp))
+        Text(it, color = Color.Gray, fontSize = 11.sp)
+    }
+}
+
 @Composable
 private fun HomeScreen(session: AuthSession, onError: (String) -> Unit, error: String?, onLogout: () -> Unit) {
     var me by remember { mutableStateOf<Profile?>(null) }
@@ -295,6 +396,8 @@ private fun HomeScreen(session: AuthSession, onError: (String) -> Unit, error: S
         LazyColumn(Modifier.fillMaxSize().padding(padding).background(Soft), contentPadding = PaddingValues(18.dp)) {
             item {
                 Text("Твой профиль", color = Navy, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(8.dp))
+                UpdateButton(onError)
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(displayName, { displayName = it }, Modifier.fillMaxWidth(), label = { Text("Имя") }, singleLine = true)
                 Spacer(Modifier.height(8.dp))
