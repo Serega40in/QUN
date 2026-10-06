@@ -142,7 +142,7 @@ fun QunApp() {
     var error by remember { mutableStateOf<String?>(null) }
     MaterialTheme(colorScheme = lightColorScheme(primary = Navy, secondary = Emerald, tertiary = Gold)) {
         Surface(Modifier.fillMaxSize(), color = Color.White) {
-            if (session == null) AuthScreen({ session = it }, { error = it }, error)
+            if (session == null) AuthScreen({ session = it }, { admin = it }, { error = it }, error)
             else HomeScreen(session!!, { error = it }, error) { session = null }
         }
     }
