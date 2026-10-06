@@ -23,3 +23,6 @@
 Архитектурный принцип: **QUN Messenger → QUN Platform → QUN Wallet → QUN AI → QUN Coin**.
 
 > На первом этапе мы строим собственный продукт и собственный UX, а не копию Telegram.
+
+
+QUN Messenger 0.3: real Supabase phone auth and messaging backend.
