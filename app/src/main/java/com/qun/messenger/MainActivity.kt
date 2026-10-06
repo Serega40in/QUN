@@ -173,7 +173,7 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onError: (String) -> Un
                 placeholder = { Text("6 цифр") }, singleLine = true, shape = RoundedCornerShape(16.dp))
         }
         Spacer(Modifier.height(16.dp))
-        Button(enabled = !busy, onClick = {
+        Button(onClick = {
             scope.launch {
                 busy = true
                 try {
@@ -182,7 +182,7 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onError: (String) -> Un
                 } catch (e: Exception) { onError(e.message ?: "Не удалось выполнить запрос") }
                 finally { busy = false }
             }
-        }, Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(16.dp),
+        }, modifier = Modifier.fillMaxWidth().height(54.dp), enabled = !busy, shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Navy)) {
             Text(if (busy) "Подождите…" else if (sent) "Войти в QUN" else "Получить код", fontSize = 16.sp)
         }
@@ -234,12 +234,12 @@ private fun HomeScreen(session: AuthSession, onError: (String) -> Unit, error: S
                 OutlinedTextField(username, { username = it.lowercase().replace(" ","") }, Modifier.fillMaxWidth(),
                     label = { Text("username") }, placeholder = { Text("например, serega40in") }, singleLine = true)
                 Spacer(Modifier.height(10.dp))
-                Button(enabled = username.length >= 3 && !saved, onClick = {
+                Button(onClick = {
                     scope.launch {
                         try { api.updateProfile(session.access_token, session.user.id, username, displayName); saved = true }
                         catch (e: Exception) { onError(e.message ?: "Не удалось сохранить профиль") }
                     }
-                }, colors = ButtonDefaults.buttonColors(containerColor = Navy)) {
+                }, modifier = Modifier, enabled = username.length >= 3 && !saved, colors = ButtonDefaults.buttonColors(containerColor = Navy)) {
                     Text(if (saved) "Сохранено" else "Сохранить профиль")
                 }
                 Spacer(Modifier.height(26.dp))
@@ -311,13 +311,13 @@ private fun ChatScreen(session: AuthSession, me: Profile, conversationId: String
             OutlinedTextField(draft, { draft = it }, Modifier.weight(1f), placeholder = { Text("Сообщение") },
                 maxLines = 4, shape = RoundedCornerShape(18.dp))
             Spacer(Modifier.width(8.dp))
-            Button(enabled = draft.isNotBlank(), onClick = {
+            Button(onClick = {
                 val text = draft.trim(); draft = ""
                 scope.launch {
                     try { api.sendMessage(session.access_token, conversationId, me.id, text); refresh() }
                     catch (e: Exception) { onError(e.message ?: "Сообщение не отправлено") }
                 }
-            }, colors = ButtonDefaults.buttonColors(containerColor = Navy), shape = CircleShape,
+            }, modifier = Modifier, enabled = draft.isNotBlank(), colors = ButtonDefaults.buttonColors(containerColor = Navy), shape = CircleShape,
                 contentPadding = PaddingValues(14.dp)) { Text("↑", fontSize = 20.sp) }
         }
     }) { padding ->
