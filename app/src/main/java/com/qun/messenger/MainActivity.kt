@@ -139,15 +139,23 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun QunApp() {
     var session by remember { mutableStateOf<AuthSession?>(null) }
+    var admin by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     MaterialTheme(colorScheme = lightColorScheme(primary = Navy, secondary = Emerald, tertiary = Gold)) {
         Surface(Modifier.fillMaxSize(), color = Color.White) {
-            if (session == null) AuthScreen({ session = it }, { admin = it }, { error = it }, error)
-            else HomeScreen(session!!, { error = it }, error) { session = null }
+            when {
+                admin != null -> AdminHomeScreen(admin!!, { admin = null })
+                session == null -> AuthScreen(
+                    { session = it },
+                    { admin = it },
+                    { error = it },
+                    error
+                )
+                else -> HomeScreen(session!!, { error = it }, error) { session = null }
+            }
         }
     }
 }
-
 @Composable
 private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Unit, onError: (String) -> Unit, error: String?) {
     var phone by remember { mutableStateOf("") }
