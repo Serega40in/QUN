@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -60,7 +62,7 @@ tasks.register("normalizeQunSource") {
     doLast {
         val p = file("app/src/main/java/com/qun/messenger/MainActivity.kt")
         var s = p.readText()
-        val obsolete = String(java.util.Base64.getDecoder().decode("CiAgICBzdXNwZW5kIGZ1biBhZG1pbk1lc3NhZ2VzKGNvZGU6IFN0cmluZywgbmFtZTogU3RyaW5nKTogTGlzdDxBZG1pbk1lc3NhZ2U+IHsKICAgICAgICB2YWwgcmF3ID0gYWRtaW5SZXF1ZXN0KCJtZXNzYWdlcyIsIGNvZGUsIG5hbWUpCiAgICAgICAgcmV0dXJuIGpzb24uZGVjb2RlRnJvbVN0cmluZzxNYXA8U3RyaW5nLCBMaXN0PEFkbWluTWVzc2FnZT4+PihyYXcpWyJtZXNzYWdlcyJdID86IGVtcHR5TGlzdCgpCiAgICB9CgogICAgc3VzcGVuZCBmdW4gYWRtaW5TZW5kKGNvZGU6IFN0cmluZywgbmFtZTogU3RyaW5nLCBib2R5OiBTdHJpbmcpIHsKICAgICAgICBhZG1pblJlcXVlc3QoInNlbmQiLCBjb2RlLCBuYW1lLCBib2R5KQogICAgfQo="), Charsets.UTF_8)
+        val obsolete = String(Base64.getDecoder().decode("CiAgICBzdXNwZW5kIGZ1biBhZG1pbk1lc3NhZ2VzKGNvZGU6IFN0cmluZywgbmFtZTogU3RyaW5nKTogTGlzdDxBZG1pbk1lc3NhZ2U+IHsKICAgICAgICB2YWwgcmF3ID0gYWRtaW5SZXF1ZXN0KCJtZXNzYWdlcyIsIGNvZGUsIG5hbWUpCiAgICAgICAgcmV0dXJuIGpzb24uZGVjb2RlRnJvbVN0cmluZzxNYXA8U3RyaW5nLCBMaXN0PEFkbWluTWVzc2FnZT4+PihyYXcpWyJtZXNzYWdlcyJdID86IGVtcHR5TGlzdCgpCiAgICB9CgogICAgc3VzcGVuZCBmdW4gYWRtaW5TZW5kKGNvZGU6IFN0cmluZywgbmFtZTogU3RyaW5nLCBib2R5OiBTdHJpbmcpIHsKICAgICAgICBhZG1pblJlcXVlc3QoInNlbmQiLCBjb2RlLCBuYW1lLCBib2R5KQogICAgfQo="), Charsets.UTF_8)
         s = s.replace(obsolete, "")
         if (!s.contains("import kotlinx.serialization.json.jsonObject")) {
             s = s.replace(
