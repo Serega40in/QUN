@@ -43,6 +43,35 @@ jobs:
           if "import kotlinx.serialization.json.jsonObject" not in s:
               s = s.replace("import kotlinx.serialization.json.Json\n", "import kotlinx.serialization.json.Json\nimport kotlinx.serialization.json.jsonObject\n")
           s = re.sub(r'\\n    suspend fun adminMessages\\(code: String, name: String\\): List<AdminMessage> \\{.*?\\n    suspend fun adminSend\\(code: String, name: String, body: String\\) \\{.*?\\n    \\}', '\\n', s, flags=re.S)
+          old = """                    onClick = {
+                        val text = draft.trim()
+                        draft = ""
+                        scope.launch {
+                            try {
+                                api.adminDirectSend(code, partner.id, text)
+                                refresh()
+                            } catch (e: Exception) {
+                                onError(e.message ?: "Сообщение не отправлено")
+                            }
+                        }
+                    },
+                    enabled = draft.isNotBlank(),"""
+          new = """                    onClick = {
+                        val text = draft.trim()
+                        if (text.isNotBlank()) {
+                            scope.launch {
+                                try {
+                                    api.adminDirectSend(code, partner.id, text)
+                                    draft = ""
+                                    refresh()
+                                } catch (e: Exception) {
+                                    onError(e.message ?: "Сообщение не отправлено")
+                                }
+                            }
+                        }
+                    },
+                    enabled = draft.trim().isNotBlank(),"""
+          s = s.replace(old, new)
           p.write_text(s)
           PY
       - name: Build signed release APK
