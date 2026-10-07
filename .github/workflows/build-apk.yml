@@ -33,6 +33,18 @@ jobs:
           test -n "$STORE_PASSWORD" || { echo "Missing QUN_KEYSTORE_PASSWORD"; exit 1; }
           echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/qun-release.jks"
           keytool -list -keystore "$RUNNER_TEMP/qun-release.jks" -storepass "$STORE_PASSWORD" >/dev/null
+      - name: Normalize generated Kotlin source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path("app/src/main/java/com/qun/messenger/MainActivity.kt")
+          s = p.read_text()
+          if "import kotlinx.serialization.json.jsonObject" not in s:
+              s = s.replace("import kotlinx.serialization.json.Json\n", "import kotlinx.serialization.json.Json\nimport kotlinx.serialization.json.jsonObject\n")
+          s = re.sub(r'\\n    suspend fun adminMessages\\(code: String, name: String\\): List<AdminMessage> \\{.*?\\n    suspend fun adminSend\\(code: String, name: String, body: String\\) \\{.*?\\n    \\}', '\\n', s, flags=re.S)
+          p.write_text(s)
+          PY
       - name: Build signed release APK
         env:
           QUN_KEYSTORE_PATH: ${{ runner.temp }}/qun-release.jks
