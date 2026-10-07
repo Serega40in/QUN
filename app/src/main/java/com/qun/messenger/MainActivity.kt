@@ -229,7 +229,10 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Un
     var adminMode by remember { mutableStateOf(false) }
     var adminCode by remember { mutableStateOf("") }
     var smsConsent by remember { mutableStateOf(false) }
+    var resendSeconds by remember { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(resendSeconds) { if (resendSeconds > 0) { delay(1000); resendSeconds -= 1 } }
 
     Column(Modifier.fillMaxSize().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.weight(1f))
@@ -247,7 +250,9 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Un
         Spacer(Modifier.height(20.dp))
         Text("QUN", color = Navy, fontSize = 32.sp, fontWeight = FontWeight.Bold)
         Text("связь нового поколения", color = Emerald)
-        Spacer(Modifier.height(38.dp))
+        Spacer(Modifier.height(10.dp))
+        UpdateButton(onError = onError, compact = true)
+        Spacer(Modifier.height(28.dp))
         if (adminMode) {
             Text("Админ-доступ", color = Navy, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(8.dp))
@@ -277,8 +282,14 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Un
             placeholder = { Text("+7 900 000-00-00") }, singleLine = true, shape = RoundedCornerShape(16.dp))
         if (sent) {
             Spacer(Modifier.height(12.dp))
-            OutlinedTextField(code, { code = it }, Modifier.fillMaxWidth(), label = { Text("Код из SMS") },
+            OutlinedTextField(code, { code = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text("Код из SMS") },
                 placeholder = { Text("6 цифр") }, singleLine = true, shape = RoundedCornerShape(16.dp))
+            Spacer(Modifier.height(6.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(enabled = resendSeconds == 0 && !busy, onClick = { scope.launch { busy = true; try { api.sendOtp(phone.trim()); code = ""; resendSeconds = 60 } catch (e: Exception) { onError(e.message ?: "Не удалось отправить новый код") } finally { busy = false } } }) {
+                    Text(if (resendSeconds > 0) "Новый код через " + resendSeconds + " с" else "Отправить код ещё раз", color = Emerald, fontSize = 12.sp)
+                }
+            }
         } else {
             Spacer(Modifier.height(10.dp))
             Row(
@@ -299,8 +310,8 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Un
                 busy = true
                 try {
                     if (!sent) { api.sendOtp(phone.trim()); sent = true }
-                    else onSession(api.verifyOtp(phone.trim(), code.trim()))
-                } catch (e: Exception) { onError(e.message ?: "Не удалось выполнить запрос") }
+                    else { if (code.trim().length != 6) onError("Введите 6 цифр из последнего SMS.") else onSession(api.verifyOtp(phone.trim(), code.trim())) }
+                } catch (e: Exception) { val raw = e.message ?: "Не удалось выполнить запрос"; onError(when { raw.contains("otp_expired", true) -> "Код истёк или уже был использован. Запросите новый код и введите именно последний SMS."; raw.contains("otp", true) && raw.contains("invalid", true) -> "Неверный код. Запросите новый код и попробуйте ещё раз."; else -> raw }) }
                 finally { busy = false }
             }
         }, modifier = Modifier.fillMaxWidth().height(54.dp), enabled = !busy && (sent || smsConsent), shape = RoundedCornerShape(16.dp),
@@ -582,6 +593,8 @@ private fun AdminHomeScreen(code: String, onLogout: () -> Unit) {
                     Text("QUN", color = Navy, fontSize = 28.sp, fontWeight = FontWeight.Bold)
                     Text("Командный чат · $name", color = Emerald, fontSize = 13.sp)
                 }
+                UpdateButton(onError = { error = it }, compact = true)
+                Spacer(Modifier.width(6.dp))
                 TextButton(onClick = onLogout) { Text("Выйти", color = Emerald) }
             }
         },
@@ -631,7 +644,13 @@ private fun AdminHomeScreen(code: String, onLogout: () -> Unit) {
             item {
                 Spacer(Modifier.height(14.dp))
                 Text("Командный чат", color = Navy, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text("Администраторы: ${team.joinToString(", ")}", color = Color.Gray, fontSize = 12.sp)
+                Text("Быстрый контакт с командой", color = Color.Gray, fontSize = 12.sp)
+                Spacer(Modifier.height(6.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    team.filter { it != name }.forEach { member ->
+                        AssistChip(onClick = { draft = "@" + member + " " }, label = { Text(member, fontSize = 12.sp) })
+                    }
+                }
                 Spacer(Modifier.height(8.dp))
             }
             items(messages, key = { it.id }) { message ->
