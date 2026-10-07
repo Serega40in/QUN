@@ -317,7 +317,7 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Un
 
 
 @Composable
-private fun UpdateButton(onError: (String) -> Unit) {
+private fun UpdateButton(onError: (String) -> Unit, compact: Boolean = false) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
@@ -341,9 +341,13 @@ private fun UpdateButton(onError: (String) -> Unit) {
             }
         },
         enabled = !busy,
-        colors = ButtonDefaults.buttonColors(containerColor = Emerald),
-        shape = RoundedCornerShape(14.dp)
-    ) { Text(if (busy) "Проверяем…" else "Проверить обновление") }
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (compact) Navy else Emerald,
+            contentColor = Color.White
+        ),
+        shape = RoundedCornerShape(14.dp),
+        contentPadding = if (compact) PaddingValues(horizontal = 12.dp, vertical = 8.dp) else ButtonDefaults.ContentPadding
+    ) { Text(if (busy) "…" else if (compact) "↻ Обновить" else "Проверить обновление", fontSize = if (compact) 12.sp else 14.sp) }
 
     update?.let { info ->
         AlertDialog(
@@ -424,9 +428,11 @@ private fun HomeScreen(session: AuthSession, onError: (String) -> Unit, error: S
     }
 
     Scaffold(topBar = {
-        Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("QUN", color = Navy, fontSize = 28.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
+            UpdateButton(onError, compact = true)
+            Spacer(Modifier.width(4.dp))
             TextButton(onClick = onLogout) { Text("Выйти", color = Emerald) }
         }
     }) { padding ->
@@ -434,8 +440,7 @@ private fun HomeScreen(session: AuthSession, onError: (String) -> Unit, error: S
             item {
                 Text("Твой профиль", color = Navy, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(8.dp))
-                UpdateButton(onError)
-                Spacer(Modifier.height(10.dp))
+
                 OutlinedTextField(displayName, { displayName = it }, Modifier.fillMaxWidth(), label = { Text("Имя") }, singleLine = true)
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(username, { username = it.lowercase().replace(" ","") }, Modifier.fillMaxWidth(),
