@@ -1,5 +1,3 @@
-import java.util.Base64
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -14,8 +12,8 @@ android {
         applicationId = "com.qun.messenger"
         minSdk = 26
         targetSdk = 36
-        versionCode = 12
-        versionName = "0.11.1"
+        versionCode = 13
+        versionName = "0.12.0"
     }
 
     signingConfigs {
@@ -42,6 +40,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
+
 kotlin { jvmToolchain(17) }
 
 dependencies {
@@ -56,24 +55,4 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     debugImplementation("androidx.compose.ui:ui-tooling:1.9.2")
-}
-
-tasks.register("normalizeQunSource") {
-    doLast {
-        val p = file("src/main/java/com/qun/messenger/MainActivity.kt")
-        var s = p.readText()
-        val obsolete = String(Base64.getDecoder().decode("CiAgICBzdXNwZW5kIGZ1biBhZG1pbk1lc3NhZ2VzKGNvZGU6IFN0cmluZywgbmFtZTogU3RyaW5nKTogTGlzdDxBZG1pbk1lc3NhZ2U+IHsKICAgICAgICB2YWwgcmF3ID0gYWRtaW5SZXF1ZXN0KCJtZXNzYWdlcyIsIGNvZGUsIG5hbWUpCiAgICAgICAgcmV0dXJuIGpzb24uZGVjb2RlRnJvbVN0cmluZzxNYXA8U3RyaW5nLCBMaXN0PEFkbWluTWVzc2FnZT4+PihyYXcpWyJtZXNzYWdlcyJdID86IGVtcHR5TGlzdCgpCiAgICB9CgogICAgc3VzcGVuZCBmdW4gYWRtaW5TZW5kKGNvZGU6IFN0cmluZywgbmFtZTogU3RyaW5nLCBib2R5OiBTdHJpbmcpIHsKICAgICAgICBhZG1pblJlcXVlc3QoInNlbmQiLCBjb2RlLCBuYW1lLCBib2R5KQogICAgfQo="), Charsets.UTF_8)
-        s = s.replace(obsolete, "")
-        if (!s.contains("import kotlinx.serialization.json.jsonObject")) {
-            s = s.replace(
-                "import kotlinx.serialization.json.Json\n",
-                "import kotlinx.serialization.json.Json\nimport kotlinx.serialization.json.jsonObject\n"
-            )
-        }
-        p.writeText(s)
-    }
-}
-
-tasks.configureEach {
-    if (name == "assembleRelease") dependsOn("normalizeQunSource")
 }
