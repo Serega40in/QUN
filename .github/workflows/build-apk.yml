@@ -72,17 +72,17 @@ jobs:
 
           for attempt in 1 2 3; do
             git fetch origin main
-            git rebase origin/main
+            git reset --hard origin/main
+            mkdir -p docs/downloads
+            cp app/build/outputs/apk/release/app-release.apk docs/downloads/QUN-latest.apk
+            cat > docs/update.json <<EOF
+          {"versionCode":$VERSION_CODE,"versionName":"$VERSION_NAME","apkUrl":"https://raw.githubusercontent.com/Serega40in/QUN/main/docs/downloads/QUN-latest.apk","notes":"QUN $VERSION_NAME — стабильное release-обновление."}
+          EOF
             git add docs/downloads/QUN-latest.apk docs/update.json
-            if git diff --cached --quiet; then
-              exit 0
-            fi
             git commit -m "chore: publish signed QUN update $VERSION_NAME"
             if git push origin HEAD:main; then
               exit 0
             fi
-            git reset --soft HEAD~1
-            git reset
             sleep 2
           done
 
