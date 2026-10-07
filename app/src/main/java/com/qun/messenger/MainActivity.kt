@@ -254,7 +254,6 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Un
         Text("QUN", color = Navy, fontSize = 32.sp, fontWeight = FontWeight.Bold)
         Text("связь нового поколения", color = Emerald)
         Spacer(Modifier.height(10.dp))
-        UpdateButton(onError = onError, compact = true)
         Spacer(Modifier.height(28.dp))
         if (adminMode) {
             Text("Админ-доступ", color = Navy, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
