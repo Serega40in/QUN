@@ -125,8 +125,8 @@ private class QunApi {
         return r.body()
     }
 
-    suspend fun adminRequest(action: String, code: String, name: String, body: String? = null): String {
-        val payload = mutableMapOf<String, String>("action" to action, "code" to code, "name" to name)
+     suspend fun adminRequest(action: String, code: String, body: String? = null): String {
+        val payload = mutableMapOf<String, String>("action" to action, "code" to code)
         if (body != null) payload["body"] = body
         val r = http.post("$SUPABASE_URL/functions/v1/qun-admin-chat") {
             contentType(ContentType.Application.Json)
@@ -134,6 +134,29 @@ private class QunApi {
         }
         check(r.status.isSuccess()) { r.bodyAsText() }
         return r.bodyAsText()
+    }
+
+    suspend fun adminTeam(code: String): Pair<String, List<String>> {
+        val raw = adminRequest("team", code)
+        val obj = json.parseToJsonElement(raw).jsonObject
+        val me = obj["me"]?.toString()?.trim('"') ?: "Администратор"
+        val team = obj["team"]?.toString()?.removePrefix("[")?.removeSuffix("]")
+            ?.split(",")?.map { it.trim().trim('"') }?.filter { it.isNotBlank() } ?: emptyList()
+        return me to team
+    }
+
+    suspend fun adminMessages(code: String): List<AdminMessage> {
+        val raw = adminRequest("messages", code)
+        return json.decodeFromString<Map<String, List<AdminMessage>>>(raw)["messages"] ?: emptyList()
+    }
+
+    suspend fun adminSend(code: String, body: String) {
+        adminRequest("send", code, body = body)
+    }
+
+    suspend fun adminSearch(code: String, query: String): List<Profile> {
+        val raw = adminRequest("search", code, body = query)
+        return json.decodeFromString<Map<String, List<Profile>>>(raw)["people"] ?: emptyList()
     }
 
     suspend fun adminMessages(code: String, name: String): List<AdminMessage> {
@@ -205,6 +228,7 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Un
     var lastTapAt by remember { mutableLongStateOf(0L) }
     var adminMode by remember { mutableStateOf(false) }
     var adminCode by remember { mutableStateOf("") }
+    var smsConsent by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     Column(Modifier.fillMaxSize().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -255,6 +279,19 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Un
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(code, { code = it }, Modifier.fillMaxWidth(), label = { Text("Код из SMS") },
                 placeholder = { Text("6 цифр") }, singleLine = true, shape = RoundedCornerShape(16.dp))
+        } else {
+            Spacer(Modifier.height(10.dp))
+            Row(
+                Modifier.fillMaxWidth().clickable { smsConsent = !smsConsent },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(checked = smsConsent, onCheckedChange = { smsConsent = it })
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    "Соглашаюсь на получение SMS-кодов от QUN для авторизации и подтверждения номера телефона.",
+                    color = Color.DarkGray, fontSize = 12.sp
+                )
+            }
         }
         Spacer(Modifier.height(16.dp))
         Button(onClick = {
@@ -266,7 +303,7 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Un
                 } catch (e: Exception) { onError(e.message ?: "Не удалось выполнить запрос") }
                 finally { busy = false }
             }
-        }, modifier = Modifier.fillMaxWidth().height(54.dp), enabled = !busy, shape = RoundedCornerShape(16.dp),
+        }, modifier = Modifier.fillMaxWidth().height(54.dp), enabled = !busy && (sent || smsConsent), shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Navy)) {
             Text(if (busy) "Подождите…" else if (sent) "Войти в QUN" else "Получить код", fontSize = 16.sp)
         }
@@ -507,17 +544,27 @@ private fun ChatScreen(session: AuthSession, me: Profile, conversationId: String
 }
 
 @Composable
-private fun AdminHomeScreen(name: String, onLogout: () -> Unit) {
-    val codes = mapOf("Сергей" to "740281", "Георгий" to "531947", "Павел" to "826314", "Наталья" to "419625", "Олег" to "683752")
-    val code = codes[name] ?: ""
+private fun AdminHomeScreen(code: String, onLogout: () -> Unit) {
+    var name by remember { mutableStateOf("Администратор") }
+    var team by remember { mutableStateOf<List<String>>(emptyList()) }
     var messages by remember { mutableStateOf<List<AdminMessage>>(emptyList()) }
+    var people by remember { mutableStateOf<List<Profile>>(emptyList()) }
+    var search by remember { mutableStateOf("") }
     var draft by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(name) {
+    LaunchedEffect(code) {
+        try {
+            val identity = api.adminTeam(code)
+            name = identity.first
+            team = identity.second
+            error = null
+        } catch (e: Exception) {
+            error = e.message ?: "Не удалось подтвердить доступ"
+        }
         while (true) {
-            try { messages = api.adminMessages(code, name); error = null }
+            try { messages = api.adminMessages(code); error = null }
             catch (e: Exception) { error = e.message ?: "Не удалось загрузить сообщения" }
             delay(2000)
         }
@@ -538,28 +585,48 @@ private fun AdminHomeScreen(name: String, onLogout: () -> Unit) {
                 OutlinedTextField(draft, { draft = it }, Modifier.weight(1f), placeholder = { Text("Сообщение команде") },
                     maxLines = 4, shape = RoundedCornerShape(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Button(
-                    onClick = {
-                        val text = draft.trim()
-                        draft = ""
-                        scope.launch {
-                            try { api.adminSend(code, name, text); messages = api.adminMessages(code, name); error = null }
-                            catch (e: Exception) { error = e.message ?: "Сообщение не отправлено" }
-                        }
-                    },
-                    enabled = draft.isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Navy),
-                    shape = CircleShape,
-                    contentPadding = PaddingValues(14.dp)
-                ) { Text("↑", fontSize = 20.sp) }
+                Button(onClick = {
+                    val text = draft.trim(); draft = ""
+                    scope.launch {
+                        try { api.adminSend(code, text); messages = api.adminMessages(code); error = null }
+                        catch (e: Exception) { error = e.message ?: "Сообщение не отправлено" }
+                    }
+                }, enabled = draft.isNotBlank(), colors = ButtonDefaults.buttonColors(containerColor = Navy),
+                    shape = CircleShape, contentPadding = PaddingValues(14.dp)) { Text("↑", fontSize = 20.sp) }
             }
         }
     ) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding).background(Soft),
             contentPadding = PaddingValues(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item {
+                Text("Пользователи QUN", color = Navy, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                OutlinedTextField(search, { value ->
+                    search = value
+                    if (value.length >= 2) scope.launch {
+                        try { people = api.adminSearch(code, value); error = null }
+                        catch (e: Exception) { error = e.message ?: "Поиск недоступен" }
+                    } else people = emptyList()
+                }, Modifier.fillMaxWidth(), label = { Text("Найти по имени или username") }, singleLine = true)
+                Spacer(Modifier.height(8.dp))
+            }
+            items(people, key = { it.id }) { person ->
+                Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(42.dp).background(Navy, CircleShape), contentAlignment = Alignment.Center) {
+                            Text(person.display_name.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Column {
+                            Text(person.display_name.ifBlank { "QUN user" }, color = Navy, fontWeight = FontWeight.SemiBold)
+                            Text("@${person.username ?: "без username"}", color = Emerald, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+            item {
+                Spacer(Modifier.height(14.dp))
                 Text("Командный чат", color = Navy, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text("Общий тестовый чат QUN • сообщения видят все администраторы", color = Color.Gray, fontSize = 12.sp)
+                Text("Администраторы: ${team.joinToString(", ")}", color = Color.Gray, fontSize = 12.sp)
                 Spacer(Modifier.height(8.dp))
             }
             items(messages, key = { it.id }) { message ->
