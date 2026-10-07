@@ -71,8 +71,14 @@ private class QunApi {
             contentType(ContentType.Application.Json); header("apikey", SUPABASE_KEY)
             setBody(mapOf("type" to "sms", "phone" to phone, "token" to code))
         }
-        check(r.status.isSuccess()) { r.bodyAsText() }
-        return r.body()
+        val raw = r.bodyAsText()
+        if (!r.status.isSuccess()) {
+            if (raw.contains("otp_expired", ignoreCase = true)) {
+                error("Код истёк или уже был использован. Запросите новый код и введите именно последний SMS.")
+            }
+            error(raw)
+        }
+        return json.decodeFromString(raw)
     }
 
     private fun auth(builder: HttpRequestBuilder, token: String) {
@@ -159,15 +165,6 @@ private class QunApi {
         return json.decodeFromString<Map<String, List<Profile>>>(raw)["people"] ?: emptyList()
     }
 
-    suspend fun adminMessages(code: String, name: String): List<AdminMessage> {
-        val raw = adminRequest("messages", code, name)
-        return json.decodeFromString<Map<String, List<AdminMessage>>>(raw)["messages"] ?: emptyList()
-    }
-
-    suspend fun adminSend(code: String, name: String, body: String) {
-        adminRequest("send", code, name, body)
-    }
-
     suspend fun checkUpdate(): UpdateInfo {
         val r = http.get("https://raw.githubusercontent.com/Serega40in/QUN/main/docs/update.json")
         check(r.status.isSuccess()) { r.bodyAsText() }
@@ -234,7 +231,13 @@ private fun AuthScreen(onSession: (AuthSession) -> Unit, onAdmin: (String) -> Un
 
     LaunchedEffect(resendSeconds) { if (resendSeconds > 0) { delay(1000); resendSeconds -= 1 } }
 
-    Column(Modifier.fillMaxSize().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.fillMaxSize().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("QUN", color = Navy, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.weight(1f))
+            UpdateButton(onError, compact = true)
+        }
+        Spacer(Modifier.height(8.dp))
         Spacer(Modifier.weight(1f))
         Box(
             Modifier.size(78.dp).background(Navy, CircleShape).clickable {
