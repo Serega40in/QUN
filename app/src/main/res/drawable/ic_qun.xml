@@ -12,8 +12,8 @@
         android:pathData="M54,12A42,42 0,1 0,54 96A42,42 0,1 0,54 12M54,18A36,36 0,1 1,54 90A36,36 0,1 1,54 18" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M32,28L43,28L54,49L65,28L76,28L60,54L76,80L65,80L54,59L43,80L32,80L48,54Z" />
+        android:pathData="M34,27L45,27L45,48L67,27L80,27L56,51L80,81L66,81L48,59L45,62L45,81L34,81Z" />
     <path
         android:fillColor="#C6A15B"
-        android:pathData="M42,67L66,67L66,71L42,71Z" />
+        android:pathData="M45,66L68,66L68,70L45,70Z" />
 </vector>
