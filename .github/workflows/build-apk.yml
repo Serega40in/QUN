@@ -52,6 +52,12 @@ jobs:
           QUN_KEY_ALIAS: ${{ secrets.QUN_KEY_ALIAS }}
           QUN_KEY_PASSWORD: ${{ secrets.QUN_KEY_PASSWORD }}
         run: gradle assembleRelease
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: QUN-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
+
       - name: Publish signed update
         run: |
           mkdir -p docs/downloads
@@ -63,10 +69,22 @@ jobs:
           EOF
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/downloads/QUN-latest.apk docs/update.json
-          git diff --cached --quiet || (git commit -m "chore: publish signed QUN update $VERSION_NAME" && git push)
-      - name: Upload release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: QUN-release-apk
-          path: app/build/outputs/apk/release/app-release.apk
+
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            git add docs/downloads/QUN-latest.apk docs/update.json
+            if git diff --cached --quiet; then
+              exit 0
+            fi
+            git commit -m "chore: publish signed QUN update $VERSION_NAME"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git reset --soft HEAD~1
+            git reset
+            sleep 2
+          done
+
+          echo "Could not publish update after 3 attempts"
+          exit 1
