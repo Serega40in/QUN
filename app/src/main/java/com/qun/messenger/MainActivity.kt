@@ -55,6 +55,7 @@ private val http = HttpClient(Android) {
 @Serializable data class MemberRow(val conversation_id: String, val user_id: String)
 @Serializable data class Message(val id: String, val conversation_id: String, val sender_id: String, val body: String, val created_at: String)
 @Serializable data class AdminMessage(val id: String, val sender: String, val body: String, val created_at: String)
+@Serializable data class AdminDirectMessage(val id: String, val admin_name: String, val user_id: String, val body: String, val created_at: String)
 @Serializable data class UpdateInfo(val versionCode: Int, val versionName: String, val apkUrl: String, val notes: String = "")
 
 private class QunApi {
@@ -160,9 +161,31 @@ private class QunApi {
         adminRequest("send", code, body = body)
     }
 
+    private suspend fun adminDirectRequest(action: String, code: String, userId: String? = null, body: String? = null, query: String? = null): String {
+        val payload = mutableMapOf<String, String>("action" to action, "code" to code)
+        if (userId != null) payload["user_id"] = userId
+        if (body != null) payload["body"] = body
+        if (query != null) payload["query"] = query
+        val r = http.post("$SUPABASE_URL/functions/v1/qun-admin-direct") {
+            contentType(ContentType.Application.Json)
+            setBody(payload)
+        }
+        check(r.status.isSuccess()) { r.bodyAsText() }
+        return r.bodyAsText()
+    }
+
     suspend fun adminSearch(code: String, query: String): List<Profile> {
-        val raw = adminRequest("search", code, body = query)
+        val raw = adminDirectRequest("search", code, query = query)
         return json.decodeFromString<Map<String, List<Profile>>>(raw)["people"] ?: emptyList()
+    }
+
+    suspend fun adminDirectMessages(code: String, userId: String): List<AdminDirectMessage> {
+        val raw = adminDirectRequest("messages", code, userId = userId)
+        return json.decodeFromString<Map<String, List<AdminDirectMessage>>>(raw)["messages"] ?: emptyList()
+    }
+
+    suspend fun adminDirectSend(code: String, userId: String, body: String) {
+        adminDirectRequest("send", code, userId = userId, body = body)
     }
 
     suspend fun checkUpdate(): UpdateInfo {
@@ -562,11 +585,98 @@ private fun ChatScreen(session: AuthSession, me: Profile, conversationId: String
 }
 
 @Composable
+private fun AdminDirectChatScreen(
+    code: String,
+    partner: Profile,
+    onBack: () -> Unit,
+    onError: (String) -> Unit
+) {
+    var messages by remember { mutableStateOf<List<AdminDirectMessage>>(emptyList()) }
+    var draft by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+
+    suspend fun refresh() {
+        try { messages = api.adminDirectMessages(code, partner.id) }
+        catch (e: Exception) { onError(e.message ?: "Не удалось загрузить личный чат") }
+    }
+
+    LaunchedEffect(partner.id) {
+        while (true) { refresh(); delay(2000) }
+    }
+
+    Scaffold(
+        topBar = {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onBack) { Text("‹", color = Navy, fontSize = 30.sp) }
+                Column {
+                    Text(partner.display_name.ifBlank { "QUN user" }, color = Navy, fontWeight = FontWeight.Bold)
+                    Text("@${partner.username ?: ""}", color = Emerald, fontSize = 12.sp)
+                }
+            }
+        },
+        bottomBar = {
+            Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.Bottom) {
+                OutlinedTextField(
+                    draft,
+                    { draft = it },
+                    Modifier.weight(1f),
+                    placeholder = { Text("Личное сообщение") },
+                    maxLines = 4,
+                    shape = RoundedCornerShape(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        val text = draft.trim()
+                        draft = ""
+                        scope.launch {
+                            try {
+                                api.adminDirectSend(code, partner.id, text)
+                                refresh()
+                            } catch (e: Exception) {
+                                onError(e.message ?: "Сообщение не отправлено")
+                            }
+                        }
+                    },
+                    enabled = draft.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Navy),
+                    shape = CircleShape,
+                    contentPadding = PaddingValues(14.dp)
+                ) { Text("↑", fontSize = 20.sp) }
+            }
+        }
+    ) { padding ->
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding).background(Soft),
+            contentPadding = PaddingValues(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(messages, key = { it.id }) { message ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    Surface(color = Navy, shape = RoundedCornerShape(18.dp)) {
+                        Text(
+                            message.body,
+                            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            color = Color.White,
+                            fontSize = 15.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun AdminHomeScreen(code: String, onLogout: () -> Unit) {
     var name by remember { mutableStateOf("Администратор") }
     var team by remember { mutableStateOf<List<String>>(emptyList()) }
     var messages by remember { mutableStateOf<List<AdminMessage>>(emptyList()) }
     var people by remember { mutableStateOf<List<Profile>>(emptyList()) }
+    var directPartner by remember { mutableStateOf<Profile?>(null) }
     var search by remember { mutableStateOf("") }
     var draft by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
@@ -586,6 +696,16 @@ private fun AdminHomeScreen(code: String, onLogout: () -> Unit) {
             catch (e: Exception) { error = e.message ?: "Не удалось загрузить сообщения" }
             delay(2000)
         }
+    }
+
+    if (directPartner != null) {
+        AdminDirectChatScreen(
+            code = code,
+            partner = directPartner!!,
+            onBack = { directPartner = null },
+            onError = { error = it }
+        )
+        return
     }
 
     Scaffold(
@@ -630,16 +750,20 @@ private fun AdminHomeScreen(code: String, onLogout: () -> Unit) {
                 Spacer(Modifier.height(8.dp))
             }
             items(people, key = { it.id }) { person ->
-                Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                Card(
+                    Modifier.fillMaxWidth().clickable { directPartner = person },
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.size(42.dp).background(Navy, CircleShape), contentAlignment = Alignment.Center) {
                             Text(person.display_name.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
                         }
                         Spacer(Modifier.width(10.dp))
-                        Column {
+                        Column(Modifier.weight(1f)) {
                             Text(person.display_name.ifBlank { "QUN user" }, color = Navy, fontWeight = FontWeight.SemiBold)
                             Text("@${person.username ?: "без username"}", color = Emerald, fontSize = 12.sp)
                         }
+                        Text("›", color = Gold, fontSize = 28.sp)
                     }
                 }
             }
