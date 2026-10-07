@@ -74,6 +74,6 @@ tasks.register("normalizeQunSource") {
     }
 }
 
-tasks.named("assembleRelease") {
-    dependsOn("normalizeQunSource")
+tasks.configureEach {
+    if (name == "assembleRelease") dependsOn("normalizeQunSource")
 }
