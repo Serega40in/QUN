@@ -27,6 +27,14 @@ jobs:
         with:
           gradle-version: "8.13"
 
+      - name: Install official QUN app icon
+        run: |
+          mkdir -p app/src/main/res/drawable-nodpi docs/assets
+          ICON_URL='https://images.openai.com/static-rsc-4/pQWrStCExv8q2fzrh0tW64bkBFHtVmr2Ye6hfjoLvGdz5JCR65QrSdtqu-dKDpCviPUNbrMbJRBN-T_zhMgyQ_oXO5rOrObnzXv7NdUv-bfEUIBrGvH1xY85jTW2hFOnSMG3-hfrevAioEw60u1BEUfPlERLHyTdqwQCZDWVD6bfXMANQ_Idc78Ni_tNo_Ga?purpose=fullsize'
+          curl --fail --location --retry 3 "$ICON_URL" --output app/src/main/res/drawable-nodpi/qun_icon.jpg
+          file app/src/main/res/drawable-nodpi/qun_icon.jpg | grep -E 'JPEG image data|JPEG image'
+          cp app/src/main/res/drawable-nodpi/qun_icon.jpg docs/assets/qun-icon.jpg
+
       - name: Prepare persistent release keystore
         env:
           KEYSTORE_B64: ${{ secrets.QUN_KEYSTORE_B64 }}
@@ -71,7 +79,7 @@ jobs:
             cat > docs/update.json <<EOF
           {"versionCode":$VERSION_CODE,"versionName":"$VERSION_NAME","apkUrl":"https://raw.githubusercontent.com/Serega40in/QUN/main/docs/downloads/QUN-latest.apk","notes":"QUN $VERSION_NAME — обновление интерфейса, профиля и личных сообщений."}
           EOF
-            git add docs/downloads/QUN-latest.apk docs/update.json
+            git add docs/downloads/QUN-latest.apk docs/update.json docs/assets/qun-icon.jpg
             git commit -m "chore: publish signed QUN update $VERSION_NAME"
             if git push origin HEAD:main; then
               exit 0
