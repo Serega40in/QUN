@@ -458,6 +458,7 @@ private fun HomeScreen(
             me = api.profile(session.access_token, session.user.id)
             username = me?.username ?: ""
             displayName = me?.display_name ?: ""
+            people = api.searchProfiles(session.access_token, "", session.user.id)
         } catch (e: Exception) {
             onError(e.message ?: "Ошибка профиля")
         } finally {
