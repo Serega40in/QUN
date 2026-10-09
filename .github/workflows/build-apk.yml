@@ -69,7 +69,7 @@ jobs:
             mkdir -p docs/downloads
             cp app/build/outputs/apk/release/app-release.apk docs/downloads/QUN-latest.apk
             cat > docs/update.json <<EOF
-          {"versionCode":$VERSION_CODE,"versionName":"$VERSION_NAME","apkUrl":"https://raw.githubusercontent.com/Serega40in/QUN/main/docs/downloads/QUN-latest.apk","notes":"QUN $VERSION_NAME — тестовое ядро: вход по телефону, профили и личные сообщения."}
+          {"versionCode":$VERSION_CODE,"versionName":"$VERSION_NAME","apkUrl":"https://raw.githubusercontent.com/Serega40in/QUN/main/docs/downloads/QUN-latest.apk","notes":"QUN $VERSION_NAME — обновление интерфейса, профиля и личных сообщений."}
           EOF
             git add docs/downloads/QUN-latest.apk docs/update.json
             git commit -m "chore: publish signed QUN update $VERSION_NAME"
