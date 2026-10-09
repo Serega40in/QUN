@@ -154,7 +154,7 @@ private class QunApi {
             setBody(mapOf("target_user" to target))
         }
         check(r.status.isSuccess()) { r.bodyAsText() }
-        return r.body<String>()
+        return r.bodyAsText().trim().trim('"').also { check(it.matches(Regex("[0-9a-fA-F-]{36}"))) { "Сервер не вернул идентификатор диалога: $it" } }
     }
 
     suspend fun messages(token: String, conversationId: String): List<Message> {
@@ -448,6 +448,7 @@ private fun HomeScreen(
     var people by remember { mutableStateOf<List<Profile>>(emptyList()) }
     var selected by remember { mutableStateOf<Pair<String, Profile>?>(null) }
     var saved by remember { mutableStateOf(false) }
+    var profileExpanded by remember { mutableStateOf(false) }
     var loadingProfile by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
 
@@ -482,7 +483,7 @@ private fun HomeScreen(
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("QUN", color = Navy, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                Text("КЮН", color = Navy, fontSize = 23.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
                 UpdateButton(onError, compact = true)
                 Spacer(Modifier.width(4.dp))
@@ -495,92 +496,111 @@ private fun HomeScreen(
             contentPadding = PaddingValues(18.dp)
         ) {
             item {
-                Text("Твой профиль", color = Navy, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    displayName,
-                    { displayName = it; saved = false },
+                Card(
                     Modifier.fillMaxWidth(),
-                    label = { Text("Имя") },
-                    singleLine = true
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    username,
-                    { username = it.lowercase().replace(" ", "").replace("@", ""); saved = false },
-                    Modifier.fillMaxWidth(),
-                    label = { Text("username") },
-                    placeholder = { Text("например, serega40in") },
-                    singleLine = true
-                )
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    "Логин: @" + (me?.username ?: username),
-                    color = Color.Gray,
-                    fontSize = 12.sp
-                )
-                Spacer(Modifier.height(10.dp))
-
-                Button(
-                    onClick = {
-                        scope.launch {
-                            try {
-                                api.updateProfile(
-                                    session.access_token,
-                                    session.user.id,
-                                    username.trim(),
-                                    displayName.trim()
-                                )
-                                saved = true
-                                me = api.profile(session.access_token, session.user.id)
-                            } catch (e: Exception) {
-                                onError(e.message ?: "Не удалось сохранить профиль")
-                            }
-                        }
-                    },
-                    enabled = !loadingProfile && username.length >= 3 && !saved,
-                    colors = ButtonDefaults.buttonColors(containerColor = Navy)
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(22.dp)
                 ) {
-                    Text(if (saved) "Сохранено" else "Сохранить профиль")
+                    Row(
+                        Modifier.fillMaxWidth().padding(15.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            Modifier.size(46.dp).background(Soft, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                (me?.display_name?.ifBlank { me?.username ?: "К" } ?: "К").take(1).uppercase(),
+                                color = Emerald,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(me?.display_name?.ifBlank { "Мой профиль" } ?: "Мой профиль", color = Navy, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                if (!me?.username.isNullOrBlank()) "@${me?.username}" else "Настроить профиль",
+                                color = Color.Gray,
+                                fontSize = 12.sp
+                            )
+                        }
+                        TextButton(onClick = { profileExpanded = !profileExpanded }) {
+                            Text(if (profileExpanded) "Готово" else "Изменить", color = Emerald)
+                        }
+                    }
+                    if (profileExpanded) {
+                        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+                            OutlinedTextField(
+                                displayName,
+                                { displayName = it; saved = false },
+                                Modifier.fillMaxWidth(),
+                                label = { Text("Имя") },
+                                singleLine = true
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedTextField(
+                                username,
+                                { username = it.lowercase().replace(" ", "").replace("@", ""); saved = false },
+                                Modifier.fillMaxWidth(),
+                                label = { Text("Username") },
+                                placeholder = { Text("например, serega40in") },
+                                singleLine = true
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        try {
+                                            api.updateProfile(session.access_token, session.user.id, username.trim(), displayName.trim())
+                                            saved = true
+                                            me = api.profile(session.access_token, session.user.id)
+                                            profileExpanded = false
+                                        } catch (e: Exception) {
+                                            onError(e.message ?: "Не удалось сохранить профиль")
+                                        }
+                                    }
+                                },
+                                enabled = !loadingProfile && username.length >= 3 && !saved,
+                                colors = ButtonDefaults.buttonColors(containerColor = Navy)
+                            ) { Text(if (saved) "Сохранено" else "Сохранить") }
+                        }
+                    }
                 }
 
-                Spacer(Modifier.height(26.dp))
-                Text("Личные сообщения", color = Navy, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    "Найди человека по имени или username.",
-                    color = Color.Gray,
-                    fontSize = 12.sp
-                )
-                Spacer(Modifier.height(8.dp))
-
+                Spacer(Modifier.height(18.dp))
+                Text("Сообщения", color = Navy, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text("Найдите человека и начните диалог", color = Color.Gray, fontSize = 13.sp)
+                Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
                     search,
                     { value ->
                         search = value
-                        if (value.trim().length >= 2) {
-                            scope.launch {
-                                try {
-                                    people = api.searchProfiles(
-                                        session.access_token,
-                                        value,
-                                        session.user.id
-                                    )
-                                } catch (e: Exception) {
-                                    onError(e.message ?: "Поиск недоступен")
-                                }
+                        scope.launch {
+                            try {
+                                people = api.searchProfiles(session.access_token, value, session.user.id)
+                            } catch (e: Exception) {
+                                onError(e.message ?: "Поиск недоступен")
                             }
-                        } else {
-                            people = emptyList()
                         }
                     },
                     Modifier.fillMaxWidth(),
-                    label = { Text("Имя или @username") },
-                    placeholder = { Text("+7 900…") },
-                    singleLine = true
+                    label = { Text("Поиск по имени или @username") },
+                    placeholder = { Text("Например, natasha") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp)
                 )
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(8.dp))
+                if (!error.isNullOrBlank()) {
+                    Card(
+                        Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF0EF)),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text(error.take(260), Modifier.padding(12.dp), color = Color(0xFFB3261E), fontSize = 12.sp)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
             }
 
             items(people, key = { it.id }) { person ->
@@ -629,18 +649,6 @@ private fun HomeScreen(
                 }
             }
 
-            item {
-                Spacer(Modifier.height(20.dp))
-                Text(
-                    "Сейчас это тестовая версия: несколько участников команды.",
-                    color = Color.Gray,
-                    fontSize = 12.sp
-                )
-                error?.let {
-                    Spacer(Modifier.height(8.dp))
-                    Text(it.take(220), color = Color(0xFFB3261E), fontSize = 12.sp)
-                }
-            }
         }
     }
 }
