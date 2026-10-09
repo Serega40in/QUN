@@ -110,7 +110,7 @@ private class QunApi {
         val r = http.get("$SUPABASE_URL/rest/v1/profiles") {
             auth(this, token)
             parameter("id", "eq.$id")
-            parameter("select", "id,username,display_name,phone")
+            parameter("select", "id,username,display_name")
             parameter("limit", "1")
         }
         check(r.status.isSuccess()) { r.bodyAsText() }
@@ -130,17 +130,15 @@ private class QunApi {
 
     suspend fun searchProfiles(token: String, query: String, me: String): List<Profile> {
         val raw = query.trim().replace("*", "").replace(",", "")
-        val text = raw.replace("(", "").replace(")", "")
-        val digits = raw.filter(Char::isDigit)
+        val text = raw.replace("(", "").replace(")", "").removePrefix("@")
         val clauses = mutableListOf(
             "username.ilike.*$text*",
             "display_name.ilike.*$text*"
         )
-        if (digits.length >= 4) clauses += "phone.ilike.*$digits*"
 
         val r = http.get("$SUPABASE_URL/rest/v1/profiles") {
             auth(this, token)
-            parameter("select", "id,username,display_name,phone")
+            parameter("select", "id,username,display_name")
             parameter("id", "neq.$me")
             parameter("or", "(" + clauses.joinToString(",") + ")")
             parameter("limit", "20")
@@ -518,7 +516,7 @@ private fun HomeScreen(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Телефон: " + (me?.phone ?: session.user.phone ?: "—"),
+                    "Логин: @" + (me?.username ?: username),
                     color = Color.Gray,
                     fontSize = 12.sp
                 )
@@ -551,7 +549,7 @@ private fun HomeScreen(
                 Text("Личные сообщения", color = Navy, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Найди человека по имени, username или номеру телефона.",
+                    "Найди человека по имени или username.",
                     color = Color.Gray,
                     fontSize = 12.sp
                 )
@@ -578,7 +576,7 @@ private fun HomeScreen(
                         }
                     },
                     Modifier.fillMaxWidth(),
-                    label = { Text("Имя, @username или телефон") },
+                    label = { Text("Имя или @username") },
                     placeholder = { Text("+7 900…") },
                     singleLine = true
                 )
@@ -625,9 +623,6 @@ private fun HomeScreen(
                                 color = Emerald,
                                 fontSize = 13.sp
                             )
-                            if (!person.phone.isNullOrBlank()) {
-                                Text(person.phone!!, color = Color.Gray, fontSize = 11.sp)
-                            }
                         }
                         Text("›", color = Gold, fontSize = 28.sp)
                     }
