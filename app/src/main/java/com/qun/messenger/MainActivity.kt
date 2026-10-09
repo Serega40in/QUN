@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
@@ -51,6 +52,8 @@ private val http = HttpClient(Android) {
 
 @Serializable data class AuthUser(val id: String, val phone: String? = null)
 @Serializable data class AuthSession(val access_token: String, val user: AuthUser)
+@Serializable data class AuthTokenSession(val access_token: String, val refresh_token: String? = null)
+@Serializable data class AuthResponse(val session: AuthTokenSession, val user: AuthUser)
 @Serializable data class Profile(
     val id: String,
     val username: String? = null,
@@ -72,16 +75,31 @@ private val http = HttpClient(Android) {
 )
 
 private class QunApi {
-    suspend fun testLogin(phone: String): AuthSession {
-        val r = http.post("$SUPABASE_URL/functions/v1/qun-test-login") {
+    private suspend fun authAction(action: String, fields: Map<String, String>): AuthSession {
+        val r = http.post("$SUPABASE_URL/functions/v1/qun-auth") {
             contentType(ContentType.Application.Json)
             header("apikey", SUPABASE_KEY)
-            setBody(mapOf("phone" to phone))
+            header("Authorization", "Bearer $SUPABASE_KEY")
+            setBody(mapOf("action" to action) + fields)
         }
         val raw = r.bodyAsText()
-        check(r.status.isSuccess()) { raw }
-        return json.decodeFromString(raw)
+        check(r.status.isSuccess()) {
+            runCatching { json.decodeFromString<Map<String, String>>(raw)["error"] }.getOrNull() ?: raw
+        }
+        val response = json.decodeFromString<AuthResponse>(raw)
+        return AuthSession(response.session.access_token, response.user)
     }
+
+    suspend fun login(login: String, password: String): AuthSession =
+        authAction("login", mapOf("login" to login, "password" to password))
+
+    suspend fun register(username: String, displayName: String, phone: String, password: String): AuthSession =
+        authAction("register", mapOf(
+            "username" to username,
+            "display_name" to displayName,
+            "phone" to phone,
+            "password" to password
+        ))
 
     private fun auth(builder: HttpRequestBuilder, token: String) {
         builder.header("apikey", SUPABASE_KEY)
@@ -220,81 +238,101 @@ private fun AuthScreen(
     onError: (String) -> Unit,
     error: String?
 ) {
+    var identifier by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var password2 by remember { mutableStateOf("") }
+    var displayName by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var mode by remember { mutableStateOf("login") }
     var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val isRegister = mode == "register"
 
-    Column(
-        Modifier.fillMaxSize().padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Column(Modifier.fillMaxSize().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("QUN", color = Navy, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("КЮН", color = Navy, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
             UpdateButton(onError, compact = true)
         }
-
         Spacer(Modifier.weight(1f))
-
-        Box(
-            Modifier.size(78.dp).background(Navy, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(Modifier.size(78.dp).background(Navy, CircleShape), contentAlignment = Alignment.Center) {
             Text("К", color = Color.White, fontSize = 36.sp, fontWeight = FontWeight.Bold)
         }
-
         Spacer(Modifier.height(20.dp))
-        Text("QUN", color = Navy, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+        Text("КЮН", color = Navy, fontSize = 32.sp, fontWeight = FontWeight.Bold)
         Text("связь нового поколения", color = Emerald)
-        Spacer(Modifier.height(28.dp))
-
+        Spacer(Modifier.height(20.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { mode = "login" }, enabled = !busy, modifier = Modifier.weight(1f)) {
+                Text("Войти", color = if (!isRegister) Emerald else Navy)
+            }
+            TextButton(onClick = { mode = "register" }, enabled = !busy, modifier = Modifier.weight(1f)) {
+                Text("Создать аккаунт", color = if (isRegister) Emerald else Navy)
+            }
+        }
         OutlinedTextField(
-            phone,
-            { phone = it },
-            Modifier.fillMaxWidth(),
-            label = { Text("Номер телефона") },
-            placeholder = { Text("+7 900 000-00-00") },
-            singleLine = true,
-            shape = RoundedCornerShape(16.dp)
+            value = identifier, onValueChange = { identifier = it }, modifier = Modifier.fillMaxWidth(),
+            label = { Text(if (isRegister) "Логин" else "Логин или телефон") },
+            placeholder = { Text(if (isRegister) "например, serega40in" else "serega40in или +79990000000") },
+            singleLine = true, shape = RoundedCornerShape(16.dp)
         )
-
-        Spacer(Modifier.height(12.dp))
-        Text(
-            "Тестовый вход: SMS и пароль пока не используются.",
-            color = Color.Gray,
-            fontSize = 12.sp,
-            modifier = Modifier.fillMaxWidth()
+        if (isRegister) {
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = displayName, onValueChange = { displayName = it }, modifier = Modifier.fillMaxWidth(),
+                label = { Text("Имя в профиле") }, singleLine = true, shape = RoundedCornerShape(16.dp)
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = phone, onValueChange = { phone = it }, modifier = Modifier.fillMaxWidth(),
+                label = { Text("Телефон для входа по номеру (необязательно)") },
+                placeholder = { Text("+7 900 000-00-00") }, singleLine = true, shape = RoundedCornerShape(16.dp)
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = password, onValueChange = { password = it }, modifier = Modifier.fillMaxWidth(),
+            label = { Text(if (isRegister) "Пароль (минимум 8 символов)" else "Пароль") },
+            visualTransformation = PasswordVisualTransformation(), singleLine = true, shape = RoundedCornerShape(16.dp)
         )
-
-        Spacer(Modifier.height(16.dp))
+        if (isRegister) {
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = password2, onValueChange = { password2 = it }, modifier = Modifier.fillMaxWidth(),
+                label = { Text("Повторите пароль") },
+                visualTransformation = PasswordVisualTransformation(), singleLine = true, shape = RoundedCornerShape(16.dp)
+            )
+        }
+        Spacer(Modifier.height(14.dp))
         Button(
             onClick = {
                 scope.launch {
                     busy = true
                     try {
-                        onSession(api.testLogin(phone.trim()))
+                        val login = identifier.trim().removePrefix("@").lowercase()
+                        val account = if (isRegister) {
+                            require(password == password2) { "Пароли не совпадают." }
+                            api.register(login, displayName.trim().ifBlank { login }, phone.trim(), password)
+                        } else api.login(identifier.trim(), password)
+                        onSession(account)
                     } catch (e: Exception) {
-                        onError(e.message ?: "Не удалось войти")
-                    } finally {
-                        busy = false
-                    }
+                        onError(e.message ?: "Не удалось выполнить вход")
+                    } finally { busy = false }
                 }
             },
             modifier = Modifier.fillMaxWidth().height(54.dp),
-            enabled = !busy && phone.trim().length >= 8,
+            enabled = !busy && identifier.trim().length >= 3 && password.length >= 8 && (!isRegister || password == password2),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Navy)
         ) {
-            Text(if (busy) "Входим…" else "Войти в QUN", fontSize = 16.sp)
+            Text(if (busy) "Подождите…" else if (isRegister) "Создать аккаунт" else "Войти в КЮН", fontSize = 16.sp)
         }
-
         error?.let {
             Spacer(Modifier.height(12.dp))
             Text(it.take(220), color = Color(0xFFB3261E), fontSize = 12.sp)
         }
-
         Spacer(Modifier.weight(1f))
-        Text("QUN • test messenger", color = Gold, fontSize = 12.sp)
+        Text("Логин и пароль · SMS не требуется", color = Gold, fontSize = 12.sp)
         Spacer(Modifier.height(24.dp))
     }
 }
