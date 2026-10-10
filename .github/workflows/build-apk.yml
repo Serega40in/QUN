@@ -45,19 +45,21 @@ jobs:
           echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/qun-release.jks"
           keytool -list -keystore "$RUNNER_TEMP/qun-release.jks" -storepass "$STORE_PASSWORD" >/dev/null
 
-      - name: Build signed release APK
+      - name: Build signed release APK and AAB
         env:
           QUN_KEYSTORE_PATH: ${{ runner.temp }}/qun-release.jks
           QUN_KEYSTORE_PASSWORD: ${{ secrets.QUN_KEYSTORE_PASSWORD }}
           QUN_KEY_ALIAS: ${{ secrets.QUN_KEY_ALIAS }}
           QUN_KEY_PASSWORD: ${{ secrets.QUN_KEY_PASSWORD }}
-        run: gradle assembleRelease
+        run: gradle assembleRelease bundleRelease
 
-      - name: Upload release APK
+      - name: Upload release APK and AAB artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: QUN-release-apk
-          path: app/build/outputs/apk/release/app-release.apk
+          name: QUN-android-release-candidates
+          path: |
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/bundle/release/app-release.aab
 
       - name: Publish signed update
         run: |
