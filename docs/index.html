@@ -36,6 +36,45 @@ body{background:#071724;color:#eaf2f4}
 .legal,.foot{color:#718994}
 @media(max-width:720px){.sidebar,.chatpanel{background:#0c2130}.panel{border-color:#244050}.top{border-color:#203744}}
 
+
+/* Message bubbles: soft contrast between the two sides, without striping. */
+.bubble{
+  display:inline-block;
+  width:fit-content;
+  max-width:min(78%,720px);
+  padding:10px 14px;
+  border:1px solid #294552;
+  border-radius:5px 17px 17px 17px;
+  background:#102b3a;
+  color:#eaf2f4;
+  box-shadow:0 2px 8px #00000012;
+  overflow-wrap:anywhere;
+  white-space:pre-wrap;
+  line-height:1.55;
+}
+.bubble.mine{
+  background:#123c37;
+  border-color:#24685b;
+  color:#e5fff5;
+  border-radius:17px 5px 17px 17px;
+}
+.message-row.mine .message-label{color:#73c9b2}
+.message-row:not(.mine) .message-label{color:#a8bac4}
+.stamp{padding-left:2px}
+@media(max-width:720px){
+  .bubble,.bubble.mine{
+    max-width:88%;
+    background:#102b3a!important;
+    border:1px solid #294552;
+    border-radius:5px 16px 16px 16px;
+    padding:9px 12px;
+  }
+  .bubble.mine{
+    background:#123c37!important;
+    border-color:#24685b;
+    border-radius:16px 5px 16px 16px;
+  }
+}
 </style>
 </head>
 <body>
