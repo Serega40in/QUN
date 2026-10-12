@@ -7,7 +7,7 @@ import { LocalStorage, sha256 } from "./storage.js";
 const HOST = process.env.QUN_NODE_HOST || "127.0.0.1";
 const PORT = Number(process.env.QUN_NODE_PORT || 8787);
 const DATA_DIR = path.resolve(process.env.QUN_NODE_DATA_DIR || "./.qun-node-data");
-const MAX_BODY_BYTES = 1024 * 1024;
+const MAX_BODY_BYTES = 2 * 1024 * 1024;
 const PEERS = (process.env.QUN_NODE_PEERS || "").split(",").map(v => v.trim().replace(/\/$/, "")).filter(Boolean);
 const SHARED_TOKEN = process.env.QUN_NODE_SHARED_TOKEN || "";
 
