@@ -208,7 +208,7 @@ const server = createServer(async (req, res) => {
           return send(res, 409, { error: "Object ID already exists with different valid content" });
         }
       } catch (error) {
-        if (error?.code !== "ENOENT") throw error;
+        if (error?.code !== "ENOENT" && !(error instanceof SyntaxError)) throw error;
       }
       const manifest = await storage.put(body.data, body.id);
       return send(res, 201, { manifest });
