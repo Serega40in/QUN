@@ -3,6 +3,7 @@ package com.qun.messenger
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.content.Context
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -51,9 +52,10 @@ private val http = HttpClient(Android) {
 }
 
 @Serializable data class AuthUser(val id: String, val phone: String? = null)
-@Serializable data class AuthSession(val access_token: String, val user: AuthUser)
+@Serializable data class AuthSession(val access_token: String, val user: AuthUser, val refresh_token: String? = null)
 @Serializable data class AuthTokenSession(val access_token: String, val refresh_token: String? = null)
 @Serializable data class AuthResponse(val session: AuthTokenSession, val user: AuthUser)
+@Serializable data class RefreshedSession(val access_token: String, val refresh_token: String? = null, val user: AuthUser)
 @Serializable data class Profile(
     val id: String,
     val username: String? = null,
@@ -87,11 +89,23 @@ private class QunApi {
             runCatching { json.decodeFromString<Map<String, String>>(raw)["error"] }.getOrNull() ?: raw
         }
         val response = json.decodeFromString<AuthResponse>(raw)
-        return AuthSession(response.session.access_token, response.user)
+        return AuthSession(response.session.access_token, response.user, response.session.refresh_token)
     }
 
     suspend fun login(login: String, password: String): AuthSession =
         authAction("login", mapOf("login" to login, "password" to password))
+
+    suspend fun refreshSession(refreshToken: String): AuthSession {
+        val r = http.post("$SUPABASE_URL/auth/v1/token?grant_type=refresh_token") {
+            header("apikey", SUPABASE_KEY)
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("refresh_token" to refreshToken))
+        }
+        val raw = r.bodyAsText()
+        check(r.status.isSuccess()) { "Сессия истекла. Войдите снова." }
+        val refreshed = json.decodeFromString<RefreshedSession>(raw)
+        return AuthSession(refreshed.access_token, refreshed.user, refreshed.refresh_token)
+    }
 
     suspend fun register(username: String, displayName: String, phone: String, password: String): AuthSession =
         authAction("register", mapOf(
@@ -207,14 +221,60 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun QunApp() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { context.getSharedPreferences("qun_session", Context.MODE_PRIVATE) }
     var session by remember { mutableStateOf<AuthSession?>(null) }
+    var restoring by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
+    LaunchedEffect(Unit) {
+        val refreshToken = prefs.getString("refresh_token", null)
+        val accessToken = prefs.getString("access_token", null)
+        val userId = prefs.getString("user_id", null)
+        val phone = prefs.getString("phone", null)
+        try {
+            if (!refreshToken.isNullOrBlank()) {
+                val restored = api.refreshSession(refreshToken)
+                session = restored
+                prefs.edit().putString("access_token", restored.access_token)
+                    .putString("refresh_token", restored.refresh_token)
+                    .putString("user_id", restored.user.id)
+                    .putString("phone", restored.user.phone).apply()
+            } else if (!accessToken.isNullOrBlank() && !userId.isNullOrBlank()) {
+                session = AuthSession(accessToken, AuthUser(userId, phone), null)
+            }
+        } catch (_: Exception) {
+            prefs.edit().clear().apply()
+        } finally {
+            restoring = false
+        }
+    }
+
+    fun saveSession(value: AuthSession) {
+        session = value
+        prefs.edit().putString("access_token", value.access_token)
+            .putString("refresh_token", value.refresh_token)
+            .putString("user_id", value.user.id)
+            .putString("phone", value.user.phone).apply()
+    }
+
     MaterialTheme(colorScheme = lightColorScheme(primary = Navy, secondary = Emerald, tertiary = Gold)) {
-        Surface(Modifier.fillMaxSize(), color = Color.White) {
-            if (session == null) {
+        Surface(Modifier.fillMaxSize(), color = Soft) {
+            if (restoring) {
+                Box(Modifier.fillMaxSize().background(Soft), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(Modifier.size(66.dp).background(Navy, RoundedCornerShape(22.dp)), contentAlignment = Alignment.Center) {
+                            Text("К", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        CircularProgressIndicator(color = Emerald, strokeWidth = 3.dp)
+                        Spacer(Modifier.height(10.dp))
+                        Text("Возвращаем вас в КЮН", color = Navy, fontSize = 14.sp)
+                    }
+                }
+            } else if (session == null) {
                 AuthScreen(
-                    onSession = { error = null; session = it },
+                    onSession = { error = null; saveSession(it) },
                     onError = { error = it },
                     error = error
                 )
@@ -223,7 +283,11 @@ fun QunApp() {
                     session = session!!,
                     onError = { error = it },
                     error = error,
-                    onLogout = { session = null; error = null }
+                    onLogout = {
+                        prefs.edit().clear().apply()
+                        session = null
+                        error = null
+                    }
                 )
             }
         }
