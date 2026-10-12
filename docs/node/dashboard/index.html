@@ -20,13 +20,22 @@ h1{font-size:clamp(30px,5vw,46px);letter-spacing:-.05em;line-height:1.04;margin:
 <section class="card"><div class="label">Время работы</div><div class="value" id="uptime">—</div><div class="muted" style="margin-top:8px">Текущий запуск агента</div></section>
 <section class="card"><div class="label">Объекты тестового хранилища</div><div class="value" id="objects">—</div><div class="muted" id="storage">Объём: —</div></section>
 </div>
+<section class="card section"><h3 style="margin-top:0">Регистрация узла в сети QUN</h3>
+<p class="muted" style="line-height:1.6">Введите одноразовый код подключения, полученный от администратора тестовой сети. Секрет узла будет сохранён локально на этом устройстве.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+<input id="nodeNameInput" maxlength="80" value="QUN Node" aria-label="Название узла" placeholder="Название узла" style="min-width:0;border:1px solid #28465b;border-radius:10px;background:#091a28;color:#edf7ff;padding:12px">
+<input id="enrollmentCodeInput" maxlength="120" autocomplete="off" aria-label="Одноразовый код" placeholder="Одноразовый код подключения" style="min-width:0;border:1px solid #28465b;border-radius:10px;background:#091a28;color:#edf7ff;padding:12px">
+</div>
+<div class="actions" style="margin:12px 0 4px"><button class="btn primary" id="registerNode">Зарегистрировать этот компьютер</button><span id="enrollResult" class="muted" style="align-self:center"></span></div>
+</section>
+<section class="card section"><h3 style="margin-top:0">Узлы тестовой сети</h3><p class="muted">Статусы приходят с управляющего сервера. Узел считается онлайн, если heartbeat получен за последние 90 секунд.</p><div id="registryNodes"><div class="line"><span class="muted">Загрузка статуса…</span></div></div><div class="actions" style="margin-bottom:0"><button class="btn" id="refreshRegistry">Обновить список узлов</button></div></section>
 <section class="card section"><h3 style="margin-top:0">Сведения о подключении</h3>
 <div class="line"><span class="muted">ID узла</span><b id="nodeId">—</b></div>
 <div class="line"><span class="muted">Настроенные узлы-пиры</span><b id="peers">—</b></div>
 <div class="line"><span class="muted">Репликация</span><b id="replication">—</b></div>
 <div class="line"><span class="muted">Вознаграждения QUN</span><b>Пока не реализованы</b></div>
 <div class="line"><span class="muted">Последняя проверка</span><b id="checked">—</b></div></section>
-<div class="note"><b>Важно:</b> текущая версия — тестовый узел. Не храните личные или важные данные. Подключение к публичной сети, регистрация узлов и начисление QUN пока не включены. Для просмотра показателей сайт обращается к <code>http://127.0.0.1:8787/health</code> только после нажатия кнопки.</div>
+<div class="note"><b>Важно:</b> текущая версия — тестовый узел. Не храните личные или важные данные. Публичное автоматическое подключение и начисление QUN выключены. Регистрация тестовых узлов доступна только по одноразовому коду. Для просмотра показателей сайт обращается к <code>http://127.0.0.1:8787/health</code> только после нажатия кнопки.</div>
 <p class="small">Если подключение не удалось, установите и запустите QUN Node, затем повторите. Браузер может показать запрос доступа к локальной сети — разрешайте его только если сами запустили агент. <a href="../" style="color:#65e4c1">Вернуться на страницу QUN Node</a>.</p>
 </main>
 <script>
@@ -43,10 +52,35 @@ async function connect(){
   if(d.service!=="qun-node")throw new Error("Это не агент QUN Node");
   state(true,"Локальный агент подключён");$("status").textContent="Работает";$("platform").textContent=d.platform||"Устройство";
   $("uptime").textContent=duration(d.uptimeSeconds);$("objects").textContent=d.storage?.objectCount??"—";$("storage").textContent="Объём: "+bytes(d.storage?.storedBytes);
-  $("nodeId").textContent=d.nodeId||"—";$("peers").textContent=d.peerCount??0;$("replication").textContent=d.replicationEnabled?"Настроена":"Не включена";
+  $("nodeId").textContent=d.registry?.nodeId||d.nodeId||"—";$("peers").textContent=d.peerCount??0;$("replication").textContent=d.replicationEnabled?"Настроена":"Не включена";$("enrollResult").textContent=d.registry?.registered?"Узел зарегистрирован":"Узел пока не зарегистрирован";
   $("checked").textContent=new Date().toLocaleTimeString("ru-RU"); 
  }catch(e){state(false,"Нет соединения");$("status").textContent="Не подключён";$("platform").textContent="Запустите агент и повторите";$("checked").textContent=new Date().toLocaleTimeString("ru-RU");}
  finally{$("connect").disabled=false;$("connect").textContent="Обновить показатели"}
 }
+const REGISTRY_URL="https://qdxjltqlnphvzafapncm.supabase.co/functions/v1/qun-node-registry";
+const REGISTRY_KEY="sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L";
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function refreshRegistry(){
+ const box=$("registryNodes");box.innerHTML='<div class="line"><span class="muted">Запрашиваем управляющий сервер…</span></div>';
+ try{
+  const r=await fetch(REGISTRY_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":REGISTRY_KEY},body:JSON.stringify({action:"status"}),cache:"no-store"});
+  const d=await r.json();if(!r.ok)throw new Error(d.error||"HTTP "+r.status);
+  if(!d.nodes?.length){box.innerHTML='<div class="line"><span class="muted">Пока нет зарегистрированных узлов.</span></div>';return}
+  box.innerHTML=d.nodes.map(n=>'<div class="line"><span><b>'+esc(n.name)+'</b><br><span class="muted">'+esc(n.platform)+' · '+esc(n.nodeId)+'</span></span><span style="text-align:right"><b style="color:'+(n.status==="online"?"#65e4c1":n.status==="stale"?"#e8cf91":"#fb7185")+'">'+({online:"В сети",stale:"Нет свежего сигнала",offline:"Отключён"}[n.status]||"Неизвестно")+'</b><br><span class="muted">'+(n.lastSeenAt?new Date(n.lastSeenAt).toLocaleString("ru-RU"):"Ожидает heartbeat")+'</span></span></div>').join("");
+ }catch(e){box.innerHTML='<div class="line"><span class="muted">Не удалось получить статус сети: '+esc(e.message)+'</span></div>'}
+}
+$("registerNode").addEventListener("click",async()=>{
+ const code=$("enrollmentCodeInput").value.trim(),name=$("nodeNameInput").value.trim(),out=$("enrollResult"),btn=$("registerNode");
+ if(!code||!name){out.textContent="Введите название и одноразовый код.";return}
+ btn.disabled=true;out.textContent="Регистрируем…";
+ try{
+  const r=await fetch("http://127.0.0.1:8787/enroll",{method:"POST",mode:"cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({enrollmentCode:code,name})});
+  const d=await r.json();if(!r.ok)throw new Error(d.error||"HTTP "+r.status);
+  $("enrollmentCodeInput").value="";out.textContent="Зарегистрирован: "+d.nodeId;await connect();await refreshRegistry();
+ }catch(e){out.textContent="Не удалось: "+e.message}
+ finally{btn.disabled=false}
+});
+$("refreshRegistry").addEventListener("click",refreshRegistry);
 $("connect").addEventListener("click",connect);
+void refreshRegistry();setInterval(refreshRegistry,15000);
 </script></body></html>
