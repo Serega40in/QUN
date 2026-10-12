@@ -147,3 +147,39 @@ test("replication recovers after peer returns and repairs a corrupted copy", { t
     await rm(root, { recursive: true, force: true });
   }
 });
+
+
+test("refuses public bind and plaintext remote peers by default", { timeout: 10000 }, async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "qun-node-safety-"));
+  async function rejected(overrides, expected) {
+    const child = spawn(process.execPath, [path.join(process.cwd(), "src", "server.js")], {
+      cwd: process.cwd(),
+      stdio: ["ignore", "ignore", "pipe"],
+      env: {
+        ...process.env,
+        QUN_NODE_HOST: "127.0.0.1",
+        QUN_NODE_PORT: "0",
+        QUN_NODE_DATA_DIR: path.join(root, "data"),
+        QUN_NODE_PEERS: "",
+        QUN_NODE_SHARED_TOKEN: "",
+        ...overrides
+      }
+    });
+    let stderr = "";
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", chunk => { stderr += chunk; });
+    const code = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { child.kill("SIGKILL"); reject(new Error("Safety check process did not exit")); }, 5000);
+      child.once("error", error => { clearTimeout(timer); reject(error); });
+      child.once("exit", value => { clearTimeout(timer); resolve(value); });
+    });
+    assert.notEqual(code, 0, "unsafe configuration should fail startup");
+    assert.match(stderr, expected);
+  }
+  try {
+    await rejected({ QUN_NODE_HOST: "0.0.0.0" }, /refuses a non-local bind by default/i);
+    await rejected({ QUN_NODE_PEERS: "http://example.com" }, /without TLS/i);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
