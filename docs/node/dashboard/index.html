@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#08121f">
+<title>QUN Node · Веб-панель</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#08121f;color:#edf7ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 10% 0,#15384b 0,transparent 42%),#08121f;min-height:100vh}
+main{max-width:1080px;margin:auto;padding:28px 20px 60px}.nav{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:12px}.logo{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#65e4c1,#4a8fc7);color:#061923;font-size:22px;font-weight:900}.muted{color:#93aabe;font-size:13px}.pill{border:1px solid #28465b;background:#0d2030;padding:8px 12px;border-radius:999px;font-size:12px;display:flex;align-items:center;gap:8px}.dot{width:8px;height:8px;border-radius:50%;background:#fbbf24}.dot.ok{background:#4adeb1;box-shadow:0 0 12px #4adeb177}.dot.err{background:#fb7185}
+h1{font-size:clamp(30px,5vw,46px);letter-spacing:-.05em;line-height:1.04;margin:40px 0 12px}.lead{max-width:720px;line-height:1.7;color:#a8bdce}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}.btn{display:inline-flex;text-decoration:none;border:1px solid #2a4c61;border-radius:12px;padding:12px 16px;background:#102b3d;color:#eef9ff;font-weight:700;cursor:pointer}.primary{background:#65e4c1;color:#061923;border-color:#65e4c1}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}.card{background:linear-gradient(145deg,#102438,#0b1a29);border:1px solid #1d394e;border-radius:18px;padding:20px;min-width:0}.label{color:#91aabe;font-size:12px}.value{font-size:clamp(22px,3vw,32px);font-weight:750;margin-top:10px;overflow-wrap:anywhere}.section{margin-top:14px}.line{display:flex;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #1b3447}.line:last-child{border:0}.note{border:1px solid #4d482f;background:#211f18;color:#dfd4ad;border-radius:14px;padding:14px;line-height:1.6;font-size:13px;margin-top:16px}.small{font-size:12px;color:#7892a7;margin-top:22px;line-height:1.6}
+@media(max-width:680px){main{padding:20px 14px 40px}.grid{grid-template-columns:1fr}.line{align-items:flex-start}.value{font-size:26px}}
+</style></head>
+<body><main>
+<header class="nav"><a class="brand" href="../" style="text-decoration:none;color:inherit"><span class="logo">Q</span><span><b>QUN Node</b><span class="muted" style="display:block">Веб-панель управления</span></span></a><div class="pill"><span id="dot" class="dot"></span><span id="connection">Агент не проверен</span></div></header>
+<h1>Ваш узел.<br><span style="color:#65e4c1">Под вашим контролем.</span></h1>
+<p class="lead">Эта страница подключается только для чтения к локальному агенту QUN Node на вашем устройстве. Она не получает доступ к файлам и не отправляет данные на сервер сайта.</p>
+<div class="actions"><button class="btn primary" id="connect">Подключить локальный узел</button><a class="btn" href="https://github.com/Serega40in/QUN/tree/main/services/qun-node">Исходный код</a></div>
+<div class="grid">
+<section class="card"><div class="label">Состояние узла</div><div class="value" id="status">Не подключён</div><div class="muted" id="platform" style="margin-top:8px">Запустите QUN Node на устройстве</div></section>
+<section class="card"><div class="label">Время работы</div><div class="value" id="uptime">—</div><div class="muted" style="margin-top:8px">Текущий запуск агента</div></section>
+<section class="card"><div class="label">Объекты тестового хранилища</div><div class="value" id="objects">—</div><div class="muted" id="storage">Объём: —</div></section>
+</div>
+<section class="card section"><h3 style="margin-top:0">Сведения о подключении</h3>
+<div class="line"><span class="muted">ID узла</span><b id="nodeId">—</b></div>
+<div class="line"><span class="muted">Настроенные узлы-пиры</span><b id="peers">—</b></div>
+<div class="line"><span class="muted">Репликация</span><b id="replication">—</b></div>
+<div class="line"><span class="muted">Вознаграждения QUN</span><b>Пока не реализованы</b></div>
+<div class="line"><span class="muted">Последняя проверка</span><b id="checked">—</b></div></section>
+<div class="note"><b>Важно:</b> текущая версия — тестовый узел. Не храните личные или важные данные. Подключение к публичной сети, регистрация узлов и начисление QUN пока не включены. Для просмотра показателей сайт обращается к <code>http://127.0.0.1:8787/health</code> только после нажатия кнопки.</div>
+<p class="small">Если подключение не удалось, установите и запустите QUN Node, затем повторите. Браузер может показать запрос доступа к локальной сети — разрешайте его только если сами запустили агент. <a href="../" style="color:#65e4c1">Вернуться на страницу QUN Node</a>.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function duration(seconds){seconds=Math.max(0,Math.floor(seconds||0));const d=Math.floor(seconds/86400),h=Math.floor(seconds%86400/3600),m=Math.floor(seconds%3600/60);return (d?d+" д ":"")+(h?h+" ч ":"")+m+" мин"}
+function bytes(n){if(!Number.isFinite(n))return "—";const units=["Б","КБ","МБ","ГБ"];let i=0;while(n>=1024&&i<units.length-1){n/=1024;i++}return n.toFixed(i?1:0)+" "+units[i]}
+function state(ok,text){$("dot").className="dot"+(ok?" ok":" err");$("connection").textContent=text}
+async function connect(){
+ $("connect").disabled=true;$("connect").textContent="Проверяем…";state(false,"Проверка локального агента");$("status").textContent="Подключение…";
+ try{
+  const response=await fetch("http://127.0.0.1:8787/health",{method:"GET",cache:"no-store",mode:"cors"});
+  if(!response.ok)throw new Error("HTTP "+response.status);
+  const d=await response.json();
+  if(d.service!=="qun-node")throw new Error("Это не агент QUN Node");
+  state(true,"Локальный агент подключён");$("status").textContent="Работает";$("platform").textContent=d.platform||"Устройство";
+  $("uptime").textContent=duration(d.uptimeSeconds);$("objects").textContent=d.storage?.objectCount??"—";$("storage").textContent="Объём: "+bytes(d.storage?.totalBytes);
+  $("nodeId").textContent=d.nodeId||"—";$("peers").textContent=d.peerCount??0;$("replication").textContent=d.replicationEnabled?"Настроена":"Не включена";
+  $("checked").textContent=new Date().toLocaleTimeString("ru-RU"); 
+ }catch(e){state(false,"Нет соединения");$("status").textContent="Не подключён";$("platform").textContent="Запустите агент и повторите";$("checked").textContent=new Date().toLocaleTimeString("ru-RU");}
+ finally{$("connect").disabled=false;$("connect").textContent="Обновить показатели"}
+}
+$("connect").addEventListener("click",connect);
+</script></body></html>
