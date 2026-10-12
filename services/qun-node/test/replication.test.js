@@ -96,6 +96,15 @@ test("replication recovers after peer returns and repairs a corrupted copy", { t
     });
     assert.equal(unauthorizedWrite.status, 401);
 
+    const dashboardHealthResponse = await fetch(urlA + "/health", {
+      headers: { Origin: "https://serega40in.github.io" }
+    });
+    assert.equal(dashboardHealthResponse.headers.get("access-control-allow-origin"), "https://serega40in.github.io");
+    const deniedOriginResponse = await fetch(urlA + "/health", {
+      headers: { Origin: "https://example.com" }
+    });
+    assert.equal(deniedOriginResponse.headers.get("access-control-allow-origin"), null);
+
     const health = await (await fetch(urlA + "/health")).json();
     assert.equal(health.safety.publicEnrollment, false);
     assert.equal(health.safety.rewardsEnabled, false);
