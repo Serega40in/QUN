@@ -587,7 +587,9 @@ private fun HomeScreen(
         contactsMessage = "Ищем зарегистрированных пользователей QUN…"
         scope.launch {
             try {
-                val matches = api.matchContacts(session.access_token, deviceContacts.map { it.phone })
+                val matches = deviceContacts.map { it.phone }.chunked(500).flatMap { batch ->
+                    api.matchContacts(session.access_token, batch)
+                }
                 matchedContacts = matches.mapNotNull { match ->
                     val contact = deviceContacts.firstOrNull { normalizeContactPhone(it.phone) == match.contact_phone }
                     if (contact == null) null else MatchedContact(
