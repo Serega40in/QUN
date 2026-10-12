@@ -5,7 +5,7 @@
 ## База знаний QUN AI и архитектура
 
 - **Русская база знаний QUN AI:** [главный источник фактов](docs/qun-ai/knowledge/00-glavnaya-baza-znaniy.md), [руководство пользователя](docs/qun-ai/knowledge/01-rukovodstvo-polzovatelya.md), [каталог проектов](docs/qun-ai/knowledge/03-katalog-proektov-qun.md), [правила ответов](docs/qun-ai/knowledge/02-pravila-otvetov-i-testy.md).
-- **QUN Node 0.1 / QUN Storage 0.1:** [спецификация](docs/qun-ai/knowledge/04-qun-node-storage-01.md), [локальный тестовый прототип](services/qun-node/README.md).
+- **QUN Node 0.1 / QUN Storage 0.1:** [публичная страница подключения устройств](https://serega40in.github.io/QUN/node/), [спецификация](docs/qun-ai/knowledge/04-qun-node-storage-01.md), [локальный тестовый прототип](services/qun-node/README.md).
 - **Распределённая архитектура:** [документ v0.1](docs/architecture/distributed-backend.md).
 - **Важно:** наличие документации не означает автоматическое обучение QUN AI. Подключение runtime-инструкции к Supabase Edge Function требует успешного развёртывания и проверки.
 
