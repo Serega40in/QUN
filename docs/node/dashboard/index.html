@@ -42,7 +42,7 @@ async function connect(){
   const d=await response.json();
   if(d.service!=="qun-node")throw new Error("Это не агент QUN Node");
   state(true,"Локальный агент подключён");$("status").textContent="Работает";$("platform").textContent=d.platform||"Устройство";
-  $("uptime").textContent=duration(d.uptimeSeconds);$("objects").textContent=d.storage?.objectCount??"—";$("storage").textContent="Объём: "+bytes(d.storage?.totalBytes);
+  $("uptime").textContent=duration(d.uptimeSeconds);$("objects").textContent=d.storage?.objectCount??"—";$("storage").textContent="Объём: "+bytes(d.storage?.storedBytes);
   $("nodeId").textContent=d.nodeId||"—";$("peers").textContent=d.peerCount??0;$("replication").textContent=d.replicationEnabled?"Настроена":"Не включена";
   $("checked").textContent=new Date().toLocaleTimeString("ru-RU"); 
  }catch(e){state(false,"Нет соединения");$("status").textContent="Не подключён";$("platform").textContent="Запустите агент и повторите";$("checked").textContent=new Date().toLocaleTimeString("ru-RU");}
