@@ -108,6 +108,9 @@ const server = createServer(async (req, res) => {
         if (existing.valid && existing.actualSha256 === incomingHash) {
           return send(res, 200, { alreadyPresent: true, sha256: existing.actualSha256 });
         }
+        if (existing.valid && existing.actualSha256 !== incomingHash) {
+          return send(res, 409, { error: "Object ID already exists with different valid content" });
+        }
       } catch (error) {
         if (error?.code !== "ENOENT") throw error;
       }
