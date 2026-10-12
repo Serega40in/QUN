@@ -36,6 +36,9 @@
   </section>
   <section class="card section">
     <div class="top"><h3>Связь с другими узлами</h3><button class="button" id="refresh">Обновить</button></div>
+    <div class="line"><span class="muted">Режим узла</span><strong id="mode">—</strong></div>
+    <div class="line"><span class="muted">Время работы</span><strong id="uptime">—</strong></div>
+    <div class="line"><span class="muted">Вознаграждения QUN</span><strong id="rewards">—</strong></div>
     <div class="line"><span class="muted">Настроенные узлы</span><strong id="peerCount">—</strong></div>
     <div class="line"><span class="muted">Репликация</span><strong id="replication">—</strong></div>
     <div class="line"><span class="muted">Последняя сверка</span><strong id="lastCheck">—</strong></div>
@@ -54,6 +57,7 @@
     return v.toFixed(v>=100?0:1)+" "+units[i];
   };
   const formatTime = value => value ? new Date(value).toLocaleString("ru-RU") : "Пока нет";
+  const formatUptime = seconds => { seconds=Math.max(0,Math.floor(seconds||0)); const d=Math.floor(seconds/86400),h=Math.floor(seconds%86400/3600),m=Math.floor(seconds%3600/60); return (d?d+" д ":"")+(h?h+" ч ":"")+m+" мин"; };
   async function refresh() {
     const button=byId("refresh"); button.disabled=true; button.textContent="Обновление…";
     try {
@@ -67,6 +71,9 @@
       byId("objectCount").textContent=String(data.storage?.objectCount??0);
       byId("storedBytes").textContent=formatBytes(data.storage?.storedBytes??0);
       byId("limit").textContent="Лимит объекта: "+formatBytes(data.storage?.maxObjectBytes??0);
+      byId("mode").textContent=data.safety?.localOnlyByDefault?"Только на этом устройстве":"Нестандартная конфигурация";
+      byId("uptime").textContent=formatUptime(data.uptimeSeconds);
+      byId("rewards").textContent=data.safety?.rewardsEnabled?"Включены":"Пока не реализованы";
       byId("peerCount").textContent=String(data.peerCount??0);
       byId("replication").textContent=data.replicationEnabled?"Включена":"Не настроена";
       const recon=data.reconciliation;
