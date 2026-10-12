@@ -20,6 +20,10 @@ function isLoopbackHost(hostname) {
   return host === "localhost" || host === "::1" || /^127(?:\.\d{1,3}){3}$/.test(host);
 }
 
+if (!isLoopbackHost(HOST) && process.env.QUN_NODE_ALLOW_REMOTE !== "1") {
+  throw new Error("QUN Node refuses a non-local bind by default. Keep QUN_NODE_HOST at 127.0.0.1; remote binding requires explicit QUN_NODE_ALLOW_REMOTE=1 and a separately secured deployment.");
+}
+
 // Shared bearer secrets must never travel over plaintext HTTP to a non-local peer.
 for (const peer of PEERS) {
   let parsed;
