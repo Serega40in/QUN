@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { randomUUID } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import os from "node:os";
 import { LocalStorage } from "./storage.js";
@@ -8,9 +8,38 @@ const HOST = process.env.QUN_NODE_HOST || "127.0.0.1";
 const PORT = Number(process.env.QUN_NODE_PORT || 8787);
 const DATA_DIR = path.resolve(process.env.QUN_NODE_DATA_DIR || "./.qun-node-data");
 const MAX_BODY_BYTES = 1024 * 1024;
+const PEERS = (process.env.QUN_NODE_PEERS || "").split(",").map(v => v.trim().replace(/\\/$/, "")).filter(Boolean);
+const SHARED_TOKEN = process.env.QUN_NODE_SHARED_TOKEN || "";
 
 const storage = new LocalStorage(DATA_DIR);
 await storage.init();
+
+function tokenMatches(req) {
+  const supplied = (req.headers.authorization || "").replace(/^Bearer\\s+/i, "");
+  if (!SHARED_TOKEN || supplied.length !== SHARED_TOKEN.length) return false;
+  try { return timingSafeEqual(Buffer.from(supplied), Buffer.from(SHARED_TOKEN)); } catch { return false; }
+}
+
+async function replicateToPeers(id, data) {
+  if (!PEERS.length) return [];
+  if (SHARED_TOKEN.length < 32) return PEERS.map(peer => ({ peer, ok: false, error: "Replication disabled: configure a shared token of at least 32 characters." }));
+  return await Promise.all(PEERS.map(async peer => {
+    try {
+      const parsed = new URL(peer);
+      if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("Unsupported peer protocol");
+      const response = await fetch(peer + "/internal/replicas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + SHARED_TOKEN },
+        body: JSON.stringify({ id, data }),
+        signal: AbortSignal.timeout(5000)
+      });
+      const result = await response.json().catch(() => ({}));
+      return response.ok ? { peer, ok: true, status: response.status, sha256: result.manifest?.sha256 || result.sha256 || null } : { peer, ok: false, status: response.status, error: result.error || "Peer rejected replica" };
+    } catch (error) {
+      return { peer, ok: false, error: error instanceof Error ? error.message : "Peer unavailable" };
+    }
+  }));
+}
 
 function send(res, status, body) {
   res.writeHead(status, {
@@ -61,7 +90,8 @@ const server = createServer(async (req, res) => {
         return send(res, 400, { error: "Field 'data' must be a UTF-8 string. Use synthetic test data only." });
       }
       const manifest = await storage.put(body.data, body.id || randomUUID());
-      return send(res, 201, { manifest });
+      const replicas = await replicateToPeers(manifest.objectId, body.data);
+      return send(res, 201, { manifest, replication: { configuredPeers: PEERS.length, succeeded: replicas.filter(r => r.ok).length, peers: replicas } });
     }
 
     const objectMatch = url.pathname.match(/^\/objects\/([a-zA-Z0-9_-]{1,80})(?:\/(verify|manifest))?$/);
