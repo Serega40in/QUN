@@ -52,6 +52,8 @@ class MainActivity : ComponentActivity() {
         var registryId by remember { mutableStateOf(NodeRegistry.registeredId(this)) }
         var registryMessage by remember { mutableStateOf(if (registryId.isBlank()) "Не зарегистрирован" else "ID: $registryId") }
         var registering by remember { mutableStateOf(false) }
+        var receivingTransfer by remember { mutableStateOf(false) }
+        var transferMessage by remember { mutableStateOf("Ожидает синтетический файл с компьютера.") }
         val scope = rememberCoroutineScope()
         val notificationPermission = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestPermission()
@@ -135,6 +137,30 @@ class MainActivity : ComponentActivity() {
                                 colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Navy)
                             ) { Text(if (registering) "Регистрируем…" else if (registryId.isBlank()) "Зарегистрировать узел" else "Узел зарегистрирован", fontWeight = FontWeight.Bold) }
                             Text(registryMessage, color = if (registryId.isBlank()) Muted else Mint, fontSize = 11.sp, lineHeight = 16.sp)
+                        }
+                    }
+
+                    Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Тест передачи файла", fontWeight = FontWeight.Bold)
+                            Text("Телефон получает синтетический объект через защищённый управляющий API, сохраняет его во внутреннее хранилище приложения и сверяет SHA-256. Это тест релейной передачи, не прямой P2P.", color = Muted, fontSize = 12.sp, lineHeight = 18.sp)
+                            Button(
+                                enabled = !receivingTransfer && registryId.isNotBlank(),
+                                onClick = {
+                                    receivingTransfer = true
+                                    transferMessage = "Проверяем очередь передачи…"
+                                    scope.launch {
+                                        try {
+                                            transferMessage = withContext(Dispatchers.IO) { NodeRegistry.receiveSyntheticTestObject(this@MainActivity) }
+                                        } catch (e: Exception) {
+                                            transferMessage = e.message ?: "Не удалось получить файл"
+                                        } finally { receivingTransfer = false }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Navy)
+                            ) { Text(if (receivingTransfer) "Получаем…" else "Получить тестовый файл", fontWeight = FontWeight.Bold) }
+                            Text(transferMessage, color = if (transferMessage.contains("СОВПАЛ")) Mint else Muted, fontSize = 11.sp, lineHeight = 16.sp)
                         }
                     }
                     Button(
