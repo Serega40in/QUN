@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.core.content.FileProvider
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
@@ -15,7 +16,7 @@ import java.security.MessageDigest
 data class QunUpdateInfo(val version: String, val url: String, val sha256: String)
 
 object UpdateManager {
-    private const val RELEASES_API = "https://api.github.com/repos/Serega40in/QUN/releases/latest"
+    private const val RELEASES_API = "https://api.github.com/repos/Serega40in/QUN/releases?per_page=100"
     private const val APK_NAME = "QUN-Node-Android.apk"
 
     fun checkForUpdate(context: Context): QunUpdateInfo? {
@@ -28,22 +29,26 @@ object UpdateManager {
         }
         try {
             if (connection.responseCode !in 200..299) throw IllegalStateException("GitHub HTTP ${connection.responseCode}")
-            val release = JSONObject(connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() })
-            val tag = release.optString("tag_name")
-            val version = Regex("([0-9]+\\.[0-9]+\\.[0-9]+)").find(tag)?.value
-                ?: throw IllegalStateException("Версия в теге релиза не распознана")
+            val releases = JSONArray(connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() })
             val currentName = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.0.0"
-            if (compareVersions(version, currentName) <= 0) return null
-            val assets = release.optJSONArray("assets") ?: return null
-            for (i in 0 until assets.length()) {
-                val asset = assets.getJSONObject(i)
-                if (asset.optString("name") == APK_NAME) {
+            var best: QunUpdateInfo? = null
+            for (i in 0 until releases.length()) {
+                val release = releases.getJSONObject(i)
+                val tag = release.optString("tag_name")
+                if (!tag.startsWith("qun-node-v") || release.optBoolean("draft") || release.optBoolean("prerelease")) continue
+                val version = Regex("([0-9]+\\.[0-9]+\\.[0-9]+)").find(tag)?.value ?: continue
+                if (compareVersions(version, currentName) <= 0) continue
+                if (best != null && compareVersions(version, best!!.version) <= 0) continue
+                val assets = release.optJSONArray("assets") ?: continue
+                for (j in 0 until assets.length()) {
+                    val asset = assets.getJSONObject(j)
+                    if (asset.optString("name") != APK_NAME) continue
                     val digest = asset.optString("digest").removePrefix("sha256:")
-                    if (!digest.matches(Regex("[a-fA-F0-9]{64}"))) throw IllegalStateException("У релиза нет SHA-256 для APK")
-                    return QunUpdateInfo(version, asset.getString("browser_download_url"), digest.lowercase())
+                    if (!digest.matches(Regex("[a-fA-F0-9]{64}"))) continue
+                    best = QunUpdateInfo(version, asset.getString("browser_download_url"), digest.lowercase())
                 }
             }
-            return null
+            return best
         } finally {
             connection.disconnect()
         }
