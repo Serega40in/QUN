@@ -29,10 +29,21 @@ h1{font-size:clamp(30px,5vw,46px);letter-spacing:-.05em;line-height:1.04;margin:
 <div class="actions" style="margin:12px 0 4px"><button class="btn primary" id="registerNode">Зарегистрировать этот компьютер</button><span id="enrollResult" class="muted" style="align-self:center"></span></div>
 </section>
 <section class="card section"><h3 style="margin-top:0">Узлы тестовой сети</h3><p class="muted">Статусы приходят с управляющего сервера. Узел считается онлайн, если heartbeat получен за последние 90 секунд.</p><div id="registryNodes"><div class="line"><span class="muted">Загрузка статуса…</span></div></div><div class="actions" style="margin-bottom:0"><button class="btn" id="refreshRegistry">Обновить список узлов</button></div></section>
+<section class="card section"><h3 style="margin-top:0">Передача синтетического файла на телефон</h3>
+<p class="muted" style="line-height:1.6">Создаёт тестовый UTF-8 файл, передаёт его через управляющий API, а телефон сохраняет файл и отправляет SHA-256 для сверки. В облачном реле хранится только тестовый payload; не отправляйте личные данные.</p>
+<div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px">
+<select id="transferTarget" aria-label="Телефон-получатель" style="border:1px solid #28465b;border-radius:10px;background:#091a28;color:#edf7ff;padding:12px"><option value="">Выберите зарегистрированный телефон…</option></select>
+<button class="btn primary" id="sendSynthetic">Передать синтетический файл</button>
+</div>
+<div id="transferResult" class="muted" style="margin-top:12px;line-height:1.7;overflow-wrap:anywhere">Ожидает запуска теста.</div>
+</section>
 <section class="card section"><h3 style="margin-top:0">Сведения о подключении</h3>
 <div class="line"><span class="muted">ID узла</span><b id="nodeId">—</b></div>
 <div class="line"><span class="muted">Настроенные узлы-пиры</span><b id="peers">—</b></div>
 <div class="line"><span class="muted">Репликация</span><b id="replication">—</b></div>
+<div class="line"><span class="muted">Последний heartbeat</span><b id="heartbeat">—</b></div>
+<div class="line"><span class="muted">Целостность</span><b id="integrity">—</b></div>
+<div class="line"><span class="muted">Сверка реплик</span><b id="reconciliation">—</b></div>
 <div class="line"><span class="muted">Вознаграждения QUN</span><b>Пока не реализованы</b></div>
 <div class="line"><span class="muted">Последняя проверка</span><b id="checked">—</b></div></section>
 <div class="note"><b>Важно:</b> текущая версия — тестовый узел. Не храните личные или важные данные. Публичное автоматическое подключение и начисление QUN выключены. Регистрация тестовых узлов доступна только по одноразовому коду. Для просмотра показателей сайт обращается к <code>http://127.0.0.1:8787/health</code> только после нажатия кнопки.</div>
@@ -53,7 +64,10 @@ async function connect(){
   state(true,"Локальный агент подключён");$("status").textContent="Работает";$("platform").textContent=d.platform||"Устройство";
   $("uptime").textContent=duration(d.uptimeSeconds);$("objects").textContent=d.storage?.objectCount??"—";$("storage").textContent="Объём: "+bytes(d.storage?.storedBytes);
   $("nodeId").textContent=d.registry?.nodeId||d.nodeId||"—";$("peers").textContent=d.peerCount??0;$("replication").textContent=d.replicationEnabled?"Настроена":"Не включена";$("enrollResult").textContent=d.registry?.registered?"Узел зарегистрирован":"Узел пока не зарегистрирован";
-  $("checked").textContent=new Date().toLocaleTimeString("ru-RU"); 
+  const hb=d.registry?.heartbeat;$("heartbeat").textContent=hb?.lastSuccessAt?new Date(hb.lastSuccessAt).toLocaleString("ru-RU")+(hb.ok?" · OK":" · ошибка"):"Нет подтверждения";
+  $("integrity").textContent=d.integrity?(d.integrity.ok?"OK · "+d.integrity.verified+"/"+d.integrity.total:"ОШИБКИ · "+d.integrity.failed):"—";
+  const rec=d.reconciliation?.peers;$("reconciliation").textContent=Array.isArray(rec)?rec.map(p=>p.ok?"OK":"Ошибка").join(", "):"Нет настроенных реплик";
+  $("checked").textContent=d.integrity?.checkedAt?new Date(d.integrity.checkedAt).toLocaleTimeString("ru-RU"):new Date().toLocaleTimeString("ru-RU"); 
  }catch(e){state(false,"Нет соединения");$("status").textContent="Не подключён";$("platform").textContent="Запустите агент и повторите";$("checked").textContent=new Date().toLocaleTimeString("ru-RU");}
  finally{$("connect").disabled=false;$("connect").textContent="Обновить показатели"}
 }
@@ -65,6 +79,9 @@ async function refreshRegistry(){
  try{
   const r=await fetch(REGISTRY_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":REGISTRY_KEY},body:JSON.stringify({action:"status"}),cache:"no-store"});
   const d=await r.json();if(!r.ok)throw new Error(d.error||"HTTP "+r.status);
+  const target=$("transferTarget"),prior=target.value;
+  target.innerHTML='<option value="">Выберите зарегистрированный телефон…</option>'+d.nodes.filter(n=>String(n.platform).toLowerCase().includes("android")).map(n=>'<option value="'+esc(n.nodeId)+'">'+esc(n.name)+' · '+esc(n.status)+'</option>').join("");
+  if([...target.options].some(o=>o.value===prior))target.value=prior;
   if(!d.nodes?.length){box.innerHTML='<div class="line"><span class="muted">Пока нет зарегистрированных узлов.</span></div>';return}
   box.innerHTML=d.nodes.map(n=>'<div class="line"><span><b>'+esc(n.name)+'</b><br><span class="muted">'+esc(n.platform)+' · '+esc(n.nodeId)+'</span></span><span style="text-align:right"><b style="color:'+(n.status==="online"?"#65e4c1":n.status==="stale"?"#e8cf91":"#fb7185")+'">'+({online:"В сети",stale:"Нет свежего сигнала",offline:"Отключён"}[n.status]||"Неизвестно")+'</b><br><span class="muted">'+(n.lastSeenAt?new Date(n.lastSeenAt).toLocaleString("ru-RU"):"Ожидает heartbeat")+'</span></span></div>').join("");
  }catch(e){box.innerHTML='<div class="line"><span class="muted">Не удалось получить статус сети: '+esc(e.message)+'</span></div>'}
@@ -80,7 +97,34 @@ $("registerNode").addEventListener("click",async()=>{
  }catch(e){out.textContent="Не удалось: "+e.message}
  finally{btn.disabled=false}
 });
-$("refreshRegistry").addEventListener("click",refreshRegistry);
+
+async function sendSynthetic(){
+ const targetNodeId=$("transferTarget").value,output=$("transferResult"),button=$("sendSynthetic");
+ if(!targetNodeId){output.textContent="Сначала выберите зарегистрированный телефон.";return}
+ button.disabled=true;output.textContent="Создаём тестовый файл и отправляем…";
+ const objectId="qun-synthetic-"+Date.now();
+ const payload="QUN SYNTHETIC FILE\\nObject: "+objectId+"\\nCreated: "+new Date().toISOString()+"\\nPurpose: transport and SHA-256 integrity test.\\nNo personal data.";
+ try{
+  const response=await fetch("http://127.0.0.1:8787/test-transfer",{method:"POST",mode:"cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({targetNodeId,objectId,payload})});
+  const d=await response.json();if(!response.ok)throw new Error(d.error||"HTTP "+response.status);
+  const transfer=d.transfer;output.textContent="В очереди передачи. ID: "+transfer.transfer_id+"\\nSHA-256 отправителя: "+d.sourceSha256+"\\nОткройте QUN Node на телефоне и нажмите «Получить тестовый файл».";
+  for(let i=0;i<60;i++){
+   await new Promise(resolve=>setTimeout(resolve,3000));
+   const check=await fetch("http://127.0.0.1:8787/test-transfer/status",{method:"POST",mode:"cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({transferId:transfer.transfer_id})});
+   const status=await check.json();
+   if(!check.ok)throw new Error(status.error||"Не удалось проверить результат");
+   if(status.transfer?.status==="verified"){
+    output.textContent="ПЕРЕДАЧА УСПЕШНА · SHA-256 совпал\\nОбъект: "+status.transfer.object_id+" · "+status.transfer.size_bytes+" байт\\nSHA-256 отправителя: "+status.transfer.sha256+"\\nSHA-256 телефона: "+status.transfer.received_sha256+"\\nВремя получения: "+new Date(status.transfer.received_at).toLocaleString("ru-RU");
+    return;
+   }
+   if(status.transfer?.status==="mismatch"){output.textContent="ОШИБКА ЦЕЛОСТНОСТИ\\nОжидался: "+status.transfer.sha256+"\\nПолучен: "+status.transfer.received_sha256;return}
+  }
+  output.textContent+="\\nПока нет подтверждения от телефона. Оставьте это окно открытым и нажмите получение на телефоне.";
+ }catch(e){output.textContent="Ошибка: "+e.message}
+ finally{button.disabled=false}
+}
+$("sendSynthetic").addEventListener("click",sendSynthetic);
+\n$("refreshRegistry").addEventListener("click",refreshRegistry);
 $("connect").addEventListener("click",connect);
 void refreshRegistry();setInterval(refreshRegistry,15000);
 </script></body></html>
