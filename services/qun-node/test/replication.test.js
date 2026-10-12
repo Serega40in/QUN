@@ -111,6 +111,17 @@ test("replication recovers after peer returns and repairs a corrupted copy", { t
     }, "Corrupted replica was not repaired");
     const bytes = await readFile(path.join(dataB, "objects", objectId + ".bin"), "utf8");
     assert.equal(bytes, "synthetic QUN repair test object");
+
+    // A malformed manifest must not permanently block a valid peer from repairing it.
+    await writeFile(path.join(dataB, "manifests", objectId + ".json"), "{ malformed json");
+    await waitForCondition(async () => {
+      try {
+        const response = await fetch(urlB + "/objects/" + objectId + "/verify");
+        return response.ok && (await response.json()).valid === true;
+      } catch { return false; }
+    }, "Malformed manifest was not repaired");
+    const repairedManifest = JSON.parse(await readFile(path.join(dataB, "manifests", objectId + ".json"), "utf8"));
+    assert.equal(repairedManifest.objectId, objectId);
   } finally {
     if (nodeA) await stopNode(nodeA);
     if (nodeB) await stopNode(nodeB);
