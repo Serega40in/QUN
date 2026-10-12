@@ -12,8 +12,8 @@ android {
         applicationId = "com.qun.messenger"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "0.15.0"
+        versionCode = 17
+        versionName = "0.16.0"
     }
 
     signingConfigs {
