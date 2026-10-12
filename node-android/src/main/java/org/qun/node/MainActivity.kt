@@ -104,6 +104,40 @@ class MainActivity : ComponentActivity() {
                     }
                     Text("Узел под вашим контролем", fontSize = 29.sp, fontWeight = FontWeight.Bold, lineHeight = 34.sp)
                     Text("Следите за состоянием телефона и управляйте тестовым агентом. Запуск не означает присоединение к публичной сети.", color = Muted, lineHeight = 22.sp)
+                    Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Обновления QUN Node", fontWeight = FontWeight.Bold)
+                            Text(updateMessage, color = Muted, fontSize = 12.sp, lineHeight = 18.sp)
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                OutlinedButton(enabled = !updateBusy, onClick = {
+                                    updateBusy = true
+                                    updateMessage = "Проверяем GitHub Releases…"
+                                    scope.launch {
+                                        try {
+                                            val available = withContext(Dispatchers.IO) { UpdateManager.checkForUpdate(this@MainActivity) }
+                                            updateInfo = available
+                                            updateMessage = if (available == null) "Установлена последняя версия или релиз ещё не опубликован." else "Доступна версия " + available.version
+                                        } catch (e: Exception) { updateMessage = e.message ?: "Проверка не удалась" }
+                                        finally { updateBusy = false }
+                                    }
+                                }) { Text("Проверить") }
+                                if (updateInfo != null) {
+                                    Button(enabled = !updateBusy, onClick = {
+                                        val info = updateInfo ?: return@Button
+                                        updateBusy = true
+                                        updateMessage = "Скачиваем APK и проверяем SHA-256…"
+                                        scope.launch {
+                                            try {
+                                                withContext(Dispatchers.IO) { UpdateManager.downloadAndPromptInstall(this@MainActivity, info) }
+                                                updateMessage = "APK проверен. Подтверди установку в окне Android."
+                                            } catch (e: Exception) { updateMessage = e.message ?: "Установка не удалась" }
+                                            finally { updateBusy = false }
+                                        }
+                                    }) { Text("Установить обновление") }
+                                }
+                            }
+                        }
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         MetricCard("Состояние", if (running) "Активен" else "Остановлен", Modifier.weight(1f))
                         MetricCard("Батарея", "$battery%", Modifier.weight(1f))
