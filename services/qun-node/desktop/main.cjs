@@ -1,10 +1,15 @@
 const { app, BrowserWindow, dialog, shell } = require("electron");
+const { autoUpdater } = require("electron-updater");
 const { spawn } = require("node:child_process");
 const path = require("node:path");
 const http = require("node:http");
 
 let agent = null;
 let windowRef = null;
+let updateCheckStarted = false;
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.allowDowngrade = false;
 const PORT = Number(process.env.QUN_NODE_PORT || 8787);
 const HOST = "127.0.0.1";
 
@@ -62,6 +67,29 @@ function waitForDashboard(attempt = 0) {
     req.on("timeout", () => req.destroy());
   });
 }
+function setupAutoUpdates() {
+  if (!app.isPackaged || updateCheckStarted) return;
+  updateCheckStarted = true;
+  autoUpdater.on("checking-for-update", () => console.log("[QUN updater] Checking for updates"));
+  autoUpdater.on("update-available", info => {
+    console.log("[QUN updater] Update available:", info.version);
+  });
+  autoUpdater.on("update-not-available", info => console.log("[QUN updater] Up to date:", info.version));
+  autoUpdater.on("download-progress", progress => console.log("[QUN updater] Download:", Math.round(progress.percent) + "%"));
+  autoUpdater.on("update-downloaded", async info => {
+    if (!windowRef || windowRef.isDestroyed()) return;
+    const result = await dialog.showMessageBox(windowRef, {
+      type: "info", title: "QUN Node — обновление готово",
+      message: "Версия " + info.version + " скачана и проверена.",
+      detail: "Перезапустить QUN Node сейчас? Данные узла сохранятся.",
+      buttons: ["Перезапустить и обновить", "Позже"], defaultId: 0, cancelId: 1
+    });
+    if (result.response === 0) autoUpdater.quitAndInstall();
+  });
+  autoUpdater.on("error", error => console.error("[QUN updater] Update error:", error.message));
+  setTimeout(() => autoUpdater.checkForUpdates().catch(error => console.error("[QUN updater]", error.message)), 12000);
+  setInterval(() => autoUpdater.checkForUpdates().catch(error => console.error("[QUN updater]", error.message)), 6 * 60 * 60 * 1000);
+}
 async function createWindow() {
   windowRef = new BrowserWindow({
     width: 1180, height: 820, minWidth: 760, minHeight: 620,
@@ -78,6 +106,7 @@ async function createWindow() {
     app.quit(); return;
   }
   await windowRef.loadURL("http://" + HOST + ":" + PORT + "/");
+  setupAutoUpdates();
   windowRef.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith("https://github.com/Serega40in/QUN/")) shell.openExternal(url);
     return { action: "deny" };
