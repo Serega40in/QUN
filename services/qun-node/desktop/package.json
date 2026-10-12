@@ -1,24 +1,69 @@
 {
   "name": "qun-node-desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "QUN Node desktop shell and local agent",
   "main": "main.cjs",
-  "scripts": { "start": "electron .", "dist:win": "electron-builder --win nsis portable" },
-  "devDependencies": { "electron": "^38.2.0", "electron-builder": "^26.0.12" },
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis portable"
+  },
+  "devDependencies": {
+    "electron": "^38.2.0",
+    "electron-builder": "^27.0.0"
+  },
   "build": {
     "appId": "org.qun.node",
     "productName": "QUN Node",
     "asar": true,
-    "directories": { "output": "dist" },
-    "files": ["main.cjs", "package.json"],
-    "extraResources": [
-      { "from": "../src", "to": "qun-node/src" },
-      { "from": "../public", "to": "qun-node/public" },
-      { "from": "../package.json", "to": "qun-node/package.json" }
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.cjs",
+      "package.json"
     ],
-    "win": { "target": ["nsis", "portable"], "artifactName": "QUN-Node-Setup-${version}.${ext}" },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true },
-    "portable": { "artifactName": "QUN-Node-Portable-${version}.${ext}" }
+    "extraResources": [
+      {
+        "from": "../src",
+        "to": "qun-node/src"
+      },
+      {
+        "from": "../public",
+        "to": "qun-node/public"
+      },
+      {
+        "from": "../package.json",
+        "to": "qun-node/package.json"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "artifactName": "QUN-Node-Setup-${version}.${ext}",
+      "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "portable": {
+      "artifactName": "QUN-Node-Portable-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Serega40in",
+        "repo": "QUN",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.7.0"
   }
 }
