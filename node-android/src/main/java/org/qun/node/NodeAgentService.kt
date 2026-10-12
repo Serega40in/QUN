@@ -8,8 +8,18 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class NodeAgentService : Service() {
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var heartbeatJob: Job? = null
     companion object {
         @Volatile var running: Boolean = false
         @Volatile var startedAtMs: Long = 0L
@@ -23,6 +33,12 @@ class NodeAgentService : Service() {
         running = true
         startedAtMs = System.currentTimeMillis()
         startForeground(NOTIFICATION_ID, buildNotification())
+        heartbeatJob = serviceScope.launch {
+            while (isActive) {
+                try { NodeRegistry.heartbeat(this@NodeAgentService) } catch (_: Exception) { }
+                delay(30_000)
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -32,6 +48,8 @@ class NodeAgentService : Service() {
 
     override fun onDestroy() {
         running = false
+        heartbeatJob?.cancel()
+        serviceScope.cancel()
         super.onDestroy()
     }
 
