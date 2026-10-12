@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Check Android Termux installer syntax
+        run: bash -n services/qun-node/scripts/install-android-termux.sh
       - name: Run QUN Node tests
         working-directory: services/qun-node
         run: npm test
