@@ -181,7 +181,7 @@ async function readJson(req) {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", "http://127.0.0.1");
   try {
-    if (["/health", "/enroll"].includes(url.pathname) && req.method === "OPTIONS") {
+    if (["/health", "/enroll", "/test-transfer", "/test-transfer/status"].includes(url.pathname) && req.method === "OPTIONS") {
       const headers = dashboardCors(req);
       if (!headers["Access-Control-Allow-Origin"]) return send(res, 403, { error: "Origin not allowed" });
       res.writeHead(204, headers);
@@ -220,6 +220,16 @@ const server = createServer(async (req, res) => {
 
     if (req.method === "GET" && url.pathname === "/health") {
       const storageStats = await storage.stats();
+      const manifests = await storage.listManifests();
+      let integrityVerified = 0;
+      let integrityFailed = 0;
+      for (const manifest of manifests) {
+        try {
+          const check = await storage.verify(manifest.objectId);
+          if (check.valid) integrityVerified++; else integrityFailed++;
+        } catch { integrityFailed++; }
+      }
+      const integrity = { checkedAt: new Date().toISOString(), total: manifests.length, verified: integrityVerified, failed: integrityFailed, ok: integrityFailed === 0 };
       return send(res, 200, {
         service: "qun-node",
         version: "0.1.0",
@@ -231,11 +241,47 @@ const server = createServer(async (req, res) => {
         peerCount: PEERS.length,
         replicationEnabled: PEERS.length > 0 && SHARED_TOKEN.length >= 32,
         reconciliation: lastReconciliation,
+        integrity,
         registry: { registered: Boolean(registryState?.nodeId), nodeId: registryState?.nodeId || null, registeredAt: registryState?.registeredAt || null, heartbeat: registryHeartbeatState },
         uptimeSeconds: Math.floor(process.uptime()),
         safety: { localOnlyByDefault: HOST === "127.0.0.1" || HOST === "::1" || HOST === "localhost", publicEnrollment: false, controlledEnrollment: true, rewardsEnabled: false },
         timestamp: new Date().toISOString()
       }, dashboardCors(req));
+    }
+
+
+    if (req.method === "POST" && url.pathname === "/test-transfer") {
+      const cors = dashboardCors(req);
+      if (!cors["Access-Control-Allow-Origin"]) return send(res, 403, { error: "Origin not allowed" });
+      if (!registryState?.nodeId || !registryState?.nodeToken) return send(res, 401, { error: "Register this computer first." }, cors);
+      const body = await readJson(req);
+      if (typeof body.targetNodeId !== "string" || typeof body.payload !== "string") return send(res, 400, { error: "Target node and synthetic payload are required" }, cors);
+      const objectId = typeof body.objectId === "string" && /^[a-zA-Z0-9_-]{1,80}$/.test(body.objectId) ? body.objectId : "qun-synthetic-" + Date.now();
+      const payload = body.payload;
+      const digest = sha256(Buffer.from(payload, "utf8"));
+      const response = await fetch(REGISTRY_URL, {
+        method: "POST", headers: { "Content-Type": "application/json", "apikey": REGISTRY_KEY },
+        body: JSON.stringify({ action: "upload_test_object", nodeId: registryState.nodeId, nodeToken: registryState.nodeToken, targetNodeId: body.targetNodeId, objectId, payload, sha256: digest }),
+        signal: AbortSignal.timeout(10000)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.transfer) return send(res, response.status, { error: result.error || "Could not queue test transfer" }, cors);
+      return send(res, 201, { transfer: result.transfer, sourceNodeId: registryState.nodeId, sourceSha256: digest }, cors);
+    }
+
+    if (req.method === "POST" && url.pathname === "/test-transfer/status") {
+      const cors = dashboardCors(req);
+      if (!cors["Access-Control-Allow-Origin"]) return send(res, 403, { error: "Origin not allowed" });
+      if (!registryState?.nodeId || !registryState?.nodeToken) return send(res, 401, { error: "Register this computer first." }, cors);
+      const body = await readJson(req);
+      if (typeof body.transferId !== "string") return send(res, 400, { error: "Transfer ID is required" }, cors);
+      const response = await fetch(REGISTRY_URL, {
+        method: "POST", headers: { "Content-Type": "application/json", "apikey": REGISTRY_KEY },
+        body: JSON.stringify({ action: "test_transfer_status", nodeId: registryState.nodeId, nodeToken: registryState.nodeToken, transferId: body.transferId }),
+        signal: AbortSignal.timeout(8000)
+      });
+      const result = await response.json().catch(() => ({}));
+      return send(res, response.status, result, cors);
     }
 
     if (req.method === "POST" && url.pathname === "/objects") {
