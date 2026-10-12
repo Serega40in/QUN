@@ -132,13 +132,27 @@ async function reconcileAllPeers() {
   }
 }
 
-function send(res, status, body) {
+function send(res, status, body, extraHeaders = {}) {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
-    "X-Content-Type-Options": "nosniff"
+    "X-Content-Type-Options": "nosniff",
+    ...extraHeaders
   });
   res.end(JSON.stringify(body));
+}
+
+const DASHBOARD_ORIGIN = "https://serega40in.github.io";
+function dashboardCors(req) {
+  const origin = req.headers.origin;
+  if (origin !== DASHBOARD_ORIGIN) return {};
+  return {
+    "Access-Control-Allow-Origin": DASHBOARD_ORIGIN,
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Vary": "Origin",
+    "Access-Control-Allow-Private-Network": "true"
+  };
 }
 
 async function readJson(req) {
@@ -161,6 +175,13 @@ async function readJson(req) {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", "http://127.0.0.1");
   try {
+    if (url.pathname === "/health" && req.method === "OPTIONS") {
+      const headers = dashboardCors(req);
+      if (!headers["Access-Control-Allow-Origin"]) return send(res, 403, { error: "Origin not allowed" });
+      res.writeHead(204, headers);
+      return res.end();
+    }
+
     if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/dashboard")) {
       const html = await readFile(DASHBOARD_FILE, "utf8");
       res.writeHead(200, {
@@ -188,7 +209,7 @@ const server = createServer(async (req, res) => {
         uptimeSeconds: Math.floor(process.uptime()),
         safety: { localOnlyByDefault: HOST === "127.0.0.1" || HOST === "::1" || HOST === "localhost", publicEnrollment: false, rewardsEnabled: false },
         timestamp: new Date().toISOString()
-      });
+      }, dashboardCors(req));
     }
 
     if (req.method === "POST" && url.pathname === "/objects") {
