@@ -41,6 +41,72 @@ async function replicateToPeers(id, data) {
   }));
 }
 
+async function reconcilePeer(peer) {
+  if (SHARED_TOKEN.length < 32) return { peer, ok: false, error: "Replication disabled: configure a shared token of at least 32 characters." };
+  const headers = { "Authorization": "Bearer " + SHARED_TOKEN };
+  const listResponse = await fetch(peer + "/internal/replicas/manifests", { headers, signal: AbortSignal.timeout(5000) });
+  if (!listResponse.ok) throw new Error("Peer manifest request returned HTTP " + listResponse.status);
+  const peerManifests = (await listResponse.json()).manifests;
+  if (!Array.isArray(peerManifests)) throw new Error("Peer returned an invalid manifest list");
+  let repairedFromPeer = 0;
+  let sentToPeer = 0;
+  let conflicts = 0;
+
+  for (const remoteManifest of peerManifests) {
+    if (!remoteManifest || typeof remoteManifest.objectId !== "string") continue;
+    let local = null;
+    try { local = await storage.verify(remoteManifest.objectId); } catch {}
+    if (local?.valid) {
+      if (local.actualSha256 !== remoteManifest.sha256) conflicts++;
+      continue;
+    }
+    const objectResponse = await fetch(peer + "/internal/replicas/" + encodeURIComponent(remoteManifest.objectId), {
+      headers, signal: AbortSignal.timeout(5000)
+    });
+    if (!objectResponse.ok) continue;
+    const remote = await objectResponse.json();
+    if (typeof remote.data !== "string" || !remote.manifest) continue;
+    const bytes = Buffer.from(remote.data, "utf8");
+    if (sha256(bytes) !== remote.manifest.sha256 || bytes.length !== remote.manifest.sizeBytes) continue;
+    if (remote.manifest.objectId !== remoteManifest.objectId) continue;
+    await storage.put(remote.data, remoteManifest.objectId);
+    repairedFromPeer++;
+  }
+
+  for (const localManifest of await storage.listManifests()) {
+    try {
+      const local = await storage.verify(localManifest.objectId);
+      if (!local.valid) continue;
+      const data = (await storage.get(localManifest.objectId)).data.toString("utf8");
+      const response = await fetch(peer + "/internal/replicas", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ id: localManifest.objectId, data }),
+        signal: AbortSignal.timeout(5000)
+      });
+      if (response.ok) sentToPeer++;
+      else if (response.status === 409) conflicts++;
+    } catch {}
+  }
+  return { peer, ok: true, repairedFromPeer, sentToPeer, conflicts, checkedAt: new Date().toISOString() };
+}
+
+let reconciliationRunning = false;
+let lastReconciliation = null;
+async function reconcileAllPeers() {
+  if (reconciliationRunning || PEERS.length === 0) return;
+  reconciliationRunning = true;
+  try {
+    const peers = await Promise.all(PEERS.map(async peer => {
+      try { return await reconcilePeer(peer); }
+      catch (error) { return { peer, ok: false, error: error instanceof Error ? error.message : "Peer unavailable", checkedAt: new Date().toISOString() }; }
+    }));
+    lastReconciliation = { checkedAt: new Date().toISOString(), peers };
+  } finally {
+    reconciliationRunning = false;
+  }
+}
+
 function send(res, status, body) {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
@@ -82,6 +148,7 @@ const server = createServer(async (req, res) => {
         storage: storageStats,
         peerCount: PEERS.length,
         replicationEnabled: PEERS.length > 0 && SHARED_TOKEN.length >= 32,
+        reconciliation: lastReconciliation,
         timestamp: new Date().toISOString()
       });
     }
@@ -94,6 +161,21 @@ const server = createServer(async (req, res) => {
       const manifest = await storage.put(body.data, body.id || randomUUID());
       const replicas = await replicateToPeers(manifest.objectId, body.data);
       return send(res, 201, { manifest, replication: { configuredPeers: PEERS.length, succeeded: replicas.filter(r => r.ok).length, peers: replicas } });
+    }
+
+    if (req.method === "GET" && url.pathname === "/internal/replicas/manifests") {
+      if (!tokenMatches(req)) return send(res, 401, { error: "Unauthorized peer replication request" });
+      return send(res, 200, { manifests: await storage.listManifests() });
+    }
+
+    const internalObjectMatch = url.pathname.match(/^\\/internal\\/replicas\\/([a-zA-Z0-9_-]{1,80})$/);
+    if (req.method === "GET" && internalObjectMatch) {
+      if (!tokenMatches(req)) return send(res, 401, { error: "Unauthorized peer replication request" });
+      const id = internalObjectMatch[1];
+      const verification = await storage.verify(id);
+      if (!verification.valid) return send(res, 409, { error: "Peer object failed integrity verification" });
+      const [object, manifest] = await Promise.all([storage.get(id), storage.readManifest(id)]);
+      return send(res, 200, { data: object.data.toString("utf8"), manifest });
     }
 
     if (req.method === "POST" && url.pathname === "/internal/replicas") {
@@ -139,7 +221,10 @@ server.listen(PORT, HOST, () => {
   console.log(`QUN Node 0.1 listening on http://${HOST}:${PORT}`);
   console.log(`Test storage directory: ${DATA_DIR}`);
   console.log("WARNING: local test prototype; do not store private or production data.");
+  void reconcileAllPeers();
 });
+const reconcileTimer = setInterval(() => { void reconcileAllPeers(); }, Number(process.env.QUN_NODE_RECONCILE_INTERVAL_MS || 5000));
+reconcileTimer.unref();
 
 function shutdown() {
   server.close(() => process.exit(0));
