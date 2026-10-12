@@ -17,8 +17,8 @@
       { "from": "../public", "to": "qun-node/public" },
       { "from": "../package.json", "to": "qun-node/package.json" }
     ],
-    "win": { "target": ["nsis", "portable"], "artifactName": "QUN-Node-Setup-\${version}.\${ext}" },
+    "win": { "target": ["nsis", "portable"], "artifactName": "QUN-Node-Setup-${version}.${ext}" },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true },
-    "portable": { "artifactName": "QUN-Node-Portable-\${version}.\${ext}" }
+    "portable": { "artifactName": "QUN-Node-Portable-${version}.${ext}" }
   }
 }
