@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import os from "node:os";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { LocalStorage, sha256 } from "./storage.js";
 
@@ -14,6 +14,12 @@ const DATA_DIR = path.resolve(process.env.QUN_NODE_DATA_DIR || "./.qun-node-data
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
 const PEERS = (process.env.QUN_NODE_PEERS || "").split(",").map(v => v.trim().replace(/\/$/, "")).filter(Boolean);
 const SHARED_TOKEN = process.env.QUN_NODE_SHARED_TOKEN || "";
+const REGISTRY_URL = process.env.QUN_NODE_REGISTRY_URL || "https://qdxjltqlnphvzafapncm.supabase.co/functions/v1/qun-node-registry";
+const REGISTRY_KEY = process.env.QUN_NODE_REGISTRY_KEY || "sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L";
+const REGISTRY_FILE = path.join(DATA_DIR, "registry.json");
+let registryState = null;
+let registryHeartbeatState = { ok: false, lastAttemptAt: null, lastSuccessAt: null, error: null };
+try { registryState = JSON.parse(await readFile(REGISTRY_FILE, "utf8")); } catch {}
 
 function isLoopbackHost(hostname) {
   const host = hostname.replace(/^\[/, "").replace(/\]$/, "").toLowerCase();
@@ -148,7 +154,7 @@ function dashboardCors(req) {
   if (origin !== DASHBOARD_ORIGIN) return {};
   return {
     "Access-Control-Allow-Origin": DASHBOARD_ORIGIN,
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Vary": "Origin",
     "Access-Control-Allow-Private-Network": "true"
@@ -175,7 +181,7 @@ async function readJson(req) {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", "http://127.0.0.1");
   try {
-    if (url.pathname === "/health" && req.method === "OPTIONS") {
+    if (["/health", "/enroll"].includes(url.pathname) && req.method === "OPTIONS") {
       const headers = dashboardCors(req);
       if (!headers["Access-Control-Allow-Origin"]) return send(res, 403, { error: "Origin not allowed" });
       res.writeHead(204, headers);
@@ -193,6 +199,25 @@ const server = createServer(async (req, res) => {
       return res.end(html);
     }
 
+    if (req.method === "POST" && url.pathname === "/enroll") {
+      const cors = dashboardCors(req);
+      if (!cors["Access-Control-Allow-Origin"]) return send(res, 403, { error: "Origin not allowed" });
+      if (registryState?.nodeId && registryState?.nodeToken) return send(res, 409, { error: "This node is already registered." }, cors);
+      const body = await readJson(req);
+      if (typeof body.enrollmentCode !== "string" || typeof body.name !== "string") return send(res, 400, { error: "Enrollment code and node name are required" }, cors);
+      const response = await fetch(REGISTRY_URL, {
+        method: "POST", headers: { "Content-Type": "application/json", "apikey": REGISTRY_KEY },
+        body: JSON.stringify({ action: "register", enrollmentCode: body.enrollmentCode, name: body.name, platform: os.platform() }),
+        signal: AbortSignal.timeout(10000)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.nodeId || !result.nodeToken) return send(res, response.status === 403 ? 403 : 502, { error: result.error || "Registration service unavailable" }, cors);
+      registryState = { nodeId: result.nodeId, nodeToken: result.nodeToken, registeredAt: result.registeredAt, name: body.name };
+      await writeFile(REGISTRY_FILE, JSON.stringify(registryState, null, 2) + "\n", { mode: 0o600 });
+      await sendRegistryHeartbeat();
+      return send(res, 201, { nodeId: registryState.nodeId, registeredAt: registryState.registeredAt, heartbeat: registryHeartbeatState }, cors);
+    }
+
     if (req.method === "GET" && url.pathname === "/health") {
       const storageStats = await storage.stats();
       return send(res, 200, {
@@ -206,8 +231,9 @@ const server = createServer(async (req, res) => {
         peerCount: PEERS.length,
         replicationEnabled: PEERS.length > 0 && SHARED_TOKEN.length >= 32,
         reconciliation: lastReconciliation,
+        registry: { registered: Boolean(registryState?.nodeId), nodeId: registryState?.nodeId || null, registeredAt: registryState?.registeredAt || null, heartbeat: registryHeartbeatState },
         uptimeSeconds: Math.floor(process.uptime()),
-        safety: { localOnlyByDefault: HOST === "127.0.0.1" || HOST === "::1" || HOST === "localhost", publicEnrollment: false, rewardsEnabled: false },
+        safety: { localOnlyByDefault: HOST === "127.0.0.1" || HOST === "::1" || HOST === "localhost", publicEnrollment: false, controlledEnrollment: true, rewardsEnabled: false },
         timestamp: new Date().toISOString()
       }, dashboardCors(req));
     }
@@ -290,17 +316,38 @@ const server = createServer(async (req, res) => {
   }
 });
 
+async function sendRegistryHeartbeat() {
+  if (!registryState?.nodeId || !registryState?.nodeToken) return;
+  const attemptedAt = new Date().toISOString();
+  try {
+    const response = await fetch(REGISTRY_URL, {
+      method: "POST", headers: { "Content-Type": "application/json", "apikey": REGISTRY_KEY },
+      body: JSON.stringify({ action: "heartbeat", nodeId: registryState.nodeId, nodeToken: registryState.nodeToken }),
+      signal: AbortSignal.timeout(8000)
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) throw new Error(result.error || "HTTP " + response.status);
+    registryHeartbeatState = { ok: true, lastAttemptAt: attemptedAt, lastSuccessAt: result.serverTime, error: null };
+  } catch (error) {
+    registryHeartbeatState = { ok: false, lastAttemptAt: attemptedAt, lastSuccessAt: registryHeartbeatState.lastSuccessAt, error: error instanceof Error ? error.message : "Registry unavailable" };
+  }
+}
+
 server.listen(PORT, HOST, () => {
   console.log(`QUN Node 0.1 listening on http://${HOST}:${PORT}`);
   console.log(`Test storage directory: ${DATA_DIR}`);
   console.log("WARNING: local test prototype; do not store private or production data.");
   void reconcileAllPeers();
+  void sendRegistryHeartbeat();
 });
+const registryTimer = setInterval(() => { void sendRegistryHeartbeat(); }, 30000);
+registryTimer.unref();
 const reconcileTimer = setInterval(() => { void reconcileAllPeers(); }, Number(process.env.QUN_NODE_RECONCILE_INTERVAL_MS || 5000));
 reconcileTimer.unref();
 
 function shutdown() {
   clearInterval(reconcileTimer);
+  clearInterval(registryTimer);
   server.close(() => process.exit(0));
 }
 process.on("SIGINT", shutdown);
