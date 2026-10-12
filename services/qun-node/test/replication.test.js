@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -30,6 +30,15 @@ async function waitForHealth(url, child) {
   throw new Error("QUN Node health endpoint did not become ready");
 }
 
+async function waitForCondition(fn, message, timeoutMs = 12000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (await fn()) return;
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  throw new Error(message);
+}
+
 function startNode({ port, dataDir, nodeId, peers = "", token }) {
   return spawn(process.execPath, [path.join(process.cwd(), "src", "server.js")], {
     cwd: process.cwd(),
@@ -41,7 +50,8 @@ function startNode({ port, dataDir, nodeId, peers = "", token }) {
       QUN_NODE_DATA_DIR: dataDir,
       QUN_NODE_ID: nodeId,
       QUN_NODE_PEERS: peers,
-      QUN_NODE_SHARED_TOKEN: token
+      QUN_NODE_SHARED_TOKEN: token,
+      QUN_NODE_RECONCILE_INTERVAL_MS: "500"
     }
   });
 }
@@ -56,42 +66,51 @@ async function stopNode(child) {
   if (child.exitCode === null) child.kill("SIGKILL");
 }
 
-test("replicates a synthetic object from node A to independent node B", { timeout: 15000 }, async () => {
-  const root = await mkdtemp(path.join(os.tmpdir(), "qun-node-replication-"));
+test("replication recovers after peer returns and repairs a corrupted copy", { timeout: 30000 }, async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "qun-node-repair-"));
   const portA = await freePort();
   const portB = await freePort();
   const token = "qun-test-only-shared-token-please-change-001";
-  let nodeB;
   let nodeA;
+  let nodeB;
+  const urlA = "http://127.0.0.1:" + portA;
+  const urlB = "http://127.0.0.1:" + portB;
+  const dataA = path.join(root, "node-a");
+  const dataB = path.join(root, "node-b");
+  const objectId = "replica-repair-01";
   try {
-    nodeB = startNode({ port: portB, dataDir: path.join(root, "node-b"), nodeId: "node-b", token });
-    await waitForHealth("http://127.0.0.1:" + portB, nodeB);
-
-    nodeA = startNode({
-      port: portA,
-      dataDir: path.join(root, "node-a"),
-      nodeId: "node-a",
-      peers: "http://127.0.0.1:" + portB,
-      token
-    });
-    await waitForHealth("http://127.0.0.1:" + portA, nodeA);
-
-    const put = await fetch("http://127.0.0.1:" + portA + "/objects", {
+    // Node B is deliberately offline when the first write occurs.
+    nodeA = startNode({ port: portA, dataDir: dataA, nodeId: "node-a", peers: urlB, token });
+    await waitForHealth(urlA, nodeA);
+    const put = await fetch(urlA + "/objects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: "replica-test-01", data: "synthetic QUN test object" })
+      body: JSON.stringify({ id: objectId, data: "synthetic QUN repair test object" })
     });
     assert.equal(put.status, 201);
-    const result = await put.json();
-    assert.equal(result.replication.succeeded, 1);
+    const initial = await put.json();
+    assert.equal(initial.replication.succeeded, 0);
 
-    const get = await fetch("http://127.0.0.1:" + portB + "/objects/replica-test-01");
-    assert.equal(get.status, 200);
-    const object = await get.json();
-    assert.equal(object.data, "synthetic QUN test object");
+    // Once B returns, A's periodic reconciliation should create its missing copy.
+    nodeB = startNode({ port: portB, dataDir: dataB, nodeId: "node-b", token });
+    await waitForHealth(urlB, nodeB);
+    await waitForCondition(async () => {
+      try {
+        const response = await fetch(urlB + "/objects/" + objectId);
+        return response.ok && (await response.json()).data === "synthetic QUN repair test object";
+      } catch { return false; }
+    }, "Replica was not restored after the peer returned");
 
-    const verify = await fetch("http://127.0.0.1:" + portB + "/objects/replica-test-01/verify");
-    assert.equal((await verify.json()).valid, true);
+    // Simulate bit rot / local file corruption on B; A must restore the valid copy.
+    await writeFile(path.join(dataB, "objects", objectId + ".bin"), "corrupted bytes");
+    await waitForCondition(async () => {
+      try {
+        const response = await fetch(urlB + "/objects/" + objectId + "/verify");
+        return response.ok && (await response.json()).valid === true;
+      } catch { return false; }
+    }, "Corrupted replica was not repaired");
+    const bytes = await readFile(path.join(dataB, "objects", objectId + ".bin"), "utf8");
+    assert.equal(bytes, "synthetic QUN repair test object");
   } finally {
     if (nodeA) await stopNode(nodeA);
     if (nodeB) await stopNode(nodeB);
