@@ -21,6 +21,8 @@ jobs:
           node-version: 24
       - name: Check Android Termux installer syntax
         run: bash -n services/qun-node/scripts/install-android-termux.sh
+      - name: Check desktop entry syntax
+        run: node --check services/qun-node/desktop/main.cjs
       - name: Run QUN Node tests
         working-directory: services/qun-node
         run: npm test
