@@ -119,7 +119,18 @@ test("replication recovers after peer returns and repairs a corrupted copy", { t
     const initial = await put.json();
     assert.equal(initial.replication.succeeded, 0);
 
-    // Once B returns, A's periodic reconciliation should create its missing copy.
+    // While B is offline, A receives a new immutable revision with updated synthetic data.
+    // QUN does not overwrite a valid object ID in place: revisions use distinct IDs.
+    const updatedObjectId = "replica-repair-02";
+    const update = await fetch(urlA + "/objects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: updatedObjectId, data: "synthetic QUN repair test object v2 after offline update" })
+    });
+    assert.equal(update.status, 201);
+    assert.equal((await update.json()).replication.succeeded, 0);
+
+    // Once B returns, A's periodic reconciliation should restore both the original and updated revision.
     nodeB = startNode({ port: portB, dataDir: dataB, nodeId: "node-b", token });
     await waitForHealth(urlB, nodeB);
     await waitForCondition(async () => {
@@ -128,6 +139,12 @@ test("replication recovers after peer returns and repairs a corrupted copy", { t
         return response.ok && (await response.json()).data === "synthetic QUN repair test object";
       } catch { return false; }
     }, "Replica was not restored after the peer returned");
+    await waitForCondition(async () => {
+      try {
+        const response = await fetch(urlB + "/objects/" + updatedObjectId);
+        return response.ok && (await response.json()).data === "synthetic QUN repair test object v2 after offline update";
+      } catch { return false; }
+    }, "Updated revision was not replicated after the peer returned");
 
     // Simulate bit rot / local file corruption on B; A must restore the valid copy.
     await writeFile(path.join(dataB, "objects", objectId + ".bin"), "corrupted bytes");
