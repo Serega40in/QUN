@@ -5,6 +5,7 @@
 **Windows EXE / installer:** [desktop/README.md](./desktop/README.md) · [сборка GitHub Actions](../../actions/workflows/build-qun-node-windows.yml)  
 **Android APK:** [мобильный агент](../../tree/main/node-android) · [сборка GitHub Actions](../../actions/workflows/build-qun-node-android.yml)  
 **План безопасного подключения участников:** [ENROLLMENT.md](./ENROLLMENT.md)  
+**Автоматические обновления:** [AUTOMATIC_UPDATES.md](../../docs/node/AUTOMATIC_UPDATES.md)  
 **Запуск через PowerShell / Termux:** [scripts/README.md](./scripts/README.md)
 
 **Статус:** локальный тестовый прототип. Не production и не публичная распределённая сеть.
