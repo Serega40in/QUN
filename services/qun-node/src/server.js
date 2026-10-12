@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import os from "node:os";
-import { LocalStorage } from "./storage.js";
+import { LocalStorage, sha256 } from "./storage.js";
 
 const HOST = process.env.QUN_NODE_HOST || "127.0.0.1";
 const PORT = Number(process.env.QUN_NODE_PORT || 8787);
@@ -80,6 +80,8 @@ const server = createServer(async (req, res) => {
         nodeId: process.env.QUN_NODE_ID || "local-dev-node",
         platform: os.platform(),
         storage: storageStats,
+        peerCount: PEERS.length,
+        replicationEnabled: PEERS.length > 0 && SHARED_TOKEN.length >= 32,
         timestamp: new Date().toISOString()
       });
     }
@@ -92,6 +94,25 @@ const server = createServer(async (req, res) => {
       const manifest = await storage.put(body.data, body.id || randomUUID());
       const replicas = await replicateToPeers(manifest.objectId, body.data);
       return send(res, 201, { manifest, replication: { configuredPeers: PEERS.length, succeeded: replicas.filter(r => r.ok).length, peers: replicas } });
+    }
+
+    if (req.method === "POST" && url.pathname === "/internal/replicas") {
+      if (!tokenMatches(req)) return send(res, 401, { error: "Unauthorized peer replication request" });
+      const body = await readJson(req);
+      if (typeof body.data !== "string" || typeof body.id !== "string") {
+        return send(res, 400, { error: "Expected object id and UTF-8 test data" });
+      }
+      const incomingHash = sha256(Buffer.from(body.data, "utf8"));
+      try {
+        const existing = await storage.verify(body.id);
+        if (existing.valid && existing.actualSha256 === incomingHash) {
+          return send(res, 200, { alreadyPresent: true, sha256: existing.actualSha256 });
+        }
+      } catch (error) {
+        if (error?.code !== "ENOENT") throw error;
+      }
+      const manifest = await storage.put(body.data, body.id);
+      return send(res, 201, { manifest });
     }
 
     const objectMatch = url.pathname.match(/^\/objects\/([a-zA-Z0-9_-]{1,80})(?:\/(verify|manifest))?$/);
