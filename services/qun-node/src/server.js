@@ -2,8 +2,12 @@ import { createServer } from "node:http";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import os from "node:os";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { LocalStorage, sha256 } from "./storage.js";
 
+const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
+const DASHBOARD_FILE = path.resolve(MODULE_DIR, "../public/index.html");
 const HOST = process.env.QUN_NODE_HOST || "127.0.0.1";
 const PORT = Number(process.env.QUN_NODE_PORT || 8787);
 const DATA_DIR = path.resolve(process.env.QUN_NODE_DATA_DIR || "./.qun-node-data");
@@ -136,6 +140,17 @@ async function readJson(req) {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", "http://127.0.0.1");
   try {
+    if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/dashboard")) {
+      const html = await readFile(DASHBOARD_FILE, "utf8");
+      res.writeHead(200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
+      });
+      return res.end(html);
+    }
+
     if (req.method === "GET" && url.pathname === "/health") {
       const storageStats = await storage.stats();
       return send(res, 200, {
