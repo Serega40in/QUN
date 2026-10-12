@@ -43,7 +43,17 @@ function startAgent() {
 function waitForDashboard(attempt = 0) {
   return new Promise(resolve => {
     const req = http.get({ host: HOST, port: PORT, path: "/health", timeout: 700 }, res => {
-      res.resume(); resolve(res.statusCode === 200);
+      let body = "";
+      res.setEncoding("utf8");
+      res.on("data", chunk => { body += chunk; });
+      res.on("end", () => {
+        try {
+          const status = JSON.parse(body);
+          resolve(res.statusCode === 200 && status.service === "qun-node");
+        } catch {
+          resolve(false);
+        }
+      });
     });
     req.on("error", () => {
       if (attempt >= 40) return resolve(false);
