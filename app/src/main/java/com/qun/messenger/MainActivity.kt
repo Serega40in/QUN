@@ -788,12 +788,29 @@ private fun HomeScreen(
                                 Text(contact.phone, color = Color.Gray, fontSize = 12.sp)
                             }
                             TextButton(onClick = {
+                                val inviteText = "Привет! Давай общаться в QUN Messenger: https://serega40in.github.io/QUN/"
+                                val digits = normalizeContactPhone(contact.phone).filter { it.isDigit() }
+                                if (digits.isNotBlank()) {
+                                    val directChat = Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse("https://wa.me/$digits?text=${Uri.encode(inviteText)}")
+                                    )
+                                    context.startActivity(directChat)
+                                } else {
+                                    val share = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, inviteText)
+                                    }
+                                    context.startActivity(Intent.createChooser(share, "Пригласить ${contact.name} в QUN"))
+                                }
+                            }) { Text("WhatsApp", color = Emerald) }
+                            TextButton(onClick = {
                                 val share = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
                                     putExtra(Intent.EXTRA_TEXT, "Привет! Давай общаться в QUN Messenger: https://serega40in.github.io/QUN/")
                                 }
                                 context.startActivity(Intent.createChooser(share, "Пригласить ${contact.name} в QUN"))
-                            }) { Text("Пригласить", color = Emerald) }
+                            }) { Text("Другие способы", color = Navy) }
                         }
                         HorizontalDivider(color = Color(0xFFE5EBE8))
                     }
