@@ -2,6 +2,17 @@
 
 Единая цифровая экосистема: мессенджер, платформа и будущие сервисы КЮН.
 
+## QUN Foundation — благотворительный фонд
+
+- **Рабочая страница пакета:** https://serega40in.github.io/QUN/foundation/
+- **Документы и финансовая модель:** [папка foundation](docs/foundation/00-start.md)
+- **Проект устава:** [рабочая редакция 0.1](docs/foundation/ustav-proekt.md)
+- **Проект решения учредителей:** [шаблон](docs/foundation/reshenie-uchreditelya-proekt.md)
+- **Тестовая модель первого транша 1 000 000 ₽:** [финансовая модель](docs/foundation/finmodel-1m.md)
+- **Подготовка регистрации:** [чек-лист](docs/foundation/checklist-registracii.md)
+
+> Документы фонда — проекты для юридической проверки. Не считать фонд зарегистрированным до внесения записи в ЕГРЮЛ. Не публиковать персональные данные учредителей.
+
 ## База знаний QUN AI и архитектура
 
 - **Русская база знаний QUN AI:** [главный источник фактов](docs/qun-ai/knowledge/00-glavnaya-baza-znaniy.md), [руководство пользователя](docs/qun-ai/knowledge/01-rukovodstvo-polzovatelya.md), [каталог проектов](docs/qun-ai/knowledge/03-katalog-proektov-qun.md), [правила ответов](docs/qun-ai/knowledge/02-pravila-otvetov-i-testy.md).
