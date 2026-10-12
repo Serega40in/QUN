@@ -62,6 +62,15 @@ class MainActivity : ComponentActivity() {
             ActivityResultContracts.RequestPermission()
         ) { }
         LaunchedEffect(Unit) {
+            launch {
+                try {
+                    val available = withContext(Dispatchers.IO) { UpdateManager.checkForUpdate(this@MainActivity) }
+                    updateInfo = available
+                    updateMessage = if (available == null) "Установлена последняя версия или нет опубликованного релиза." else "Доступна версия " + available.version
+                } catch (e: Exception) {
+                    updateMessage = "Не удалось проверить обновления: " + (e.message ?: "ошибка сети")
+                }
+            }
             while (true) {
                 running = NodeAgentService.running
                 now = System.currentTimeMillis()
