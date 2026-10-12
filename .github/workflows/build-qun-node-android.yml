@@ -30,7 +30,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: QUN-Node-Android-\${{ github.sha }}
+          name: QUN-Node-Android
           path: node-android/build/outputs/apk/debug/node-android-debug.apk
           if-no-files-found: error
           retention-days: 30
