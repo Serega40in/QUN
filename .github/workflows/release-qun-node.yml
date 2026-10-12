@@ -60,6 +60,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: "8.13"
+      - name: Verify tag matches Android version
+        shell: bash
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#qun-node-v}"
+          ANDROID_VERSION="$(grep -o 'versionName = "[^"]*"' node-android/build.gradle.kts | head -n1 | cut -d '"' -f2)"
+          test "$TAG_VERSION" = "$ANDROID_VERSION" || { echo "Tag version does not match Android version"; exit 1; }
       - name: Require stable Android signing key
         shell: bash
         env:
