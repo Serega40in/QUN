@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07131f">
+<meta name="description" content="QUN Node — участвуйте в создании распределённой инфраструктуры QUN. Подключение устройств, тестирование узлов и прозрачный статус проекта.">
+<title>QUN Node — подключите устройство к сети</title>
+<style>
+:root{color-scheme:dark;--bg:#07131f;--panel:#0d2030;--panel2:#10283a;--line:#203b4e;--text:#edf7ff;--muted:#9bb1c3;--mint:#65e4c1;--blue:#5da8ff;--gold:#e8cf91;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 80% -5%,#123b4b 0,transparent 36%),radial-gradient(ellipse at 0% 30%,#102e49 0,transparent 35%),var(--bg);color:var(--text);line-height:1.55}
+a{color:inherit}button{font:inherit}.wrap{max-width:1120px;margin:auto;padding:0 24px}.nav{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px 0;border-bottom:1px solid #ffffff12}.brand{display:flex;align-items:center;gap:12px;text-decoration:none}.logo{width:42px;height:42px;border-radius:15px;background:linear-gradient(140deg,var(--mint),#468bc5);display:grid;place-items:center;color:#06151f;font-size:22px;font-weight:900;box-shadow:0 8px 28px #54dcb82a}.brand strong{font-size:16px;letter-spacing:.02em}.brand small{display:block;color:var(--muted);font-size:11px}.navlinks{display:flex;gap:22px;color:var(--muted);font-size:13px}.navlinks a{text-decoration:none}.navlinks a:hover{color:var(--text)}
+.hero{padding:82px 0 64px;display:grid;grid-template-columns:1.15fr .85fr;gap:50px;align-items:center}.eyebrow{display:inline-flex;gap:9px;align-items:center;color:var(--mint);font-size:11px;letter-spacing:.16em;font-weight:800;text-transform:uppercase}.pulse{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 14px #65e4c188}.hero h1{font-size:clamp(42px,6vw,72px);letter-spacing:-.065em;line-height:.99;margin:20px 0 22px;font-weight:760}.hero h1 span{color:var(--mint)}.lead{font-size:17px;color:#b4c7d6;max-width:610px;line-height:1.75}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}.btn{border:1px solid var(--line);background:#102638;color:var(--text);border-radius:13px;padding:13px 18px;text-decoration:none;display:inline-flex;justify-content:center;align-items:center;gap:9px;cursor:pointer;font-weight:700;font-size:14px;transition:.18s}.btn.primary{background:var(--mint);color:#062019;border-color:var(--mint)}.btn:hover{transform:translateY(-1px);filter:brightness(1.08)}.note{font-size:12px;color:#8199ad;margin-top:14px}.visual{position:relative;min-height:365px;border:1px solid #2a4a5d;border-radius:28px;background:linear-gradient(145deg,#102a3dce,#091725eb);overflow:hidden;padding:28px;display:flex;align-items:center;justify-content:center}.orbital{position:absolute;width:300px;height:300px;border:1px solid #4ad8b633;border-radius:50%;transform:rotate(-28deg) scaleX(.78)}.orbital:before,.orbital:after{content:"";position:absolute;inset:28px;border:1px solid #5da8ff38;border-radius:50%;transform:rotate(55deg) scaleX(1.5)}.orbital:after{inset:65px;transform:rotate(-65deg) scaleX(1.6)}.core{z-index:1;width:120px;height:120px;border-radius:35px;display:grid;place-items:center;font-size:58px;font-weight:850;color:#062019;background:linear-gradient(140deg,#a4ffe2,#49b8cb 60%,#528fe0);box-shadow:0 0 80px #56e0bf25;transform:rotate(-8deg)}.nodechip{position:absolute;z-index:2;border:1px solid #2d5369;background:#0a1c2bd9;border-radius:12px;padding:10px 13px;font-size:12px;color:#c5d8e6;box-shadow:0 12px 30px #0002}.nodechip b{display:block;color:var(--mint);font-size:11px}.chip1{top:45px;left:20px}.chip2{right:20px;top:104px}.chip3{bottom:40px;left:38px}.chip4{right:24px;bottom:36px}
+.section{padding:60px 0}.sectionhead{max-width:660px;margin-bottom:26px}.sectionhead .eyebrow{margin-bottom:10px}.section h2{font-size:clamp(28px,4vw,42px);letter-spacing:-.045em;line-height:1.1;margin:0 0 14px}.sectionhead p{color:var(--muted);margin:0;line-height:1.7}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{padding:23px;border:1px solid var(--line);border-radius:19px;background:linear-gradient(145deg,#102537dd,#0a1a28dd)}.iconbox{width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:#16394a;color:var(--mint);font-size:21px;margin-bottom:20px}.card h3{font-size:17px;margin:0 0 9px}.card p{font-size:13px;color:var(--muted);line-height:1.7;margin:0}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;counter-reset:step}.step{padding:22px;border-top:1px solid #315165;counter-increment:step}.step:before{content:"0" counter(step);display:block;color:var(--mint);font-size:12px;font-weight:800;letter-spacing:.12em;margin-bottom:22px}.step h3{font-size:16px;margin:0 0 8px}.step p{font-size:13px;color:var(--muted);margin:0}
+.status{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;padding:27px;border:1px solid #2b4c60;border-radius:20px;background:linear-gradient(110deg,#102b3b,#0b1b2a)}.status h3{font-size:18px;margin:0 0 7px}.status p{font-size:13px;color:var(--muted);margin:0;max-width:680px}.tag{border:1px solid #725f38;background:#332b1b;color:var(--gold);padding:8px 11px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap}.footer{border-top:1px solid #ffffff12;margin-top:50px;padding:25px 0 34px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:#7f96a8;font-size:11px}.footer a{color:#afc7d9;text-decoration:none}
+.modal{position:fixed;inset:0;z-index:10;background:#02070dcc;backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:18px}.modal.open{display:flex}.dialog{width:min(620px,100%);max-height:90vh;overflow:auto;background:#0b1b29;border:1px solid #2a4b60;border-radius:24px;padding:26px;box-shadow:0 30px 100px #0008}.dialoghead{display:flex;justify-content:space-between;align-items:start;gap:18px}.dialog h2{font-size:26px;letter-spacing:-.04em;margin:0 0 8px}.dialog p{color:var(--muted);font-size:13px;line-height:1.7}.close{border:1px solid var(--line);background:#102638;color:#dbe9f4;border-radius:10px;width:38px;height:38px;cursor:pointer;font-size:22px}.devices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:20px 0}.device{border:1px solid var(--line);background:#0e2434;color:var(--text);border-radius:14px;padding:16px;text-align:left;cursor:pointer}.device:hover,.device.selected{border-color:var(--mint);background:#10302f}.device span{display:block;font-size:22px;margin-bottom:7px}.device b{font-size:13px}.device small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.result{display:none;border:1px solid #28485b;background:#0e2332;border-radius:15px;padding:18px}.result.show{display:block}.result h3{margin:0 0 8px;font-size:16px}.result p{margin:0 0 12px}.result code{display:block;white-space:pre-wrap;overflow-wrap:anywhere;padding:13px;border-radius:10px;background:#06111b;color:#b7f4df;font-size:11px;line-height:1.6}.copy{margin-top:10px}.warning{font-size:11px!important;color:#e6c98e!important;margin-top:12px!important}
+@media(max-width:800px){.hero{grid-template-columns:1fr;gap:28px;padding:58px 0 42px}.visual{min-height:310px}.cards,.steps{grid-template-columns:1fr}.card{padding:20px}.step{padding:18px 0}.status{grid-template-columns:1fr}.tag{justify-self:start}.navlinks{gap:12px}.navlinks a:nth-child(2){display:none}}
+@media(max-width:480px){.wrap{padding:0 17px}.nav{padding:16px 0}.navlinks a:nth-child(1){display:none}.hero h1{font-size:43px}.lead{font-size:15px}.visual{min-height:270px;padding:12px}.orbital{transform:rotate(-28deg) scale(.82,.68)}.chip1{top:25px;left:12px}.chip2{right:10px;top:85px}.chip3{bottom:22px;left:14px}.chip4{right:10px;bottom:18px}.nodechip{font-size:10px;padding:8px}.devices{grid-template-columns:1fr 1fr}.dialog{padding:20px}.section{padding:42px 0}}
+</style>
+</head>
+<body>
+<header class="wrap nav">
+<a class="brand" href="#"><span class="logo">Q</span><span><strong>QUN Node</strong><small>Устройства в общей сети</small></span></a>
+<nav class="navlinks"><a href="#how">Как это работает</a><a href="#status">Статус проекта</a><a href="https://github.com/Serega40in/QUN/tree/main/services/qun-node">Исходный код ↗</a></nav>
+</header>
+<main>
+<section class="wrap hero">
+<div>
+<div class="eyebrow"><span class="pulse"></span> Инфраструктура, которую строим вместе</div>
+<h1>Подключите<br>своё устройство<br><span>к QUN Node.</span></h1>
+<p class="lead">В перспективе компьютеры и другие устройства участников смогут помогать сети хранить и проверять данные. Начинаем с прозрачных тестов, безопасного подключения и контроля со стороны владельца.</p>
+<div class="actions"><button class="btn primary" id="openJoin">＋ Подключить устройство</button><a class="btn" href="https://github.com/Serega40in/QUN/tree/main/services/qun-node">Изучить проект ↗</a></div>
+<p class="note">Сейчас открыт предварительный интерфейс: публичное подключение ещё не включено. Устройство не будет подключено без вашего явного действия.</p>
+</div>
+<div class="visual" aria-label="Схема устройств в сети QUN"><div class="orbital"></div><div class="core">Q</div><div class="nodechip chip1"><b>NODE 01</b>Домашний компьютер</div><div class="nodechip chip2"><b>NODE 02</b>Независимый узел</div><div class="nodechip chip3"><b>NODE 03</b>Проверка целостности</div><div class="nodechip chip4"><b>QUN NETWORK</b>В разработке</div></div>
+</section>
+<section class="wrap section" id="how">
+<div class="sectionhead"><div class="eyebrow">Просто и понятно</div><h2>Устройство остаётся вашим.</h2><p>Мы проектируем подключение так, чтобы участник понимал, что именно запускается, какие ресурсы использует узел и как его остановить.</p></div>
+<div class="cards">
+<article class="card"><div class="iconbox">⌘</div><h3>Вы выбираете устройство</h3><p>Компьютер, мини-ПК или сервер — сначала проверим совместимость и доступные ресурсы. Поддержку телефонов будем добавлять отдельно с учётом ограничений iOS и Android.</p></article>
+<article class="card"><div class="iconbox">◈</div><h3>Понятная установка</h3><p>Планируем подписанный установщик или проверяемый пакет, пошаговое подтверждение разрешений, локальный статус и простую кнопку остановки/удаления.</p></article>
+<article class="card"><div class="iconbox">◎</div><h3>Вклад без обещаний</h3><p>В дальнейшем сеть сможет измерять полезную работу узла. Вознаграждения QUN появятся только после проектирования и проверки прозрачного механизма учёта.</p></article>
+</div>
+</section>
+<section class="wrap section">
+<div class="sectionhead"><div class="eyebrow">Путь подключения</div><h2>От тестовой ноды — к сети участников.</h2></div>
+<div class="steps">
+<div class="step"><h3>Проверка совместимости</h3><p>Определить операционную систему, свободное место, стабильность питания и сетевого подключения.</p></div>
+<div class="step"><h3>Безопасное присоединение</h3><p>Установить клиент, показать права доступа и подключиться через регистрацию узла и защищённый протокол.</p></div>
+<div class="step"><h3>Мониторинг и управление</h3><p>Показывать состояние, трафик, хранилище, события, обновления и понятную команду отключения.</p></div>
+</div>
+</section>
+<section class="wrap section" id="status">
+<div class="status"><div><h3>Текущий статус: закрытая техническая стадия</h3><p>QUN Node 0.1 умеет работать с тестовыми объектами и реплицировать их между вручную настроенными локальными узлами. Публичная регистрация, безопасный клиент, автоматические обновления и выплаты ещё не реализованы.</p></div><span class="tag">TESTNET · НЕ ПРОДАКШЕН</span></div>
+</section>
+</main>
+<footer class="wrap footer"><span>© QUN · Ранний прототип инфраструктуры</span><span><a href="https://github.com/Serega40in/QUN">GitHub</a> · <a href="https://github.com/Serega40in/QUN/blob/main/services/qun-node/README.md">Документация</a></span></footer>
+<div class="modal" id="joinModal" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+<div class="dialog">
+<div class="dialoghead"><div><div class="eyebrow">Подключение устройства</div><h2 id="dialogTitle">С чего начнём?</h2><p>Выберите тип устройства. Покажем подходящий следующий шаг и честно обозначим, что уже доступно.</p></div><button class="close" id="closeJoin" aria-label="Закрыть">×</button></div>
+<div class="devices">
+<button class="device" data-device="windows"><span>▣</span><b>Windows PC</b><small>Компьютер или ноутбук</small></button>
+<button class="device" data-device="mac"><span>⌘</span><b>macOS</b><small>MacBook, Mac mini</small></button>
+<button class="device" data-device="linux"><span>▤</span><b>Linux</b><small>ПК, сервер, мини-ПК</small></button>
+<button class="device" data-device="phone"><span>▯</span><b>Телефон / планшет</b><small>Android или iPhone</small></button>
+</div>
+<div class="result" id="joinResult" aria-live="polite"><h3 id="resultTitle"></h3><p id="resultText"></p><code id="resultCode"></code><button class="btn copy" id="copyCommand">Скопировать команду</button><p class="warning" id="resultWarning"></p></div>
+</div>
+</div>
+<script>
+const modal=document.getElementById("joinModal"), result=document.getElementById("joinResult");
+const choices={
+ windows:{title:"Windows: подготовка к тесту",text:"Автоматический установщик ещё не выпущен. Для безопасного локального теста установите Node.js 20+ и Git с официальных сайтов, затем клонируйте исходный код. Эта команда только скачивает исходники — она не устанавливает службу и не подключает устройство к публичной сети.",code:"git clone https://github.com/Serega40in/QUN.git\ncd QUN\\services\\qun-node\nnpm test\nnpm start",warning:"Запускайте команды только если понимаете их назначение. Для выхода остановите процесс сочетанием Ctrl+C."},
+ mac:{title:"macOS: подготовка к тесту",text:"Поддержка автоматической установки пока не готова. Для локального теста нужны Node.js 20+ и Git. Команды ниже скачивают исходники и запускают тестовый узел только на вашем компьютере.",code:"git clone https://github.com/Serega40in/QUN.git\ncd QUN/services/qun-node\nnpm test\nnpm start",warning:"Только тестовые данные. Не открывайте порт 8787 в интернет."},
+ linux:{title:"Linux: подготовка к тесту",text:"Поддержка автоматической установки как системной службы ещё не готова. Установите Node.js 20+ и Git из доверенного источника, затем запустите локальные тесты.",code:"git clone https://github.com/Serega40in/QUN.git\ncd QUN/services/qun-node\nnpm test\nnpm start",warning:"Команды не используют sudo и не устанавливают фоновую службу. Узел будет доступен только на 127.0.0.1 по умолчанию."},
+ phone:{title:"Телефон: подключение будет позже",text:"Сейчас телефон нельзя безопасно превратить в полноценную фоновую ноду через одну веб-страницу. Мобильные системы ограничивают фоновые процессы и доступ к файлам. Начнём с интерфейса мониторинга, затем отдельно проверим Android; для iPhone возможны более строгие ограничения.",code:"Публичное подключение телефона ещё не доступно.",warning:"Ничего не устанавливается и не запускается на устройстве."}
+};
+function openModal(){modal.classList.add("open");document.body.style.overflow="hidden"}
+function closeModal(){modal.classList.remove("open");document.body.style.overflow="";result.classList.remove("show")}
+document.getElementById("openJoin").addEventListener("click",openModal);
+document.getElementById("closeJoin").addEventListener("click",closeModal);
+modal.addEventListener("click",e=>{if(e.target===modal)closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+document.querySelectorAll("[data-device]").forEach(button=>button.addEventListener("click",()=>{
+ document.querySelectorAll("[data-device]").forEach(b=>b.classList.toggle("selected",b===button));
+ const item=choices[button.dataset.device];
+ document.getElementById("resultTitle").textContent=item.title;
+ document.getElementById("resultText").textContent=item.text;
+ document.getElementById("resultCode").textContent=item.code;
+ document.getElementById("resultWarning").textContent=item.warning;
+ document.getElementById("copyCommand").style.display=button.dataset.device==="phone"?"none":"inline-flex";
+ result.classList.add("show");
+}));
+document.getElementById("copyCommand").addEventListener("click",async()=>{
+ const text=document.getElementById("resultCode").textContent;
+ try{await navigator.clipboard.writeText(text);document.getElementById("copyCommand").textContent="Скопировано"}
+ catch{const range=document.createRange();range.selectNodeContents(document.getElementById("resultCode"));const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);document.getElementById("copyCommand").textContent="Выделите и скопируйте"}
+});
+</script>
+</body>
+</html>
