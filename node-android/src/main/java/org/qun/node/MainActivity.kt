@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text("QUN Node", fontSize = 25.sp, fontWeight = FontWeight.Bold)
-                            Text("Мобильный агент · 0.1.0", color = Muted, fontSize = 12.sp)
+                            Text("Мобильный агент · 0.3.0", color = Muted, fontSize = 12.sp)
                         }
                         Text(if (running) "РАБОТАЕТ" else "ОСТАНОВЛЕН", color = if (running) Mint else Color(0xFFFCA5A5), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
