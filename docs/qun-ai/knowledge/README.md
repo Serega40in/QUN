@@ -1,26 +1,25 @@
-# QUN AI knowledge base
+# База знаний QUN AI
 
-This directory is the curated knowledge source for QUN AI. It is version-controlled project documentation, not model fine-tuning by itself.
+Русскоязычная база знаний для QUN AI. Документы версионируются в GitHub, но сами по себе не означают, что модель автоматически их читает или дообучена на них.
 
-## Files
-- [00 — Source of truth](00-source-of-truth.md): official links, project direction, verified status of each product, key limitations.
-- [01 — User guide](01-user-guide.md): safe support instructions for Messenger and planned product areas.
-- [02 — Answer policy](02-answer-policy.md): grounding rules, status labels, security constraints and evaluation questions.
+## Основные документы
+- [Главная база знаний](00-glavnaya-baza-znaniy.md) — направление QUN, официальные ссылки и статусы продуктов.
+- [Руководство пользователя](01-rukovodstvo-polzovatelya.md) — Messenger, поддержка и правила для будущих сервисов.
+- [Правила ответов и тесты](02-pravila-otvetov-i-testy.md) — требования к достоверности и набор контрольных вопросов.
+- [Каталог проектов QUN](03-katalog-proektov-qun.md) — полный текущий перечень проектов, ссылки, статусы и незакрытые проверки.
+- [QUN Node 0.1 + QUN Storage 0.1](04-qun-node-storage-01.md) — спецификация ближайшего инженерного MVP.
+- [Runtime system prompt](runtime-system-prompt.txt) — краткая системная инструкция для модели.
+- [Англоязычные исходные документы](00-source-of-truth.md) и [англоязычное руководство](01-user-guide.md) сохранены для будущего перевода/сверки.
 
-## How it is used
-The current QUN AI Edge Function sends a system prompt to the configured Gemini model. The function does not automatically read Markdown files from GitHub. To make these facts affect answers immediately, the system prompt must contain a curated summary or the backend must implement retrieval (RAG) from this knowledge base.
+## Как база попадает в ответы
+Supabase Edge Function qun-ai-chat передаёт модели системный промпт. Файлы Markdown в GitHub не читаются автоматически. Чтобы использовать всю базу, нужен один из вариантов:
+1. включить краткую актуальную сводку в runtime system prompt;
+2. реализовать retrieval/RAG, который ищет по этим документам и добавляет релевантные фрагменты к запросу.
 
-Current implementation path:
-- Supabase project: QUN
-- Edge Function: qun-ai-chat
-- Project code: https://github.com/Serega40in/QUN
-- User-facing QUN AI: https://serega40in.github.io/QUN/qun-ai/
+## Безопасное обновление
+1. При изменении функции обновить главную базу и каталог.
+2. Обновить runtime prompt или RAG-индекс.
+3. Проверить контрольные вопросы и официальные ссылки.
+4. Записать дату и версию развёрнутой Edge Function.
 
-## Safe update workflow
-1. Update the source-of-truth document when a verified feature or URL changes.
-2. Update the user guide and answer policy when instructions change.
-3. Update the runtime prompt or retrieval index so the live AI actually receives the change.
-4. Test representative questions for correct status and links.
-5. Record the change date and deployed function version.
-
-Never put secrets, user conversations, private messages, database dumps, passwords, wallet seed phrases or private keys in this directory.
+Не хранить здесь секреты, приватные переписки, пароли, дампы БД, seed-фразы или приватные ключи.
