@@ -15,6 +15,23 @@ const MAX_BODY_BYTES = 2 * 1024 * 1024;
 const PEERS = (process.env.QUN_NODE_PEERS || "").split(",").map(v => v.trim().replace(/\/$/, "")).filter(Boolean);
 const SHARED_TOKEN = process.env.QUN_NODE_SHARED_TOKEN || "";
 
+function isLoopbackHost(hostname) {
+  const host = hostname.replace(/^\[/, "").replace(/\]$/, "").toLowerCase();
+  return host === "localhost" || host === "::1" || /^127(?:\.\d{1,3}){3}$/.test(host);
+}
+
+// Shared bearer secrets must never travel over plaintext HTTP to a non-local peer.
+for (const peer of PEERS) {
+  let parsed;
+  try { parsed = new URL(peer); } catch { throw new Error("Invalid QUN_NODE_PEERS URL: " + peer); }
+  if (!["http:", "https:"].includes(parsed.protocol) || parsed.username || parsed.password) {
+    throw new Error("QUN_NODE_PEERS must contain valid HTTP(S) URLs without embedded credentials.");
+  }
+  if (parsed.protocol === "http:" && !isLoopbackHost(parsed.hostname)) {
+    throw new Error("Refusing non-local HTTP peer because replication secrets would be sent without TLS: " + peer);
+  }
+}
+
 const storage = new LocalStorage(DATA_DIR);
 await storage.init();
 
@@ -164,6 +181,8 @@ const server = createServer(async (req, res) => {
         peerCount: PEERS.length,
         replicationEnabled: PEERS.length > 0 && SHARED_TOKEN.length >= 32,
         reconciliation: lastReconciliation,
+        uptimeSeconds: Math.floor(process.uptime()),
+        safety: { localOnlyByDefault: HOST === "127.0.0.1" || HOST === "::1" || HOST === "localhost", publicEnrollment: false, rewardsEnabled: false },
         timestamp: new Date().toISOString()
       });
     }
@@ -256,6 +275,7 @@ const reconcileTimer = setInterval(() => { void reconcileAllPeers(); }, Number(p
 reconcileTimer.unref();
 
 function shutdown() {
+  clearInterval(reconcileTimer);
   server.close(() => process.exit(0));
 }
 process.on("SIGINT", shutdown);
