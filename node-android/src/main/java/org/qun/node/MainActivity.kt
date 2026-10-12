@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private val Navy = Color(0xFF08121F)
 private val Panel = Color(0xFF102438)
@@ -42,6 +46,12 @@ class MainActivity : ComponentActivity() {
         var running by remember { mutableStateOf(NodeAgentService.running) }
         var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
         var battery by remember { mutableIntStateOf(readBattery()) }
+        var enrollmentCode by remember { mutableStateOf("") }
+        var nodeName by remember { mutableStateOf("QUN Phone") }
+        var registryId by remember { mutableStateOf(NodeRegistry.registeredId(this)) }
+        var registryMessage by remember { mutableStateOf(if (registryId.isBlank()) "Не зарегистрирован" else "ID: $registryId") }
+        var registering by remember { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
         val notificationPermission = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { }
@@ -63,7 +73,7 @@ class MainActivity : ComponentActivity() {
         )) {
             Surface(Modifier.fillMaxSize(), color = Navy) {
                 Column(
-                    Modifier.fillMaxSize().padding(22.dp),
+                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(22.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -91,9 +101,39 @@ class MainActivity : ComponentActivity() {
                         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Text("Безопасность и статус", fontWeight = FontWeight.Bold)
                             InfoRow("Режим", "Только локальный тест")
-                            InfoRow("Публичная регистрация", "Выключена")
+                            InfoRow("Регистрация", if (registryId.isBlank()) "Не зарегистрирован" else "В тестовой сети")
+                            InfoRow("Уникальный ID", if (registryId.isBlank()) "—" else registryId)
                             InfoRow("Вознаграждения QUN", "Не реализованы")
                             InfoRow("Данные приложения", formatBytes(totalBytes - freeBytes) + " занято")
+                        }
+                    }
+                    Card(colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Регистрация в тестовой сети", fontWeight = FontWeight.Bold)
+                            Text("Нужен одноразовый код администратора. После регистрации ID будет закреплён за этим устройством.", color = Muted, fontSize = 12.sp, lineHeight = 18.sp)
+                            OutlinedTextField(value = nodeName, onValueChange = { nodeName = it.take(80) }, label = { Text("Название узла") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                            OutlinedTextField(value = enrollmentCode, onValueChange = { enrollmentCode = it.take(120) }, label = { Text("Одноразовый код") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                            Button(
+                                enabled = !registering && registryId.isBlank() && enrollmentCode.isNotBlank() && nodeName.isNotBlank(),
+                                onClick = {
+                                    registering = true
+                                    registryMessage = "Регистрируем узел…"
+                                    scope.launch {
+                                        try {
+                                            val id = withContext(Dispatchers.IO) { NodeRegistry.register(this@MainActivity, enrollmentCode, nodeName) }
+                                            registryId = id
+                                            enrollmentCode = ""
+                                            registryMessage = "Зарегистрирован. Запустите агент для heartbeat."
+                                            if (running) withContext(Dispatchers.IO) { NodeRegistry.heartbeat(this@MainActivity) }
+                                        } catch (e: Exception) {
+                                            registryMessage = e.message ?: "Регистрация не удалась"
+                                        } finally { registering = false }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Navy)
+                            ) { Text(if (registering) "Регистрируем…" else if (registryId.isBlank()) "Зарегистрировать узел" else "Узел зарегистрирован", fontWeight = FontWeight.Bold) }
+                            Text(registryMessage, color = if (registryId.isBlank()) Muted else Mint, fontSize = 11.sp, lineHeight = 16.sp)
                         }
                     }
                     Button(
