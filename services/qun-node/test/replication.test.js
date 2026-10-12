@@ -82,6 +82,9 @@ test("replication recovers after peer returns and repairs a corrupted copy", { t
     // Node B is deliberately offline when the first write occurs.
     nodeA = startNode({ port: portA, dataDir: dataA, nodeId: "node-a", peers: urlB, token });
     await waitForHealth(urlA, nodeA);
+    const dashboard = await fetch(urlA + "/");
+    assert.equal(dashboard.status, 200);
+    assert.match(await dashboard.text(), /QUN Node/);
     const put = await fetch(urlA + "/objects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
