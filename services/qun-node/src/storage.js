@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile, rename, rm, stat } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rename, rm, stat, readdir } from "node:fs/promises";
 import path from "node:path";
 
 const SAFE_ID = /^[a-zA-Z0-9_-]{1,80}$/;
@@ -96,6 +96,20 @@ export class LocalStorage {
       expectedSizeBytes: manifest.sizeBytes,
       actualSizeBytes: data.length
     };
+  }
+
+  async listManifests() {
+    const items = [];
+    for (const name of await readdir(this.manifestsDir)) {
+      if (!name.endsWith(".json")) continue;
+      try {
+        const manifest = JSON.parse(await readFile(path.join(this.manifestsDir, name), "utf8"));
+        if (manifest && typeof manifest.objectId === "string" && SAFE_ID.test(manifest.objectId)) items.push(manifest);
+      } catch {
+        // Do not advertise malformed manifests.
+      }
+    }
+    return items;
   }
 
   async stats() {
