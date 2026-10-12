@@ -85,6 +85,22 @@ test("replication recovers after peer returns and repairs a corrupted copy", { t
     const dashboard = await fetch(urlA + "/");
     assert.equal(dashboard.status, 200);
     assert.match(await dashboard.text(), /QUN Node/);
+
+    // Internal replication endpoints must reject requests without the peer secret.
+    const unauthorizedList = await fetch(urlA + "/internal/replicas/manifests");
+    assert.equal(unauthorizedList.status, 401);
+    const unauthorizedWrite = await fetch(urlA + "/internal/replicas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: "unauthorized", data: "should not be stored" })
+    });
+    assert.equal(unauthorizedWrite.status, 401);
+
+    const health = await (await fetch(urlA + "/health")).json();
+    assert.equal(health.safety.publicEnrollment, false);
+    assert.equal(health.safety.rewardsEnabled, false);
+    assert.equal(health.safety.localOnlyByDefault, true);
+    assert.ok(health.uptimeSeconds >= 0);
     const put = await fetch(urlA + "/objects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
