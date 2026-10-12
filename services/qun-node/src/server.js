@@ -158,7 +158,21 @@ const server = createServer(async (req, res) => {
       if (typeof body.data !== "string") {
         return send(res, 400, { error: "Field 'data' must be a UTF-8 string. Use synthetic test data only." });
       }
-      const manifest = await storage.put(body.data, body.id || randomUUID());
+      const objectId = body.id || randomUUID();
+      try {
+        const existing = await storage.verify(objectId);
+        const incomingHash = sha256(Buffer.from(body.data, "utf8"));
+        if (existing.valid && existing.actualSha256 !== incomingHash) {
+          return send(res, 409, { error: "Object ID already exists with different valid content" });
+        }
+        if (existing.valid && existing.actualSha256 === incomingHash) {
+          const replicas = await replicateToPeers(objectId, body.data);
+          return send(res, 200, { manifest: await storage.readManifest(objectId), alreadyPresent: true, replication: { configuredPeers: PEERS.length, succeeded: replicas.filter(r => r.ok).length, peers: replicas } });
+        }
+      } catch (error) {
+        if (error?.code !== "ENOENT") throw error;
+      }
+      const manifest = await storage.put(body.data, objectId);
       const replicas = await replicateToPeers(manifest.objectId, body.data);
       return send(res, 201, { manifest, replication: { configuredPeers: PEERS.length, succeeded: replicas.filter(r => r.ok).length, peers: replicas } });
     }
