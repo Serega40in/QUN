@@ -13,7 +13,7 @@ h1{font-size:clamp(30px,5vw,46px);letter-spacing:-.05em;line-height:1.04;margin:
 <body><main>
 <header class="nav"><a class="brand" href="../" style="text-decoration:none;color:inherit"><span class="logo">Q</span><span><b>QUN Node</b><span class="muted" style="display:block">Веб-панель управления</span></span></a><div class="pill"><span id="dot" class="dot"></span><span id="connection">Агент не проверен</span></div></header>
 <h1>Ваш узел.<br><span style="color:#65e4c1">Под вашим контролем.</span></h1>
-<p class="lead">Эта страница подключается только для чтения к локальному агенту QUN Node на вашем устройстве. Она не получает доступ к файлам и не отправляет данные на сервер сайта.</p>
+<p class="lead">Панель читает безопасный статус локального агента и список тестовых узлов с управляющего сервера. При явной регистрации на сервер передаются одноразовый код, имя и тип устройства; файлы пользователя не отправляются.</p>
 <div class="actions"><button class="btn primary" id="connect">Подключить локальный узел</button><a class="btn" href="https://github.com/Serega40in/QUN/tree/main/services/qun-node">Исходный код</a></div>
 <div class="grid">
 <section class="card"><div class="label">Состояние узла</div><div class="value" id="status">Не подключён</div><div class="muted" id="platform" style="margin-top:8px">Запустите QUN Node на устройстве</div></section>
