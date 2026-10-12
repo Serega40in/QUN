@@ -14,3 +14,6 @@ Run `npm run dist:win`. GitHub Actions builds an NSIS installer and a portable E
 - This is an unsigned early-access build; Windows SmartScreen may warn about an unknown publisher.
 - It is not a public-network enrollment client and does not issue QUN rewards.
 - Before general release, add code signing, signed update manifests, hardened IPC, reproducible release checks, and a tested uninstall/backup flow.
+
+
+Windows build workflow: [Build QUN Node for Windows](https://github.com/Serega40in/QUN/actions/workflows/build-qun-node-windows.yml). The workflow publishes both the installer and portable EXE as a single downloadable artifact.
