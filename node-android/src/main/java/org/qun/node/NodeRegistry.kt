@@ -4,6 +4,7 @@ import android.content.Context
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
 
 object NodeRegistry {
     private const val ENDPOINT = "https://qdxjltqlnphvzafapncm.supabase.co/functions/v1/qun-node-registry"
@@ -35,9 +36,37 @@ object NodeRegistry {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val id = prefs.getString("node_id", null) ?: return false
         val token = prefs.getString("node_token", null) ?: return false
-        val response = post(JSONObject().put("action", "heartbeat").put("nodeId", id).put("nodeToken", token))
+        val response = post(authBody(context).put("action", "heartbeat"))
         return response.optBoolean("ok", false)
     }
+
+    fun receiveSyntheticTestObject(context: Context): String {
+        val response = post(authBody(context).put("action", "poll_test_object"))
+        val transfer = response.optJSONObject("transfer") ?: return "Новых тестовых файлов нет."
+        val transferId = transfer.getString("transfer_id")
+        val objectId = transfer.getString("object_id").replace(Regex("[^a-zA-Z0-9_-]"), "_").take(80)
+        val payload = transfer.getString("payload")
+        val expected = transfer.getString("sha256")
+        val actual = sha256(payload.toByteArray(Charsets.UTF_8))
+        val file = java.io.File(context.filesDir, "$objectId.txt")
+        file.writeText(payload, Charsets.UTF_8)
+        val ack = post(authBody(context)
+            .put("action", "ack_test_object")
+            .put("transferId", transferId)
+            .put("receivedSha256", actual))
+        val verified = actual == expected && ack.optString("status") == "verified" && ack.optBoolean("ok")
+        return "Файл: ${file.name} · ${file.length()} байт\nSHA-256: ${if (verified) "СОВПАЛ" else "ОШИБКА"}\n$actual\nСохранён во внутреннем хранилище приложения."
+    }
+
+    private fun authBody(context: Context): JSONObject {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val id = prefs.getString("node_id", null) ?: throw IllegalStateException("Сначала зарегистрируйте телефон.")
+        val token = prefs.getString("node_token", null) ?: throw IllegalStateException("Нет ключа узла. Перерегистрируйте устройство.")
+        return JSONObject().put("nodeId", id).put("nodeToken", token)
+    }
+
+    private fun sha256(bytes: ByteArray): String =
+        MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
     private fun post(body: JSONObject): JSONObject {
         val connection = (URL(ENDPOINT).openConnection() as HttpURLConnection).apply {
