@@ -168,7 +168,7 @@ const server = createServer(async (req, res) => {
       return send(res, 200, { manifests: await storage.listManifests() });
     }
 
-    const internalObjectMatch = url.pathname.match(/^\\/internal\\/replicas\\/([a-zA-Z0-9_-]{1,80})$/);
+    const internalObjectMatch = url.pathname.match(/^\/internal\/replicas\/([a-zA-Z0-9_-]{1,80})$/);
     if (req.method === "GET" && internalObjectMatch) {
       if (!tokenMatches(req)) return send(res, 401, { error: "Unauthorized peer replication request" });
       const id = internalObjectMatch[1];
