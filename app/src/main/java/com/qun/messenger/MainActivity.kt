@@ -1,11 +1,16 @@
 package com.qun.messenger
 
 import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
+import android.provider.ContactsContract
 import android.net.Uri
 import android.os.Bundle
 import android.content.Context
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,6 +29,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.core.content.ContextCompat
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.android.*
@@ -62,6 +68,8 @@ private val http = HttpClient(Android) {
     val display_name: String = "",
     val phone: String? = null
 )
+private data class DeviceContact(val name: String, val phone: String)
+
 @Serializable data class Message(
     val id: String,
     val conversation_id: String,
@@ -498,6 +506,28 @@ private fun UpdateButton(onError: (String) -> Unit, compact: Boolean = false) {
     }
 }
 
+private fun readDeviceContacts(context: Context): List<DeviceContact> {
+    val result = linkedMapOf<String, DeviceContact>()
+    val cursor = context.contentResolver.query(
+        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+        arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER),
+        null, null, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " COLLATE LOCALIZED ASC"
+    )
+    cursor?.use {
+        val nameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+        val phoneIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+        while (it.moveToNext()) {
+            val name = it.getString(nameIndex)?.trim().orEmpty()
+            val phone = it.getString(phoneIndex)?.trim().orEmpty()
+            if (name.isNotBlank() && phone.isNotBlank()) {
+                val key = phone.filter { ch -> ch.isDigit() }
+                if (key.isNotBlank()) result.putIfAbsent(key, DeviceContact(name, phone))
+            }
+        }
+    }
+    return result.values.toList()
+}
+
 @Composable
 private fun HomeScreen(
     session: AuthSession,
@@ -513,6 +543,19 @@ private fun HomeScreen(
     var selected by remember { mutableStateOf<Pair<String, Profile>?>(null) }
     var saved by remember { mutableStateOf(false) }
     var profileExpanded by remember { mutableStateOf(false) }
+    var contactsExpanded by remember { mutableStateOf(false) }
+    var deviceContacts by remember { mutableStateOf<List<DeviceContact>>(emptyList()) }
+    var contactsMessage by remember { mutableStateOf<String?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val contactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            deviceContacts = readDeviceContacts(context)
+            contactsExpanded = true
+            contactsMessage = if (deviceContacts.isEmpty()) "В телефонной книге пока нет контактов." else "Найдено контактов: ${deviceContacts.size}. Контакты остаются на устройстве."
+        } else {
+            contactsMessage = "Доступ к контактам не разрешён. Его можно включить в настройках Android."
+        }
+    }
     var loadingProfile by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
 
@@ -636,6 +679,42 @@ private fun HomeScreen(
                 Spacer(Modifier.height(18.dp))
                 Text("Сообщения", color = Navy, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 Text("Найдите человека и начните диалог", color = Color.Gray, fontSize = 13.sp)
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = {
+                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                            deviceContacts = readDeviceContacts(context)
+                            contactsExpanded = !contactsExpanded
+                            contactsMessage = if (deviceContacts.isEmpty()) "В телефонной книге пока нет контактов." else "Найдено контактов: ${deviceContacts.size}. Контакты не отправляются на сервер."
+                        } else contactsPermission.launch(Manifest.permission.READ_CONTACTS)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text(if (contactsExpanded) "Скрыть контакты телефона" else "Найти друзей из контактов")
+                }
+                contactsMessage?.let { Text(it, color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(vertical = 5.dp)) }
+                if (contactsExpanded) {
+                    Text("Пригласить в QUN", color = Navy, fontWeight = FontWeight.SemiBold)
+                    Text("Выберите контакт — откроется меню отправки приглашения. Телефонная книга не загружается на сервер.", color = Color.Gray, fontSize = 12.sp)
+                    deviceContacts.take(300).forEach { contact ->
+                        Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f).padding(vertical = 7.dp)) {
+                                Text(contact.name, color = Navy, fontWeight = FontWeight.Medium)
+                                Text(contact.phone, color = Color.Gray, fontSize = 12.sp)
+                            }
+                            TextButton(onClick = {
+                                val share = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, "Привет! Давай общаться в QUN Messenger: https://serega40in.github.io/QUN/")
+                                }
+                                context.startActivity(Intent.createChooser(share, "Пригласить ${contact.name} в QUN"))
+                            }) { Text("Пригласить", color = Emerald) }
+                        }
+                        HorizontalDivider(color = Color(0xFFE5EBE8))
+                    }
+                    if (deviceContacts.size > 300) Text("Показаны первые 300 контактов.", color = Color.Gray, fontSize = 11.sp)
+                }
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
                     search,
