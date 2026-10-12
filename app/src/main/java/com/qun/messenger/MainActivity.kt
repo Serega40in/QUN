@@ -69,6 +69,9 @@ private val http = HttpClient(Android) {
     val phone: String? = null
 )
 private data class DeviceContact(val name: String, val phone: String)
+@Serializable data class ContactMatch(val contact_phone: String, val id: String, val username: String? = null, val display_name: String? = null)
+@Serializable data class ContactMatchResponse(val matches: List<ContactMatch> = emptyList())
+private data class MatchedContact(val contact: DeviceContact, val profile: Profile)
 
 @Serializable data class Message(
     val id: String,
@@ -167,6 +170,20 @@ private class QunApi {
         }
         check(r.status.isSuccess()) { r.bodyAsText() }
         return r.body()
+    }
+
+    suspend fun matchContacts(token: String, phones: List<String>): List<ContactMatch> {
+        val r = http.post("$SUPABASE_URL/functions/v1/qun-contact-match") {
+            auth(this, token)
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("phones" to phones.take(500)))
+        }
+        val raw = r.bodyAsText()
+        check(r.status.isSuccess()) {
+            runCatching { json.decodeFromString<Map<String, String>>(raw)["error"] }.getOrNull()
+                ?: "Не удалось проверить контакты."
+        }
+        return json.decodeFromString<ContactMatchResponse>(raw).matches
     }
 
     suspend fun createDirect(token: String, target: String): String {
@@ -506,6 +523,14 @@ private fun UpdateButton(onError: (String) -> Unit, compact: Boolean = false) {
     }
 }
 
+private fun normalizeContactPhone(value: String): String {
+    var phone = value.trim().replace(Regex("[^\\d+]"), "")
+    if (phone.startsWith("00")) phone = "+" + phone.drop(2)
+    if (phone.startsWith("8") && phone.length == 11) phone = "+7" + phone.drop(1)
+    if (!phone.startsWith("+")) phone = "+$phone"
+    return if (Regex("^\\+[1-9]\\d{7,14}$").matches(phone)) phone else ""
+}
+
 private fun readDeviceContacts(context: Context): List<DeviceContact> {
     val result = linkedMapOf<String, DeviceContact>()
     val cursor = context.contentResolver.query(
@@ -546,18 +571,47 @@ private fun HomeScreen(
     var contactsExpanded by remember { mutableStateOf(false) }
     var deviceContacts by remember { mutableStateOf<List<DeviceContact>>(emptyList()) }
     var contactsMessage by remember { mutableStateOf<String?>(null) }
+    var matchedContacts by remember { mutableStateOf<List<MatchedContact>>(emptyList()) }
+    var contactsBusy by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
-    val contactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) {
-            deviceContacts = readDeviceContacts(context)
-            contactsExpanded = true
-            contactsMessage = if (deviceContacts.isEmpty()) "В телефонной книге пока нет контактов." else "Найдено контактов: ${deviceContacts.size}. Контакты остаются на устройстве."
-        } else {
-            contactsMessage = "Доступ к контактам не разрешён. Его можно включить в настройках Android."
+    val scope = rememberCoroutineScope()
+    fun loadAndMatchContacts() {
+        deviceContacts = readDeviceContacts(context)
+        contactsExpanded = true
+        matchedContacts = emptyList()
+        if (deviceContacts.isEmpty()) {
+            contactsMessage = "В телефонной книге пока нет контактов."
+            return
+        }
+        contactsBusy = true
+        contactsMessage = "Ищем зарегистрированных пользователей QUN…"
+        scope.launch {
+            try {
+                val matches = api.matchContacts(session.access_token, deviceContacts.map { it.phone })
+                matchedContacts = matches.mapNotNull { match ->
+                    val contact = deviceContacts.firstOrNull { normalizeContactPhone(it.phone) == match.contact_phone }
+                    if (contact == null) null else MatchedContact(
+                        contact,
+                        Profile(match.id, match.username, match.display_name.orEmpty())
+                    )
+                }
+                contactsMessage = if (matchedContacts.isEmpty()) {
+                    "Совпадений пока нет. Можно пригласить друзей в QUN ниже."
+                } else {
+                    "В QUN уже зарегистрированы: ${matchedContacts.size}. Совпадения найдены по номеру телефона."
+                }
+            } catch (e: Exception) {
+                contactsMessage = "Не удалось проверить контакты: ${e.message ?: "попробуйте ещё раз"}"
+            } finally {
+                contactsBusy = false
+            }
         }
     }
+    val contactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) loadAndMatchContacts()
+        else contactsMessage = "Доступ к контактам не разрешён. Его можно включить в настройках Android."
+    }
     var loadingProfile by remember { mutableStateOf(true) }
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(session.user.id) {
         loadingProfile = true
@@ -682,22 +736,50 @@ private fun HomeScreen(
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(
                     onClick = {
-                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-                            deviceContacts = readDeviceContacts(context)
-                            contactsExpanded = !contactsExpanded
-                            contactsMessage = if (deviceContacts.isEmpty()) "В телефонной книге пока нет контактов." else "Найдено контактов: ${deviceContacts.size}. Контакты не отправляются на сервер."
+                        if (contactsExpanded) {
+                            contactsExpanded = false
+                        } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                            loadAndMatchContacts()
                         } else contactsPermission.launch(Manifest.permission.READ_CONTACTS)
                     },
+                    enabled = !contactsBusy,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp)
                 ) {
-                    Text(if (contactsExpanded) "Скрыть контакты телефона" else "Найти друзей из контактов")
+                    Text(if (contactsBusy) "Ищем пользователей…" else if (contactsExpanded) "Скрыть контакты" else "Найти друзей из контактов")
                 }
                 contactsMessage?.let { Text(it, color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(vertical = 5.dp)) }
+                if (contactsBusy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Emerald)
                 if (contactsExpanded) {
+                    if (matchedContacts.isNotEmpty()) {
+                        Text("Уже в QUN", color = Navy, fontWeight = FontWeight.SemiBold)
+                        Text("Совпадения по номерам телефонов. Номер не показывается другим пользователям.", color = Color.Gray, fontSize = 12.sp)
+                        matchedContacts.forEach { match ->
+                            Row(
+                                Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(Modifier.weight(1f).padding(vertical = 7.dp)) {
+                                    Text(match.profile.display_name.ifBlank { match.profile.username ?: match.contact.name }, color = Navy, fontWeight = FontWeight.Medium)
+                                    Text(if (!match.profile.username.isNullOrBlank()) "@${match.profile.username}" else match.contact.name, color = Color.Gray, fontSize = 12.sp)
+                                }
+                                TextButton(onClick = {
+                                    scope.launch {
+                                        try {
+                                            val conversation = api.createDirect(session.access_token, match.profile.id)
+                                            selected = conversation to match.profile
+                                        } catch (e: Exception) {
+                                            onError(e.message ?: "Не удалось открыть чат")
+                                        }
+                                    }
+                                }) { Text("Написать", color = Emerald) }
+                            }
+                            HorizontalDivider(color = Color(0xFFE5EBE8))
+                        }
+                    }
                     Text("Пригласить в QUN", color = Navy, fontWeight = FontWeight.SemiBold)
-                    Text("Выберите контакт — откроется меню отправки приглашения. Телефонная книга не загружается на сервер.", color = Color.Gray, fontSize = 12.sp)
-                    deviceContacts.take(300).forEach { contact ->
+                    Text("Телефонная книга обрабатывается только после вашего действия; номера используются для поиска совпадений и не сохраняются этой функцией.", color = Color.Gray, fontSize = 12.sp)
+                    deviceContacts.filter { contact -> matchedContacts.none { it.contact.phone == contact.phone } }.take(300).forEach { contact ->
                         Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f).padding(vertical = 7.dp)) {
                                 Text(contact.name, color = Navy, fontWeight = FontWeight.Medium)
