@@ -54,6 +54,9 @@ class MainActivity : ComponentActivity() {
         var registering by remember { mutableStateOf(false) }
         var receivingTransfer by remember { mutableStateOf(false) }
         var transferMessage by remember { mutableStateOf("Ожидает синтетический файл с компьютера.") }
+        var updateInfo by remember { mutableStateOf<QunUpdateInfo?>(null) }
+        var updateMessage by remember { mutableStateOf("Проверяем наличие обновлений…") }
+        var updateBusy by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
         val notificationPermission = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestPermission()
