@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "QUN"
-include(":app")
+include(":app", ":node-android")
