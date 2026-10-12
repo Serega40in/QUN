@@ -1,8 +1,11 @@
 # QUN Node 0.1 + QUN Storage 0.1
 
-**Публичная страница проекта:** https://serega40in.github.io/QUN/node/  
+**Страница проекта:** https://serega40in.github.io/QUN/node/  
+**Веб-панель в браузере:** https://serega40in.github.io/QUN/node/dashboard/  
+**Windows EXE / installer:** [desktop/README.md](./desktop/README.md) · [сборка GitHub Actions](../../actions/workflows/build-qun-node-windows.yml)  
+**Android APK:** [мобильный агент](../../tree/main/node-android) · [сборка GitHub Actions](../../actions/workflows/build-qun-node-android.yml)  
 **План безопасного подключения участников:** [ENROLLMENT.md](./ENROLLMENT.md)  
-**Установка Windows и Android:** [scripts/README.md](./scripts/README.md)
+**Запуск через PowerShell / Termux:** [scripts/README.md](./scripts/README.md)
 
 **Статус:** локальный тестовый прототип. Не production и не публичная распределённая сеть.
 
@@ -18,7 +21,10 @@
 - периодическая сверка настроенных peers, повторная отправка объектов после возвращения узла и восстановление повреждённой копии по проверенной SHA-256;
 - ранний установочный сценарий Windows (PowerShell + Node.js LTS/Git через winget) и запуск на Android через Termux;
 - отказ от незашифрованного HTTP для удалённых peers, чтобы не передавать общий секрет репликации открытым текстом;
-- health-статус показывает uptime и явно сообщает, что публичная регистрация и вознаграждения выключены.
+- health-статус показывает uptime и явно сообщает, что публичная регистрация и вознаграждения выключены;
+- веб-панель на GitHub Pages может прочитать только безопасный статус локального агента после явного нажатия пользователя; CORS разрешён только для origin https://serega40in.github.io;
+- Windows desktop shell запускает локальный агент и открывает панель внутри приложения;
+- отдельный Android APK содержит foreground-службу и экран мониторинга батареи, времени работы и локального состояния. Это пока мобильная основа агента, не полноценный узел распределённого хранилища.
 
 ## Требования
 Node.js 20 или новее. Зависимости npm не нужны.
