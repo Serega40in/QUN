@@ -1,0 +1,50 @@
+name: QUN Node Local Load Test
+on:
+  push:
+    paths:
+      - "services/qun-node/**"
+      - ".github/workflows/qun-node-load-test.yml"
+  pull_request:
+    paths:
+      - "services/qun-node/**"
+      - ".github/workflows/qun-node-load-test.yml"
+  workflow_dispatch:
+
+jobs:
+  node-tests-and-100-client-load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Unit tests
+        working-directory: services/qun-node
+        run: npm test
+      - name: Start local test node
+        working-directory: services/qun-node
+        run: |
+          mkdir -p "${RUNNER_TEMP}/qun-node-data"
+          QUN_NODE_HOST=127.0.0.1 QUN_NODE_PORT=8787 QUN_NODE_DATA_DIR="${RUNNER_TEMP}/qun-node-data" npm start > "${RUNNER_TEMP}/qun-node.log" 2>&1 &
+          echo $! > "${RUNNER_TEMP}/qun-node.pid"
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8787/health > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "${RUNNER_TEMP}/qun-node.log"
+          exit 1
+      - name: Synthetic 100-client load test
+        working-directory: services/qun-node
+        env:
+          QUN_LOAD_CLIENTS: "100"
+          QUN_LOAD_CONCURRENCY: "10"
+          QUN_LOAD_ROUNDS: "1"
+        run: npm run test:load
+      - name: Print node log on failure
+        if: failure()
+        run: cat "${RUNNER_TEMP}/qun-node.log" || true
