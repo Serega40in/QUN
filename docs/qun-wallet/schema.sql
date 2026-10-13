@@ -14,6 +14,8 @@ create table if not exists public.qun_wallet_transactions (
   id uuid primary key default gen_random_uuid(),
   sender_wallet_id uuid references public.qun_wallets(id) on delete restrict,
   recipient_wallet_id uuid not null references public.qun_wallets(id) on delete restrict,
+  sender_address text,
+  recipient_address text,
   amount numeric(28,8) not null check (amount > 0),
   tx_type text not null check (tx_type in ('transfer','test_faucet','node_reward')),
   request_id uuid,
@@ -82,8 +84,8 @@ begin
     raise exception 'Test QUN has already been claimed for this wallet';
   end if;
   update public.qun_wallets set balance = balance + 100 where id = v_wallet.id returning * into v_wallet;
-  insert into public.qun_wallet_transactions(sender_wallet_id,recipient_wallet_id,amount,tx_type,memo)
-    values (null,v_wallet.id,100,'test_faucet','One-time QUN testnet faucet') returning * into v_tx;
+  insert into public.qun_wallet_transactions(sender_wallet_id,recipient_wallet_id,sender_address,recipient_address,amount,tx_type,memo)
+    values (null,v_wallet.id,null,v_wallet.address,100,'test_faucet','One-time QUN testnet faucet') returning * into v_tx;
   return jsonb_build_object('transaction_id',v_tx.id,'amount',v_tx.amount,'balance',v_wallet.balance);
 end;
 $$;
@@ -118,8 +120,8 @@ begin
   if v_sender.balance < p_amount then raise exception 'Insufficient QUN balance'; end if;
   update public.qun_wallets set balance = balance - p_amount where id = v_sender.id;
   update public.qun_wallets set balance = balance + p_amount where id = v_recipient.id;
-  insert into public.qun_wallet_transactions(sender_wallet_id,recipient_wallet_id,amount,tx_type,request_id,memo)
-    values (v_sender.id,v_recipient.id,p_amount,'transfer',p_request_id,v_memo) returning * into v_tx;
+  insert into public.qun_wallet_transactions(sender_wallet_id,recipient_wallet_id,sender_address,recipient_address,amount,tx_type,request_id,memo)
+    values (v_sender.id,v_recipient.id,v_sender.address,v_recipient.address,p_amount,'transfer',p_request_id,v_memo) returning * into v_tx;
   return jsonb_build_object('transaction_id',v_tx.id,'amount',v_tx.amount,'sender_address',v_sender.address,'recipient_address',v_recipient.address,'sender_balance',v_sender.balance-p_amount,'status','confirmed','created_at',v_tx.created_at);
 end;
 $$;
