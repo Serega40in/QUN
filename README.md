@@ -21,9 +21,18 @@
 - **Распределённая архитектура:** [документ v0.1](docs/architecture/distributed-backend.md).
 - **Важно:** наличие документации не означает автоматическое обучение QUN AI. Подключение runtime-инструкции к Supabase Edge Function требует успешного развёртывания и проверки.
 
+## QUN Wallet и распределённая сеть
+
+- **QUN Wallet (testnet MVP):** https://serega40in.github.io/QUN/qun-wallet/
+- **Описание кошелька и ограничения:** [docs/qun-wallet/README.md](docs/qun-wallet/README.md)
+- **QUN Node + Storage:** [проект](https://serega40in.github.io/QUN/node/), [панель](https://serega40in.github.io/QUN/node/dashboard/)
+- **План мощности для 1 млн активных пользователей и пилота 100+ устройств:** [capacity plan v0.1](docs/architecture/qun-network-capacity-plan-v0.1.md)
+
+> QUN Wallet сейчас использует внутренний тестовый ledger в Supabase, а не блокчейн. Тестовые QUN не имеют денежной стоимости. Реальные выплаты, mainnet и публичная сеть из 100+ устройств не запущены; для них нужны отдельные криптографические, нагрузочные и security-аудиты.
+
 ## Проекты
 
-- **Веб-мессенджер:** https://serega40in.github.io/QUN/
+- **Веб-мессенджер:** https://serega40in/QUN/
 - **Политика конфиденциальности (проект, требует заполнения данных оператора):** https://serega40in.github.io/QUN/privacy.html
 - **Android:** Kotlin + Jetpack Compose, пакет `com.qun.messenger`.
 - **Backend:** Supabase Auth + PostgreSQL + Row Level Security.
