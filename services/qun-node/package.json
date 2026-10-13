@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:load": "node scripts/load-test-100.js"
   },
   "engines": {
     "node": ">=20"
