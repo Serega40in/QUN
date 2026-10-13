@@ -59,6 +59,7 @@ alter table public.social_posts enable row level security;
 alter table public.social_comments enable row level security;
 alter table public.social_likes enable row level security;
 alter table public.social_follows enable row level security;
+alter table public.social_stories enable row level security;
 grant select on public.social_profiles,public.social_posts,public.social_comments to anon,authenticated;
 grant insert,update,delete on public.social_profiles,public.social_posts to authenticated;
 grant insert,delete on public.social_comments to authenticated;
