@@ -32,7 +32,7 @@
 
 ## Проекты
 
-- **Веб-мессенджер:** https://serega40in/QUN/
+- **Веб-мессенджер:** https://serega40in.github.io/QUN/
 - **Политика конфиденциальности (проект, требует заполнения данных оператора):** https://serega40in.github.io/QUN/privacy.html
 - **Android:** Kotlin + Jetpack Compose, пакет `com.qun.messenger`.
 - **Backend:** Supabase Auth + PostgreSQL + Row Level Security.
