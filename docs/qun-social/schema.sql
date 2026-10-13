@@ -20,6 +20,7 @@ create table if not exists public.social_posts (
   comment_count integer not null default 0 check(comment_count>=0),
   created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
+alter table public.social_posts add column if not exists media_urls jsonb not null default '[]'::jsonb;
 create index if not exists social_posts_public_created_idx on public.social_posts(created_at desc) where visibility='public';
 create index if not exists social_posts_user_created_idx on public.social_posts(user_id,created_at desc);
 create table if not exists public.social_comments (
