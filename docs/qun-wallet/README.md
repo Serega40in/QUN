@@ -19,7 +19,7 @@
 - Следующий этап: проектирование криптографического non-custodial wallet, threat model, выбор протокола/консенсуса, аудит, тесты повторных запросов и конкурирующих переводов.
 - Публичный URL — удобная тестовая оболочка, но перед внешним пилотом нужно проверить CORS, RLS/advisors, abuse limits, backups, monitoring и реальную авторизацию на двух отдельных аккаунтах.
 
-## RPC / таблицы
+**Схема БД:** [schema.sql](./schema.sql) — snapshot функций, таблиц, RLS и grants. При изменении базы обновлять этот файл и повторно проверять security advisors.\n\n## RPC / таблицы
 - `public.qun_wallets`: wallet address and balance, one per `auth.users` account.
 - `public.qun_wallet_transactions`: append-only transaction records for transfers, test faucet and future rewards.
 - `qun_wallet_get_or_create()`: create or return current user's wallet.
