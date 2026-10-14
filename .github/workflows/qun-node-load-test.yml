@@ -9,11 +9,42 @@ on:
       - "services/qun-node/**"
       - ".github/workflows/qun-node-load-test.yml"
   workflow_dispatch:
+    inputs:
+      clients:
+        description: "Число виртуальных клиентов (локальный CI-узел)"
+        required: true
+        type: choice
+        options:
+          - "100"
+          - "250"
+          - "500"
+          - "1000"
+        default: "100"
+      concurrency:
+        description: "Одновременные запросчики (не более 50)"
+        required: true
+        type: choice
+        options:
+          - "5"
+          - "10"
+          - "20"
+          - "50"
+        default: "10"
+      rounds:
+        description: "Число раундов (1–5)"
+        required: true
+        type: choice
+        options:
+          - "1"
+          - "2"
+          - "3"
+          - "5"
+        default: "1"
 
 jobs:
-  node-tests-and-100-client-load:
+  node-tests-and-local-load:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,10 +52,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Unit tests
+      - name: Unit and replication tests
         working-directory: services/qun-node
         run: npm test
-      - name: Start local test node
+      - name: Start isolated local test node
         working-directory: services/qun-node
         run: |
           mkdir -p "${RUNNER_TEMP}/qun-node-data"
@@ -38,13 +69,17 @@ jobs:
           done
           cat "${RUNNER_TEMP}/qun-node.log"
           exit 1
-      - name: Synthetic 100-client load test
+      - name: Synthetic local load test
         working-directory: services/qun-node
         env:
-          QUN_LOAD_CLIENTS: "100"
-          QUN_LOAD_CONCURRENCY: "10"
-          QUN_LOAD_ROUNDS: "1"
+          QUN_LOAD_CLIENTS: ${{ github.event.inputs.clients || '100' }}
+          QUN_LOAD_CONCURRENCY: ${{ github.event.inputs.concurrency || '10' }}
+          QUN_LOAD_ROUNDS: ${{ github.event.inputs.rounds || '1' }}
         run: npm run test:load
-      - name: Print node log on failure
+      - name: Upload node log on failure
         if: failure()
-        run: cat "${RUNNER_TEMP}/qun-node.log" || true
+        uses: actions/upload-artifact@v4
+        with:
+          name: qun-node-failure-log
+          path: ${{ runner.temp }}/qun-node.log
+          if-no-files-found: ignore
