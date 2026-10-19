@@ -1,3 +1,15 @@
+## QUN AI Knowledge Hub — единая память проекта
+
+- **Центральная страница для любой ИИ:** https://serega40in.github.io/QUN/knowledge/
+- **Стартовая инструкция:** [AI_START_HERE.md](docs/knowledge-hub/AI_START_HERE.md)
+- **Visual Bible:** [визуальные правила и статус цветовой палитры](docs/knowledge-hub/VISUAL_BIBLE.md)
+- **Библиотека промптов:** [изображения](docs/knowledge-hub/PROMPTS_IMAGES.md), [видео и музыка](docs/knowledge-hub/PROMPTS_VIDEO_MUSIC.md)
+- **Разработка:** [Engineering Guide](docs/knowledge-hub/ENGINEERING_GUIDE.md)
+- **Машиночитаемый каталог:** [manifest.json](docs/knowledge-hub/manifest.json)
+- **Статус и решения:** [PROJECT_STATUS.md](docs/knowledge-hub/PROJECT_STATUS.md)
+
+> Knowledge Hub — публичный источник контекста для разных ИИ. Перед изменениями кода проверяйте актуальные исходники; точные бренд-параметры и статусы не считаются утверждёнными без проверки.
+
 # КЮН / QUN
 
 Единая цифровая экосистема: мессенджер, платформа и будущие сервисы КЮН.
