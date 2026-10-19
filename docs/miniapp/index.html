@@ -44,6 +44,7 @@
 </div>
 <div class="bottom"><nav class="nav"><button class="active" data-page="home"><span>🏡</span>Остров</button><button data-page="world"><span>🌳</span>Мир</button><button data-page="friends"><span>🫶</span>Друзья</button><button data-page="profilePage"><span>✨</span>Путь</button></nav></div>
 <div class="toast" id="toast"></div>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
 const tg=window.Telegram?.WebApp;try{tg?.ready();tg?.expand();tg?.setHeaderColor?.('#101d36');tg?.setBackgroundColor?.('#101d36')}catch(e){}
 const today=new Date().toLocaleDateString('en-CA');
@@ -76,5 +77,4 @@ document.getElementById('shareBtn').addEventListener('click',share);
 window.resetDemo=function(){if(confirm('Сбросить прогресс на этом устройстве?')){state={xp:0,leaves:0,done:[],date:today,streak:1};save();render();toast('Начнём новое путешествие!')}};
 render();
 </script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 </body></html>
