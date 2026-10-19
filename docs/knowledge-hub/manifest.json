@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "project": {
+    "id": "QUN",
+    "name": "QUN / КЮН",
+    "description": "Развивающаяся цифровая экосистема и набор продуктов.",
+    "language_primary": "ru",
+    "repository": "https://github.com/Serega40in/QUN",
+    "knowledge_hub": "https://serega40in.github.io/QUN/knowledge/",
+    "status_policy": "Distinguish confirmed implementation, work in progress, plans, hypotheses, and unverified claims."
+  },
+  "documents": [
+    {"id":"start","title":"AI Start Here","path":"docs/knowledge-hub/AI_START_HERE.md","url":"https://github.com/Serega40in/QUN/blob/main/docs/knowledge-hub/AI_START_HERE.md","purpose":"Universal onboarding protocol for AI systems","tags":["ai","onboarding","prompt","context"]},
+    {"id":"identity","title":"QUN Identity","path":"docs/knowledge-hub/QUN_IDENTITY.md","url":"https://github.com/Serega40in/QUN/blob/main/docs/knowledge-hub/QUN_IDENTITY.md","purpose":"Mission, principles, terminology and identity rules","tags":["brand","identity","principles"]},
+    {"id":"visual-bible","title":"Visual Bible","path":"docs/knowledge-hub/VISUAL_BIBLE.md","url":"https://github.com/Serega40in/QUN/blob/main/docs/knowledge-hub/VISUAL_BIBLE.md","purpose":"Visual language, color status and art direction","tags":["visual","design","colors","3d","animation"]},
+    {"id":"images","title":"Image prompts","path":"docs/knowledge-hub/PROMPTS_IMAGES.md","url":"https://github.com/Serega40in/QUN/blob/main/docs/knowledge-hub/PROMPTS_IMAGES.md","purpose":"Reusable prompts for image generation and character design","tags":["image","illustration","character","prompt"]},
+    {"id":"video-music","title":"Video, animation and music prompts","path":"docs/knowledge-hub/PROMPTS_VIDEO_MUSIC.md","url":"https://github.com/Serega40in/QUN/blob/main/docs/knowledge-hub/PROMPTS_VIDEO_MUSIC.md","purpose":"Reusable templates for video, animation, voice and music","tags":["video","music","audio","animation"]},
+    {"id":"engineering","title":"Engineering Guide","path":"docs/knowledge-hub/ENGINEERING_GUIDE.md","url":"https://github.com/Serega40in/QUN/blob/main/docs/knowledge-hub/ENGINEERING_GUIDE.md","purpose":"Repository-first software development workflow","tags":["code","engineering","api","security","tests"]},
+    {"id":"project-status","title":"Project Status","path":"docs/knowledge-hub/PROJECT_STATUS.md","url":"https://github.com/Serega40in/QUN/blob/main/docs/knowledge-hub/PROJECT_STATUS.md","purpose":"Status conventions and decision log","tags":["status","roadmap","decisions"]},
+    {"id":"existing-qun-ai-kb","title":"Existing QUN AI knowledge base","path":"docs/qun-ai/knowledge/README.md","url":"https://github.com/Serega40in/QUN/blob/main/docs/qun-ai/knowledge/README.md","purpose":"Existing knowledge and runtime context for QUN AI","tags":["qun-ai","products","runtime"]},
+    {"id":"product-catalog","title":"QUN product catalog","path":"docs/qun-ai/knowledge/03-katalog-proektov-qun.md","url":"https://github.com/Serega40in/QUN/blob/main/docs/qun-ai/knowledge/03-katalog-proektov-qun.md","purpose":"Product names, scope and project references","tags":["products","catalog"]},
+    {"id":"node-storage","title":"QUN Node / Storage documentation","path":"docs/qun-ai/knowledge/04-qun-node-storage-01.md","url":"https://github.com/Serega40in/QUN/blob/main/docs/qun-ai/knowledge/04-qun-node-storage-01.md","purpose":"Existing Node and Storage technical context","tags":["node","storage","infrastructure"]}
+  ],
+  "working_rules": [
+    "Read AI_START_HERE.md first.",
+    "Use only documents relevant to the current task, then verify primary sources.",
+    "Do not treat plans as shipped features.",
+    "Do not invent exact brand tokens; confirm them from approved assets.",
+    "Never expose credentials, private keys, tokens, or private personal data.",
+    "Record durable decisions and update the status after meaningful work."
+  ]
+}
