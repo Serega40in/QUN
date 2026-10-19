@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-10-19",
+  "policy": "Public links and status metadata only. Never store Telegram bot tokens, Supabase service_role keys, passwords, or other secrets here.",
+  "entries": [
+    {
+      "slug": "telegram-channel",
+      "name": "QUN News",
+      "category": "telegram",
+      "url": "https://t.me/qunnews",
+      "status": "active",
+      "type": "channel"
+    },
+    {
+      "slug": "telegram-community",
+      "name": "QUN Community",
+      "category": "telegram",
+      "url": "https://t.me/quncommunity",
+      "status": "active",
+      "type": "group"
+    },
+    {
+      "slug": "telegram-bot",
+      "name": "QUN Telegram Bot",
+      "category": "telegram",
+      "url": null,
+      "status": "needs_token_rotation",
+      "telegram_bot_id": "8907849629",
+      "token_stored": false,
+      "token_rotation_required": true
+    },
+    {
+      "slug": "qun-miniapp",
+      "name": "QUN — Живой мир",
+      "category": "miniapp",
+      "url": "https://serega40in.github.io/QUN/miniapp/",
+      "status": "prototype"
+    },
+    {
+      "slug": "qun-messenger",
+      "name": "QUN Messenger",
+      "category": "product",
+      "url": "https://serega40in.github.io/QUN/",
+      "status": "mvp"
+    },
+    {
+      "slug": "qun-ai",
+      "name": "QUN AI",
+      "category": "product",
+      "url": "https://serega40in.github.io/QUN/qun-ai/",
+      "status": "development"
+    },
+    {
+      "slug": "qun-node",
+      "name": "QUN Node & Storage",
+      "category": "infrastructure",
+      "url": "https://serega40in.github.io/QUN/node/",
+      "status": "prototype",
+      "real_qn_rewards_live": false
+    },
+    {
+      "slug": "qun-platform-market",
+      "name": "QUN Platform / Market",
+      "category": "product",
+      "url": null,
+      "status": "concept_only",
+      "task_enabled": false
+    }
+  ]
+}
