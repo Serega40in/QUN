@@ -31,7 +31,7 @@ def request_json(url: str, payload: dict, headers: dict | None = None) -> dict:
         raise RuntimeError(f"HTTP {exc.code}: {detail}") from exc
 
 def api(body: dict) -> dict:
-    return request_json(BASE + "/functions/v1/qun-compute", body, {
+    return request_json(BASE + "/functions/v1/qun-compute-node", body, {
         "apikey": PUBLIC_KEY, "Authorization": "Bearer " + PUBLIC_KEY
     })
 
