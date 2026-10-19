@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "site_name": "QUN",
+  "homepage": "/",
+  "search": {
+    "id": "qun-search",
+    "name": "QUN Search",
+    "path": "/search/",
+    "status": "prototype",
+    "category": "discovery",
+    "description": "Поиск по продуктам, публикациям и материалам экосистемы QUN."
+  },
+  "products": [
+    {"id":"qun-messenger","name":"QUN Messenger","path":"/messenger/","status":"in_development","category":"communication","description":"Сообщения и коммуникации экосистемы."},
+    {"id":"qun-ai","name":"QUN AI","path":"/ai/","status":"in_development","category":"ai","description":"AI-помощник и интерфейс к знаниям QUN."},
+    {"id":"qun-social","name":"QUN Social","path":"/social/","status":"in_development","category":"community","description":"Публикации, профили и социальные функции."},
+    {"id":"qun-publisher","name":"QUN Publisher","path":"/publisher/","status":"in_development","category":"publishing","description":"Создание и публикация материалов."},
+    {"id":"qun-market","name":"QUN Market","path":"/market/","status":"planned","category":"commerce","description":"Каталог товаров и услуг экосистемы."},
+    {"id":"qun-wallet","name":"QUN Wallet","path":"/wallet/","status":"planned","category":"finance","description":"Планируемый кошелёк цифровой экосистемы; реальные активы требуют отдельной проверки безопасности."},
+    {"id":"qun-node","name":"QUN Node","path":"/node/","status":"prototype","category":"infrastructure","description":"Узлы распределённой инфраструктуры."},
+    {"id":"qun-storage","name":"QUN Storage","path":"/node/","status":"prototype","category":"infrastructure","description":"Распределённое хранение на раннем этапе."},
+    {"id":"qun-core","name":"QUN Core","path":"/core/","status":"prototype","category":"infrastructure","description":"Собственный блокчейн QUN; текущая реализация — локальный прототип."},
+    {"id":"qun-guardian","name":"QUN Guardian","path":"/guardian/","status":"planned","category":"administration","description":"Административный центр; доступ должен быть защищён."},
+    {"id":"qun-brandbook","name":"Брендбук и журнал QUN","path":"/brandbook/","status":"available","category":"publishing","description":"Брендбук, интерактивный журнал и материалы."}
+  ],
+  "notes": [
+    "Это реестр целевой архитектуры; наличие записи не гарантирует, что соответствующая страница уже развёрнута по этому пути.",
+    "Перед ссылкой на продукт нужно подтвердить реальный маршрут и сохранить текущий рабочий URL."
+  ]
+}
