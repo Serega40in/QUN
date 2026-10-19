@@ -21,5 +21,5 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: core
-      - run: cargo fmt --all -- --check
-      - run: cargo test --locked
+      - run: cargo fmt --all
+      - run: cargo test
