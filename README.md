@@ -70,3 +70,16 @@ GitHub Actions автоматически разворачивает содер�
 **QUN Messenger → QUN Platform → QUN MAP → QUN Wallet → QUN AI → QUN Coin**
 
 Текущий приоритет — надёжный вход, приватность профилей и стабильная переписка между пользователями.
+
+
+## QUN Mini App — Живая сеть
+
+- **Telegram Mini App:** https://serega40in.github.io/QUN/miniapp/
+- **Стратегия игры и этапы запуска:** [docs/miniapp/strategy-roadmap.md](docs/miniapp/strategy-roadmap.md)
+- **Реестр официальных ссылок и безопасных метаданных:** [docs/miniapp/ecosystem-registry.json](docs/miniapp/ecosystem-registry.json)
+- **QUN News:** https://t.me/qunnews
+- **QUN Community:** https://t.me/quncommunity
+
+Игровая концепция: развивать остров, строить лабораторию, хранилище и QUN Node; реальные вычисления/хранение и любые возможные награды связывать только с проверенным вкладом узла. XP, листья и строительные материалы — игровые ресурсы, не денежные обещания.
+
+Текущий Mini App остаётся прототипом: прогресс локальный, серверная проверка Telegram WebApp initData и выполнение заданий ещё не подключены. Токены Telegram-бота не хранить в репозитории или публичных таблицах. Опубликованный в чате токен нужно отозвать через @BotFather; новый хранить только в секретах backend.
