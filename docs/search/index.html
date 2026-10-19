@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07111f">
+<meta name="description" content="QUN Search — единый поиск по приложениям, публикациям и сервисам экосистемы QUN.">
+<title>QUN Search — поиск по экосистеме</title>
+<style>
+:root{color-scheme:dark;--bg:#07111f;--panel:#101d30;--muted:#9aabc1;--text:#f3f7ff;--line:#25364c;--mint:#7af0c1;--blue:#8cbcff}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#15304a 0,transparent 48%),var(--bg);color:var(--text);font:16px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{width:min(100% - 32px,980px);margin:auto}.top{display:flex;align-items:center;justify-content:space-between;padding:24px 0}.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.04em}.gem{display:grid;place-items:center;width:36px;height:36px;border:1px solid #6de4bd;border-radius:12px;color:var(--mint);transform:rotate(0deg);font-size:18px}.top a,.link{color:var(--muted);text-decoration:none}.top a:hover,.link:hover{color:var(--mint)}
+.hero{text-align:center;padding:clamp(46px,9vw,100px) 0 40px}.eyebrow{color:var(--mint);font-size:12px;letter-spacing:.22em;text-transform:uppercase;font-weight:750}.hero h1{font-size:clamp(38px,7vw,68px);letter-spacing:-.055em;line-height:1.05;margin:16px 0}.hero p{max-width:590px;margin:0 auto;color:var(--muted);font-size:17px}
+.searchbox{margin:30px auto 14px;max-width:720px;display:flex;gap:10px;padding:8px;background:#0d1a2b;border:1px solid #35516a;border-radius:18px;box-shadow:0 18px 65px #0005}.searchbox input{min-width:0;flex:1;background:transparent;border:0;outline:0;color:var(--text);padding:12px 14px;font:inherit}.searchbox input::placeholder{color:#778ba4}.searchbox button{border:0;border-radius:12px;background:var(--mint);color:#082016;font:inherit;font-weight:750;padding:0 22px;cursor:pointer}.searchbox button:hover{filter:brightness(1.07)}.hint{color:#8193a9;font-size:12px}
+.filters{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:26px 0 34px}.chip{border:1px solid var(--line);background:#0d1929;color:var(--muted);border-radius:999px;padding:8px 14px;cursor:pointer;font:inherit;font-size:13px}.chip.active,.chip:hover{border-color:#5bd6b0;color:var(--mint);background:#102b2a}
+.sectionhead{display:flex;align-items:center;justify-content:space-between;margin:0 0 14px}.sectionhead h2{font-size:18px;margin:0}.count{font-size:12px;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{display:flex;flex-direction:column;min-height:155px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#13243a,#0d1929);text-decoration:none;color:inherit;transition:transform .18s,border-color .18s}.card:hover{transform:translateY(-3px);border-color:#5bd6b0}.cardtop{display:flex;align-items:center;gap:12px}.ico{width:40px;height:40px;display:grid;place-items:center;border-radius:13px;background:#1b3547;color:var(--mint);font-weight:800;font-size:17px}.card h3{margin:0;font-size:16px}.tag{font-size:11px;color:var(--mint);margin-top:3px}.card p{font-size:13px;color:var(--muted);margin:14px 0}.open{margin-top:auto;color:var(--blue);font-size:12px}.empty{display:none;padding:30px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:16px}.note{margin:30px 0 0;padding:18px 20px;border:1px solid var(--line);border-radius:16px;color:var(--muted);font-size:13px}.note strong{color:var(--text)}footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:30px 0 36px;color:#71849b;font-size:12px}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.top{padding:16px 0}.hero{padding-top:48px}.searchbox button{padding:0 15px}}
+@media(max-width:460px){.grid{grid-template-columns:1fr}.card{min-height:130px}.hero p{font-size:15px}.searchbox{gap:4px}.searchbox input{padding:10px 8px}.searchbox button{padding:0 12px}}
+</style>
+</head>
+<body><div class="wrap">
+<header class="top"><a class="brand" href="./" aria-label="QUN Search"><span class="gem">Q</span><span>QUN <span style="color:var(--mint)">SEARCH</span></span></a><a href="https://github.com/Serega40in/QUN">Проект на GitHub ↗</a></header>
+<main>
+<section class="hero"><div class="eyebrow">One ecosystem · One search</div><h1>Найди своё<br><span style="color:var(--mint)">в мире QUN.</span></h1><p>Единая точка входа в приложения, публикации, инструменты и знания экосистемы QUN.</p>
+<form class="searchbox" id="searchForm" role="search"><input id="query" type="search" autocomplete="off" placeholder="Что будем искать в QUN?" aria-label="Поиск по экосистеме"><button type="submit">Найти&nbsp; ↗</button></form><div class="hint">Попробуй: AI, публикации, кошелёк, узлы, профиль</div>
+<div class="filters" id="filters"><button class="chip active" data-filter="all">Всё</button><button class="chip" data-filter="apps">Приложения</button><button class="chip" data-filter="create">Создание</button><button class="chip" data-filter="infra">Инфраструктура</button><button class="chip" data-filter="community">Сообщество</button></div></section>
+<section><div class="sectionhead"><h2 id="resultsTitle">Разделы экосистемы</h2><span class="count" id="count"></span></div><div class="grid" id="results"></div><div class="empty" id="empty">Ничего не найдено. Попробуй другой запрос.</div></section>
+<div class="note"><strong>QUN Search развивается.</strong> Сейчас поиск помогает находить разделы экосистемы. Поиск по содержимому публикаций, профилям, товарам и сообщениям подключается по мере готовности соответствующих API и индексов. Результаты не имитируются: пока раздел не подключён, здесь отображается только его карточка.</div>
+</main>
+<footer><span>© QUN · Поиск по экосистеме</span><span>Создано с заботой о ясности и простоте.</span></footer>
+</div>
+<script>
+const items=[
+{n:"QUN ID",c:"apps",i:"ID",d:"Единый профиль и идентификатор для сервисов QUN.",k:"профиль аккаунт пользователь идентификатор"},
+{n:"QUN AI",c:"apps",i:"✳",d:"ИИ-помощник и навигатор по экосистеме.",k:"искусственный интеллект нейросеть помощник чат"},
+{n:"QUN Messenger",c:"apps",i:"↗",d:"Общение и сообщения внутри QUN.",k:"мессенджер чат переписка сообщения"},
+{n:"QUN Market",c:"apps",i:"◇",d:"Поиск товаров и услуг экосистемы.",k:"маркетплейс товары услуги магазин покупки"},
+{n:"QUN Wallet",c:"apps",i:"◈",d:"Концепция кошелька цифровых активов QUN.",k:"кошелёк криптовалюта активы перевод"},
+{n:"QUN Publisher",c:"create",i:"✎",d:"Публикации, авторы и материалы сообщества.",k:"статьи публикации авторы блог видео"},
+{n:"QUN Social",c:"community",i:"◎",d:"Профили, лента и взаимодействие сообщества.",k:"социальная сеть посты фотографии подписки"},
+{n:"QUN Node",c:"infra",i:"⌘",d:"Распределённые узлы и участие в сети.",k:"нода узел компьютер сеть распределённое"},
+{n:"QUN Storage",c:"infra",i:"▤",d:"Направление распределённого хранения данных.",k:"хранилище файлы данные резервное копирование"},
+{n:"QUN Core",c:"infra",i:"⬡",d:"Разработка блокчейн-ядра и цифровой экономики.",k:"блокчейн токен сеть смарт контракт"},
+{n:"QUN Animation Studio",c:"create",i:"✧",d:"Творческая студия для визуальных идей и анимации.",k:"дизайн графика искусство видео анимация"},
+{n:"QUN Architecture",c:"create",i:"⌂",d:"Архитектурные концепции и модульные дома.",k:"архитектура дом 3d проектирование строительство"}
+];
+const labels={apps:"Приложения",create:"Создание",infra:"Инфраструктура",community:"Сообщество"};
+let category="all",query="";
+const results=document.getElementById("results"),count=document.getElementById("count"),empty=document.getElementById("empty");
+function render(){const q=query.trim().toLocaleLowerCase("ru");const found=items.filter(x=>(category==="all"||x.c===category)&&(!q||(x.n+" "+x.d+" "+x.k+" "+labels[x.c]).toLocaleLowerCase("ru").includes(q)));results.innerHTML=found.map(x=>'<a class="card" href="'+(x.n==="QUN"?"#":"https://github.com/Serega40in/QUN")+'" aria-label="'+x.n+' — информация о проекте"><div class="cardtop"><span class="ico">'+x.i+'</span><div><h3>'+x.n+'</h3><div class="tag">'+labels[x.c]+'</div></div></div><p>'+x.d+'</p><span class="open">Открыть раздел ↗</span></a>').join("");count.textContent=found.length+" из "+items.length;empty.style.display=found.length?"none":"block";results.style.display=found.length?"grid":"none";document.getElementById("resultsTitle").textContent=q?"Результаты поиска":"Разделы экосистемы"}
+document.getElementById("query").addEventListener("input",e=>{query=e.target.value;render()});
+document.getElementById("searchForm").addEventListener("submit",e=>{e.preventDefault();query=document.getElementById("query").value;render()});
+document.getElementById("filters").addEventListener("click",e=>{const b=e.target.closest("button[data-filter]");if(!b)return;category=b.dataset.filter;document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x===b));render()});
+render();
+</script></body></html>
