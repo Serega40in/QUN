@@ -183,7 +183,7 @@ async function readJson(req) {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", "http://127.0.0.1");
   try {
-    if (["/health", "/enroll", "/test-transfer", "/test-transfer/status"].includes(url.pathname) && req.method === "OPTIONS") {
+    if (["/health", "/enroll", "/test-transfer", "/test-transfer/status", "/compute/status", "/compute/start", "/compute/stop"].includes(url.pathname) && req.method === "OPTIONS") {
       const headers = dashboardCors(req);
       if (!headers["Access-Control-Allow-Origin"]) return send(res, 403, { error: "Origin not allowed" });
       res.writeHead(204, headers);
@@ -203,23 +203,24 @@ const server = createServer(async (req, res) => {
 
     if (url.pathname.startsWith("/compute/")) {
       const origin = req.headers.origin;
-      const allowedOrigins = new Set([`http://${HOST}:${PORT}`, `http://localhost:${PORT}`]);
+      const allowedOrigins = new Set([`http://${HOST}:${PORT}`, `http://localhost:${PORT}`, DASHBOARD_ORIGIN]);
       if (origin && !allowedOrigins.has(origin)) return send(res, 403, { error: "Origin not allowed" });
+      const cors = dashboardCors(req);
       if (req.method === "GET" && url.pathname === "/compute/status") {
-        return send(res, 200, computeWorker.snapshot());
+        return send(res, 200, computeWorker.snapshot(), cors);
       }
       if (req.method === "POST" && url.pathname === "/compute/start") {
         try {
           const state = await computeWorker.start();
-          return send(res, 200, state);
+          return send(res, 200, state, cors);
         } catch (error) {
-          return send(res, 409, { ...computeWorker.snapshot(), error: error instanceof Error ? error.message : "Could not start compute worker" });
+          return send(res, 409, { ...computeWorker.snapshot(), error: error instanceof Error ? error.message : "Could not start compute worker" }, cors);
         }
       }
       if (req.method === "POST" && url.pathname === "/compute/stop") {
-        return send(res, 200, await computeWorker.stop());
+        return send(res, 200, await computeWorker.stop(), cors);
       }
-      return send(res, 404, { error: "Unknown compute endpoint" });
+      return send(res, 404, { error: "Unknown compute endpoint" }, cors);
     }
 
     if (req.method === "POST" && url.pathname === "/enroll") {
