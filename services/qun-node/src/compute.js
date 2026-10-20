@@ -7,6 +7,7 @@ export function createComputeWorker({ credentialsFile, base = DEFAULT_BASE, publ
   let running = false;
   let loopPromise = null;
   let wakeTimer = null;
+  let wakeResolve = null;
   let state = {
     running: false,
     mode: "idle",
@@ -52,7 +53,8 @@ export function createComputeWorker({ credentialsFile, base = DEFAULT_BASE, publ
   }
 
   const sleep = ms => new Promise(resolve => {
-    wakeTimer = setTimeout(() => { wakeTimer = null; resolve(); }, ms);
+    wakeResolve = resolve;
+    wakeTimer = setTimeout(() => { wakeTimer = null; wakeResolve = null; resolve(); }, ms);
   });
 
   async function processJob(job, creds) {
@@ -133,6 +135,9 @@ export function createComputeWorker({ credentialsFile, base = DEFAULT_BASE, publ
     if (wakeTimer) {
       clearTimeout(wakeTimer);
       wakeTimer = null;
+      const resolve = wakeResolve;
+      wakeResolve = null;
+      if (resolve) resolve();
     }
     if (loopPromise) await Promise.race([loopPromise, new Promise(resolve => setTimeout(resolve, 3000))]);
     state.running = false;
