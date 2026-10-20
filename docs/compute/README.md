@@ -18,7 +18,7 @@ QUN Compute is the first shared job queue for the QUN distributed compute layer.
 ## Security rules
 - Never expose Supabase service-role keys in GitHub Pages or node agents.
 - Node credentials are long random tokens; store only SHA-256 hashes server-side.
-- Only `health_check` jobs are claimable in the current worker version. Image/video/audio and ComfyUI jobs stay queued until a compatible executor is explicitly enabled.
+- Only `health_check` jobs are claimable in the current worker version. Use the Studio option “Проверка очереди (без генерации)” to smoke-test the queue. Image/video/audio and ComfyUI jobs stay queued until a compatible executor is explicitly enabled.
 - Job claims are atomic; each claim increments `attempt_count` and receives a three-minute lease. Worker heartbeats renew the lease. Expired leases are retried up to `max_attempts` (default 3), then marked failed.
 - Completion/failure updates are accepted only from the node currently assigned to a running job; stale workers cannot overwrite a requeued job.
 - Only run explicitly allow-listed workflows. Do not execute arbitrary shell commands or accept arbitrary workflow files from untrusted users on a worker.
