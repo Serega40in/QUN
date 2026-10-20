@@ -4,7 +4,6 @@
   "private": true,
   "description": "QUN Node desktop shell and local agent",
   "main": "main.cjs",
-      "preload.cjs",
   "scripts": {
     "start": "electron .",
     "dist:win": "electron-builder --win nsis portable"
@@ -22,6 +21,7 @@
     },
     "files": [
       "main.cjs",
+      "preload.cjs",
       "package.json"
     ],
     "extraResources": [
