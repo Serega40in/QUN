@@ -2,6 +2,8 @@
 setlocal EnableExtensions
 title QUN Compute Worker
 cd /d "%~dp0"
+set "QUN_SUPABASE_URL=https://qdxjltqlnphvzafapncm.supabase.co"
+set "QUN_SUPABASE_PUBLISHABLE_KEY=sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L"
 where py >nul 2>nul
 if not errorlevel 1 goto use_py
 where python >nul 2>nul
