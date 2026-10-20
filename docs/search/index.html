@@ -18,7 +18,7 @@
 </style>
 </head>
 <body><div class="wrap">
-<header class="top"><a class="brand" href="./" aria-label="QUN Search"><span class="gem">Q</span><span>QUN <span style="color:var(--mint)">SEARCH</span></span></a><a href="https://github.com/Serega40in/QUN">Проект на GitHub ↗</a></header>
+<header class="top"><a class="brand" href="../" aria-label="QUN Search"><span class="gem">Q</span><span>QUN <span style="color:var(--mint)">SEARCH</span></span></a><a href="https://github.com/Serega40in/QUN">Проект на GitHub ↗</a></header>
 <main>
 <section class="hero"><div class="eyebrow">One ecosystem · One search</div><h1>Найди своё<br><span style="color:var(--mint)">в мире QUN.</span></h1><p>Единая точка входа в приложения, публикации, инструменты и знания экосистемы QUN.</p>
 <form class="searchbox" id="searchForm" role="search"><input id="query" type="search" autocomplete="off" placeholder="Что будем искать в QUN?" aria-label="Поиск по экосистеме"><button type="submit">Найти&nbsp; ↗</button></form><div class="hint">Попробуй: AI, публикации, кошелёк, узлы, профиль</div>
@@ -38,6 +38,7 @@ const items=[
 {n:"QUN Publisher",c:"create",i:"✎",d:"Публикации, авторы и материалы сообщества.",k:"статьи публикации авторы блог видео"},
 {n:"QUN Social",c:"community",i:"◎",d:"Профили, лента и взаимодействие сообщества.",k:"социальная сеть посты фотографии подписки"},
 {n:"QUN Node",c:"infra",i:"⌘",d:"Распределённые узлы и участие в сети.",k:"нода узел компьютер сеть распределённое"},
+{n:"QUN Node Dashboard",c:"infra",i:"▦",d:"Веб-панель локального агента и тестовой сети.",k:"дашборд статус узла мониторинг"},
 {n:"QUN Storage",c:"infra",i:"▤",d:"Направление распределённого хранения данных.",k:"хранилище файлы данные резервное копирование"},
 {n:"QUN Core",c:"infra",i:"⬡",d:"Разработка блокчейн-ядра и цифровой экономики.",k:"блокчейн токен сеть смарт контракт"},
 {n:"QUN Animation Studio",c:"create",i:"✧",d:"Творческая студия для визуальных идей и анимации.",k:"дизайн графика искусство видео анимация"},
@@ -46,7 +47,7 @@ const items=[
 const labels={apps:"Приложения",create:"Создание",infra:"Инфраструктура",community:"Сообщество"};
 let category="all",query=new URLSearchParams(location.search).get("q")||"";document.getElementById("query").value=query;
 const results=document.getElementById("results"),count=document.getElementById("count"),empty=document.getElementById("empty");
-function render(){const q=query.trim().toLocaleLowerCase("ru");const found=items.filter(x=>(category==="all"||x.c===category)&&(!q||(x.n+" "+x.d+" "+x.k+" "+labels[x.c]).toLocaleLowerCase("ru").includes(q)));const links={"QUN ID":"../messenger/","QUN AI":"../qun-ai/","QUN Messenger":"../messenger/","QUN Market":"../ecosystem/","QUN Wallet":"../qun-wallet/","QUN Publisher":"../publisher/","QUN Social":"../qun-social/","QUN Node":"../node/","QUN Storage":"../node/","QUN Core":"../architecture/","QUN Animation Studio":"../world/","QUN Architecture":"../architecture/"};results.innerHTML=found.map(x=>'<a class="card" href="'+links[x.n]+'" aria-label="'+x.n+' — открыть раздел"><div class="cardtop"><span class="ico">'+x.i+'</span><div><h3>'+x.n+'</h3><div class="tag">'+labels[x.c]+'</div></div></div><p>'+x.d+'</p><span class="open">Открыть раздел ↗</span></a>').join("");count.textContent=found.length+" из "+items.length;empty.style.display=found.length?"none":"block";results.style.display=found.length?"grid":"none";document.getElementById("resultsTitle").textContent=q?"Результаты поиска":"Разделы экосистемы"}
+function render(){const q=query.trim().toLocaleLowerCase("ru");const found=items.filter(x=>(category==="all"||x.c===category)&&(!q||(x.n+" "+x.d+" "+x.k+" "+labels[x.c]).toLocaleLowerCase("ru").includes(q)));const links={"QUN ID":"../ecosystem/","QUN AI":"../qun-ai/","QUN Messenger":"../messenger/","QUN Market":"../ecosystem/","QUN Wallet":"../qun-wallet/","QUN Publisher":"../publisher/","QUN Social":"../qun-social/","QUN Node":"../node/","QUN Node Dashboard":"../node/dashboard/","QUN Storage":"../node/","QUN Core":"../architecture/","QUN Animation Studio":"../studio/","QUN Architecture":"../architecture/"};results.innerHTML=found.map(x=>'<a class="card" href="'+links[x.n]+'" aria-label="'+x.n+' — открыть раздел"><div class="cardtop"><span class="ico">'+x.i+'</span><div><h3>'+x.n+'</h3><div class="tag">'+labels[x.c]+'</div></div></div><p>'+x.d+'</p><span class="open">Открыть раздел ↗</span></a>').join("");count.textContent=found.length+" из "+items.length;empty.style.display=found.length?"none":"block";results.style.display=found.length?"grid":"none";document.getElementById("resultsTitle").textContent=q?"Результаты поиска":"Разделы экосистемы"}
 document.getElementById("query").addEventListener("input",e=>{query=e.target.value;render()});
 document.getElementById("searchForm").addEventListener("submit",e=>{e.preventDefault();query=document.getElementById("query").value;render()});
 document.getElementById("filters").addEventListener("click",e=>{const b=e.target.closest("button[data-filter]");if(!b)return;category=b.dataset.filter;document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x===b));render()});
