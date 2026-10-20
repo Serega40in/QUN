@@ -10,8 +10,8 @@ import hashlib, json, os, platform, secrets, sys, time, urllib.error, urllib.req
 from pathlib import Path
 
 BASE = os.environ.get("QUN_SUPABASE_URL", "https://qdxjltqlnphvzafapncm.supabase.co").rstrip("/")
-PUBLIC_KEY = os.environ.get("QUN_SUPABASE_PUBLISHABLE_KEY", "")
-NODE_ID_FILE = Path(os.environ.get("QUN_NODE_CREDENTIALS", str(Path.home() / ".qun-node" / "credentials.json")))
+PUBLIC_KEY = os.environ.get("QUN_SUPABASE_PUBLISHABLE_KEY", "sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L")
+NODE_ID_FILE = Path(os.environ.get("QUN_NODE_CREDENTIALS", str(Path.home() / ".qun-compute-node" / "credentials.json")))
 POLL_SECONDS = max(10, int(os.environ.get("QUN_POLL_SECONDS", "20")))
 COMFY_URL = os.environ.get("QUN_COMFY_URL", "http://127.0.0.1:8188").rstrip("/")
 # Only local, reviewed workflows may be added to this map.
