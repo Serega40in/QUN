@@ -9,15 +9,18 @@ QUN Compute is the first shared job queue for the QUN distributed compute layer.
 - ComfyUI is not embedded in Supabase; a trusted worker must run it and poll the queue.
 
 ## Current status
-- `qun_compute_jobs` table and atomic `qun_claim_compute_job(uuid)` function created by migration `qun_compute_queue_v01`.
+- `qun_compute_jobs` table and atomic `qun_claim_compute_job(uuid)` function; queue-safety migration adds bounded attempts, three-minute leases, heartbeat renewal and stale-job recovery.
 - Edge Function `qun-compute` deployed with JWT verification enabled.
 - Dashboard: `/compute/`
-- Supported API actions: `create_job`, `my_jobs`, `cancel_job`, `node_heartbeat`, `claim_job`, `complete_job`, `fail_job`.
+- Supported API actions: `create_job`, `my_jobs`, `cancel_job`, `node_heartbeat`, `claim_job`, `heartbeat_job`, `complete_job`, `fail_job`.
 - Job result metadata is not the actual media file. Store generated files in durable object storage and save a durable URL/checksum in `result`.
 
 ## Security rules
 - Never expose Supabase service-role keys in GitHub Pages or node agents.
 - Node credentials are long random tokens; store only SHA-256 hashes server-side.
+- Only `health_check` jobs are claimable in the current worker version. Image/video/audio and ComfyUI jobs stay queued until a compatible executor is explicitly enabled.
+- Job claims are atomic; each claim increments `attempt_count` and receives a three-minute lease. Worker heartbeats renew the lease. Expired leases are retried up to `max_attempts` (default 3), then marked failed.
+- Completion/failure updates are accepted only from the node currently assigned to a running job; stale workers cannot overwrite a requeued job.
 - Only run explicitly allow-listed workflows. Do not execute arbitrary shell commands or accept arbitrary workflow files from untrusted users on a worker.
 - Node owners must opt in and be able to pause/revoke a worker.
 - GPU generation is not active until a real worker with suitable hardware is connected.
