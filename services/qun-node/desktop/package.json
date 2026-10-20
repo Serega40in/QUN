@@ -1,9 +1,10 @@
 {
   "name": "qun-node-desktop",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": true,
   "description": "QUN Node desktop shell and local agent",
   "main": "main.cjs",
+      "preload.cjs",
   "scripts": {
     "start": "electron .",
     "dist:win": "electron-builder --win nsis portable"
