@@ -5,6 +5,7 @@ import os from "node:os";
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { LocalStorage, sha256 } from "./storage.js";
+import { createComputeWorker } from "./compute.js";
 
 const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_FILE = path.resolve(MODULE_DIR, "../public/index.html");
@@ -17,6 +18,7 @@ const SHARED_TOKEN = process.env.QUN_NODE_SHARED_TOKEN || "";
 const REGISTRY_URL = process.env.QUN_NODE_REGISTRY_URL || "https://qdxjltqlnphvzafapncm.supabase.co/functions/v1/qun-node-registry";
 const REGISTRY_KEY = process.env.QUN_NODE_REGISTRY_KEY || "sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L";
 const REGISTRY_FILE = path.join(DATA_DIR, "registry.json");
+const computeWorker = createComputeWorker({ credentialsFile: REGISTRY_FILE, base: new URL(REGISTRY_URL).origin, publishableKey: REGISTRY_KEY });
 let registryState = null;
 let registryHeartbeatState = { ok: false, lastAttemptAt: null, lastSuccessAt: null, error: null };
 try { registryState = JSON.parse(await readFile(REGISTRY_FILE, "utf8")); } catch {}
@@ -197,6 +199,27 @@ const server = createServer(async (req, res) => {
         "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
       });
       return res.end(html);
+    }
+
+    if (url.pathname.startsWith("/compute/")) {
+      const origin = req.headers.origin;
+      const allowedOrigins = new Set([`http://${HOST}:${PORT}`, `http://localhost:${PORT}`]);
+      if (origin && !allowedOrigins.has(origin)) return send(res, 403, { error: "Origin not allowed" });
+      if (req.method === "GET" && url.pathname === "/compute/status") {
+        return send(res, 200, computeWorker.snapshot());
+      }
+      if (req.method === "POST" && url.pathname === "/compute/start") {
+        try {
+          const state = await computeWorker.start();
+          return send(res, 200, state);
+        } catch (error) {
+          return send(res, 409, { ...computeWorker.snapshot(), error: error instanceof Error ? error.message : "Could not start compute worker" });
+        }
+      }
+      if (req.method === "POST" && url.pathname === "/compute/stop") {
+        return send(res, 200, await computeWorker.stop());
+      }
+      return send(res, 404, { error: "Unknown compute endpoint" });
     }
 
     if (req.method === "POST" && url.pathname === "/enroll") {
@@ -392,6 +415,7 @@ const reconcileTimer = setInterval(() => { void reconcileAllPeers(); }, Number(p
 reconcileTimer.unref();
 
 function shutdown() {
+  void computeWorker.stop();
   clearInterval(reconcileTimer);
   clearInterval(registryTimer);
   server.close(() => process.exit(0));
