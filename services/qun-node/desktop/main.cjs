@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, shell } = require("electron");
+const { app, BrowserWindow, dialog, shell, ipcMain } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const { spawn } = require("node:child_process");
 const path = require("node:path");
@@ -7,6 +7,7 @@ const http = require("node:http");
 let agent = null;
 let windowRef = null;
 let updateCheckStarted = false;
+let updaterState = { status: "idle", version: app.getVersion(), message: "Обновления ещё не проверялись", progress: 0 };
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 autoUpdater.allowDowngrade = false;
@@ -70,31 +71,67 @@ function waitForDashboard(attempt = 0) {
 function setupAutoUpdates() {
   if (!app.isPackaged || updateCheckStarted) return;
   updateCheckStarted = true;
-  autoUpdater.on("checking-for-update", () => console.log("[QUN updater] Checking for updates"));
+  autoUpdater.on("checking-for-update", () => {
+    updaterState = { ...updaterState, status: "checking", message: "Проверяем наличие обновлений…" };
+    notifyUpdater();
+    console.log("[QUN updater] Checking for updates");
+  });
   autoUpdater.on("update-available", info => {
     console.log("[QUN updater] Update available:", info.version);
   });
-  autoUpdater.on("update-not-available", info => console.log("[QUN updater] Up to date:", info.version));
-  autoUpdater.on("download-progress", progress => console.log("[QUN updater] Download:", Math.round(progress.percent) + "%"));
-  autoUpdater.on("update-downloaded", async info => {
-    if (!windowRef || windowRef.isDestroyed()) return;
-    const result = await dialog.showMessageBox(windowRef, {
-      type: "info", title: "QUN Node — обновление готово",
-      message: "Версия " + info.version + " скачана и проверена.",
-      detail: "Перезапустить QUN Node сейчас? Данные узла сохранятся.",
-      buttons: ["Перезапустить и обновить", "Позже"], defaultId: 0, cancelId: 1
-    });
-    if (result.response === 0) autoUpdater.quitAndInstall();
+  autoUpdater.on("update-not-available", info => {
+    updaterState = { status: "current", version: info.version, message: "Установлена последняя версия (" + info.version + ").", progress: 0 };
+    notifyUpdater();
+    console.log("[QUN updater] Up to date:", info.version);
   });
-  autoUpdater.on("error", error => console.error("[QUN updater] Update error:", error.message));
+  autoUpdater.on("download-progress", progress => {
+    updaterState = { status: "downloading", version: updaterState.version, message: "Загрузка обновления… " + Math.round(progress.percent) + "%", progress: Math.round(progress.percent) };
+    notifyUpdater();
+    console.log("[QUN updater] Download:", Math.round(progress.percent) + "%");
+  });
+  autoUpdater.on("update-downloaded", info => {
+    updaterState = { status: "downloaded", version: info.version, message: "Обновление " + info.version + " скачано. Нажмите «Перезапустить и установить».", progress: 100 };
+    notifyUpdater();
+  });
+  autoUpdater.on("error", error => {
+    updaterState = { status: "error", version: app.getVersion(), message: "Ошибка обновления: " + error.message, progress: 0 };
+    notifyUpdater();
+    console.error("[QUN updater] Update error:", error.message);
+  });
   setTimeout(() => autoUpdater.checkForUpdates().catch(error => console.error("[QUN updater]", error.message)), 12000);
   setInterval(() => autoUpdater.checkForUpdates().catch(error => console.error("[QUN updater]", error.message)), 6 * 60 * 60 * 1000);
 }
+function notifyUpdater() {
+  if (windowRef && !windowRef.isDestroyed()) windowRef.webContents.send("qun-updater:state", updaterState);
+}
+ipcMain.handle("qun-updater:get-state", () => updaterState);
+ipcMain.handle("qun-updater:check", async () => {
+  if (!app.isPackaged) {
+    updaterState = { status: "development", version: app.getVersion(), message: "Проверка обновлений доступна только в установленной версии.", progress: 0 };
+    notifyUpdater();
+    return updaterState;
+  }
+  updaterState = { status: "checking", version: app.getVersion(), message: "Проверяем наличие обновлений…", progress: 0 };
+  notifyUpdater();
+  try {
+    await autoUpdater.checkForUpdates();
+  } catch (error) {
+    updaterState = { status: "error", version: app.getVersion(), message: "Не удалось проверить обновления: " + error.message, progress: 0 };
+    notifyUpdater();
+  }
+  return updaterState;
+});
+ipcMain.handle("qun-updater:install", () => {
+  if (updaterState.status !== "downloaded") return { ...updaterState, message: "Обновление ещё не скачано." };
+  setImmediate(() => autoUpdater.quitAndInstall());
+  return { ...updaterState, message: "Перезапускаем приложение для установки обновления…" };
+});
+
 async function createWindow() {
   windowRef = new BrowserWindow({
     width: 1180, height: 820, minWidth: 760, minHeight: 620,
     title: "QUN Node", backgroundColor: "#08121f",
-    webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true }
+    webPreferences: { preload: path.join(__dirname, "preload.cjs"), nodeIntegration: false, contextIsolation: true, sandbox: true }
   });
   const ready = await waitForDashboard();
   if (!ready) {
