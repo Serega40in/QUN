@@ -1,0 +1,56 @@
+name: Publish QUN Node Windows release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Must match services/qun-node/desktop/package.json"
+        required: true
+        default: "0.4.1"
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: services/qun-node/desktop
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate release version
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          $packageVersion = (Get-Content package.json | ConvertFrom-Json).version
+          if ($env:RELEASE_VERSION -ne $packageVersion) {
+            throw "Requested version $env:RELEASE_VERSION does not match package.json $packageVersion"
+          }
+      - name: Install dependencies
+        run: npm install
+      - name: Build Windows installer and portable app
+        run: npm run dist:win -- --publish never
+      - name: Verify installer, portable build, and updater manifest
+        shell: pwsh
+        run: |
+          $required = @("QUN-Node-Setup-${{ inputs.version }}.exe", "QUN-Node-Portable-${{ inputs.version }}.exe", "latest.yml")
+          foreach ($name in $required) {
+            if (-not (Test-Path "dist/$name")) { throw "Missing release file: $name" }
+          }
+      - name: Publish GitHub Release for app updater
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: qun-node-v${{ inputs.version }}
+          target_commitish: main
+          name: QUN Node v${{ inputs.version }} (Windows)
+          generate_release_notes: true
+          make_latest: true
+          files: services/qun-node/desktop/dist/*
