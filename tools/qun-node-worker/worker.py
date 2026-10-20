@@ -68,7 +68,17 @@ def register() -> dict:
     return result
 
 def run_job(job: dict) -> dict:
-    """Only execute a named local workflow from the explicit allow-list."""
+    """Handle lightweight health checks; only run reviewed local workflows."""
+    job_type = job.get("job_type") or job.get("type")
+    if job_type == "health_check":
+        return {
+            "provider": "qun-worker",
+            "health_check": True,
+            "node": platform.node()[:120],
+            "platform": platform.platform()[:160],
+            "checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "comfyui_configured": bool(WORKFLOW_ALLOWLIST),
+        }
     requirements = job.get("requirements") or {}
     workflow_id = requirements.get("workflow_id")
     if not isinstance(workflow_id, str) or workflow_id not in WORKFLOW_ALLOWLIST:
