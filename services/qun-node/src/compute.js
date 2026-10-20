@@ -63,6 +63,11 @@ export function createComputeWorker({ credentialsFile, base = DEFAULT_BASE, publ
     state.lastJobId = jobId;
     state.lastJobAt = new Date().toISOString();
     state.message = "Выполняется задание " + jobId;
+    const leaseTimer = setInterval(() => {
+      api("heartbeat_job", creds, { jobId }).catch(error => {
+        state.lastError = "Не удалось продлить аренду задания: " + (error instanceof Error ? error.message : "API error");
+      });
+    }, 45000);
     try {
       const type = job.job_type || job.type;
       if (type !== "health_check") {
@@ -91,6 +96,8 @@ export function createComputeWorker({ credentialsFile, base = DEFAULT_BASE, publ
       state.jobsFailed += 1;
       if (!state.lastError) state.lastError = message;
       state.message = "Задание отклонено или завершилось ошибкой.";
+    } finally {
+      clearInterval(leaseTimer);
     }
   }
 
