@@ -14,7 +14,7 @@
     .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid #234259;border-radius:999px;padding:8px 12px;font-size:12px;color:#b8cad8;background:#0b1a29}
     .dot{width:7px;height:7px;border-radius:50%;background:#64748b}.dot.good{background:#48dfb1;box-shadow:0 0 12px #48dfb155}.dot.bad{background:#fb7185}
     .intro{margin:40px 0 22px}.eyebrow{color:#55d9b7;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.intro h2{font-size:clamp(26px,5vw,40px);letter-spacing:-.055em;line-height:1.05;margin:12px 0}.intro p{max-width:620px;color:#9bb0c4;line-height:1.65;margin:0}
-    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{background:linear-gradient(145deg,#102235,#0b1928);border:1px solid #1e384e;border-radius:18px;padding:20px;min-width:0}.label{color:#8ea7bd;font-size:12px}.value{font-size:28px;font-weight:750;letter-spacing:-.04em;margin-top:10px;overflow-wrap:anywhere}.unit{font-size:13px;color:#a5bdce;font-weight:500;letter-spacing:0}.section{margin-top:16px}.section h3{font-size:15px;margin:0 0 12px}.line{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid #1b3043}.line:last-child{border-bottom:0}.muted{color:#8ea7bd;font-size:12px}.peer{overflow-wrap:anywhere}.button{background:#15374a;border:1px solid #2b5a6b;color:#e7f7ff;border-radius:12px;padding:10px 14px;font-weight:650;cursor:pointer}.button:hover{background:#1a4657}.footer{color:#6e879b;font-size:11px;line-height:1.6;margin-top:18px}.error{color:#fda4af}.empty{color:#8ea7bd;font-size:13px;padding:14px 0}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{background:linear-gradient(145deg,#102235,#0b1928);border:1px solid #1e384e;border-radius:18px;padding:20px;min-width:0}.label{color:#8ea7bd;font-size:12px}.value{font-size:28px;font-weight:750;letter-spacing:-.04em;margin-top:10px;overflow-wrap:anywhere}.unit{font-size:13px;color:#a5bdce;font-weight:500;letter-spacing:0}.section{margin-top:16px}.section h3{font-size:15px;margin:0 0 12px}.line{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid #1b3043}.line:last-child{border-bottom:0}.muted{color:#8ea7bd;font-size:12px}.peer{overflow-wrap:anywhere}.button{background:#15374a;border:1px solid #2b5a6b;color:#e7f7ff;border-radius:12px;padding:10px 14px;font-weight:650;cursor:pointer}.button:hover{background:#1a4657}.footer{color:#6e879b;font-size:11px;line-height:1.6;margin-top:18px}.error{color:#fda4af}.empty{color:#8ea7bd;font-size:13px;padding:14px 0}.compute-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.compute-actions{display:flex;gap:8px;flex-wrap:wrap}.button.primary{background:#65e4c1;color:#052019;border-color:#65e4c1}.button:disabled{opacity:.55;cursor:wait}.compute-message{font-size:13px;color:#b8cad8;line-height:1.6;margin:8px 0}.compute-error{font-size:12px;color:#fda4af;line-height:1.6;overflow-wrap:anywhere}.compute-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}.compute-stat{border:1px solid #203b50;background:#0a1927;border-radius:12px;padding:12px}.compute-stat strong{display:block;font-size:17px}.compute-stat span{display:block;color:#8ea7bd;font-size:11px;margin-top:4px}@media(max-width:650px){.compute-stats{grid-template-columns:1fr}}
     @media(max-width:650px){main{padding:24px 14px}.grid{grid-template-columns:1fr}.value{font-size:24px}.intro{margin-top:30px}}
   </style>
 </head>
@@ -33,6 +33,18 @@
     <div class="card"><div class="label">Идентификатор узла</div><div class="value" id="nodeId">—</div><div class="muted" id="platform">Платформа: —</div></div>
     <div class="card"><div class="label">Объекты</div><div class="value" id="objectCount">—</div><div class="muted">Локально сохранено</div></div>
     <div class="card"><div class="label">Занято хранилище</div><div class="value" id="storedBytes">—</div><div class="muted" id="limit">Лимит объекта: —</div></div>
+  </section>
+  <section class="card section" id="computePanel">
+    <div class="compute-head"><div><h3>QUN Compute</h3><div class="muted">Вычислительный модуль внутри QUN Node</div></div><div class="compute-actions"><button class="button primary" id="computeStart">Запустить вычисления</button><button class="button" id="computeStop" disabled>Остановить</button></div></div>
+    <div class="line"><span class="muted">Состояние</span><strong id="computeStatus">Проверка…</strong></div>
+    <p class="compute-message" id="computeMessage">Модуль выключен по умолчанию и запускается только по вашей команде.</p>
+    <div class="compute-stats">
+      <div class="compute-stat"><strong id="computeDone">0</strong><span>Заданий выполнено</span></div>
+      <div class="compute-stat"><strong id="computeFailed">0</strong><span>Заданий отклонено / ошибок</span></div>
+      <div class="compute-stat"><strong id="computeHeartbeat">—</strong><span>Последний heartbeat</span></div>
+    </div>
+    <div class="compute-error" id="computeError" hidden></div>
+    <div class="footer">Безопасный режим: разрешена только проверка работоспособности (health_check). Произвольные команды не исполняются; генерация изображений/видео появится после настройки и проверки локальных workflow.</div>
   </section>
   <section class="card section">
     <div class="top"><h3>Связь с другими узлами</h3><button class="button" id="refresh">Обновить</button></div>
@@ -96,8 +108,45 @@
       byId("updated").textContent="Не удалось получить /health. Запустите QUN Node и повторите попытку.";
     } finally {button.disabled=false;button.textContent="Обновить";}
   }
+  async function refreshCompute() {
+    const start=byId("computeStart"), stop=byId("computeStop");
+    try {
+      const response=await fetch("/compute/status",{cache:"no-store"});
+      const data=await response.json();
+      if(!response.ok) throw new Error(data.error||("HTTP "+response.status));
+      byId("computeStatus").textContent=data.running?"Работает":"Остановлен";
+      byId("computeMessage").textContent=data.message||"";
+      byId("computeDone").textContent=String(data.jobsCompleted||0);
+      byId("computeFailed").textContent=String(data.jobsFailed||0);
+      byId("computeHeartbeat").textContent=data.lastHeartbeatAt?new Date(data.lastHeartbeatAt).toLocaleTimeString("ru-RU"):"—";
+      byId("computeError").hidden=!data.lastError;
+      byId("computeError").textContent=data.lastError||"";
+      start.disabled=Boolean(data.running); stop.disabled=!data.running;
+    } catch(error) {
+      byId("computeStatus").textContent="Недоступен";
+      byId("computeMessage").textContent="Не удалось прочитать состояние вычислительного модуля.";
+      byId("computeError").hidden=false; byId("computeError").textContent=error.message;
+      start.disabled=false; stop.disabled=true;
+    }
+  }
+  async function computeAction(action) {
+    const start=byId("computeStart"), stop=byId("computeStop");
+    start.disabled=true; stop.disabled=true;
+    byId("computeMessage").textContent=action==="start"?"Запускаем вычислительный модуль…":"Останавливаем вычисления…";
+    try {
+      const response=await fetch("/compute/"+action,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+      const data=await response.json();
+      if(!response.ok) throw new Error(data.error||("HTTP "+response.status));
+      await refreshCompute();
+    } catch(error) {
+      byId("computeError").hidden=false; byId("computeError").textContent=error.message;
+      await refreshCompute();
+    }
+  }
+  byId("computeStart").addEventListener("click",()=>computeAction("start"));
+  byId("computeStop").addEventListener("click",()=>computeAction("stop"));
   byId("refresh").addEventListener("click",refresh);
-  refresh(); setInterval(refresh,5000);
+  refresh(); refreshCompute(); setInterval(refresh,5000); setInterval(refreshCompute,3000);
 </script>
 </body>
 </html>
