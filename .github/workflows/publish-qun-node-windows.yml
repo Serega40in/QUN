@@ -48,7 +48,7 @@ jobs:
       - name: Publish GitHub Release for app updater
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: qun-node-v${{ inputs.version }}
+          tag_name: qun-node-windows-v${{ inputs.version }}
           target_commitish: main
           name: QUN Node v${{ inputs.version }} (Windows)
           generate_release_notes: true
