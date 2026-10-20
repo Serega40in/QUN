@@ -11,7 +11,7 @@
     main{max-width:980px;margin:0 auto;padding:36px 20px 56px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
     .brand{display:flex;align-items:center;gap:12px}.mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(145deg,#55e0bb,#2678ac);display:grid;place-items:center;color:#071a24;font-weight:900;font-size:20px}
     h1{font-size:24px;margin:0;letter-spacing:-.04em} .sub{color:#91a8be;font-size:13px;margin-top:4px}
-    .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid #234259;border-radius:999px;padding:8px 12px;font-size:12px;color:#b8cad8;background:#0b1a29}
+    .update-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.update-note{font-size:11px;color:#91a8be;max-width:260px}.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid #234259;border-radius:999px;padding:8px 12px;font-size:12px;color:#b8cad8;background:#0b1a29}
     .dot{width:7px;height:7px;border-radius:50%;background:#64748b}.dot.good{background:#48dfb1;box-shadow:0 0 12px #48dfb155}.dot.bad{background:#fb7185}
     .intro{margin:40px 0 22px}.eyebrow{color:#55d9b7;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.intro h2{font-size:clamp(26px,5vw,40px);letter-spacing:-.055em;line-height:1.05;margin:12px 0}.intro p{max-width:620px;color:#9bb0c4;line-height:1.65;margin:0}
     .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{background:linear-gradient(145deg,#102235,#0b1928);border:1px solid #1e384e;border-radius:18px;padding:20px;min-width:0}.label{color:#8ea7bd;font-size:12px}.value{font-size:28px;font-weight:750;letter-spacing:-.04em;margin-top:10px;overflow-wrap:anywhere}.unit{font-size:13px;color:#a5bdce;font-weight:500;letter-spacing:0}.section{margin-top:16px}.section h3{font-size:15px;margin:0 0 12px}.line{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid #1b3043}.line:last-child{border-bottom:0}.muted{color:#8ea7bd;font-size:12px}.peer{overflow-wrap:anywhere}.button{background:#15374a;border:1px solid #2b5a6b;color:#e7f7ff;border-radius:12px;padding:10px 14px;font-weight:650;cursor:pointer}.button:hover{background:#1a4657}.footer{color:#6e879b;font-size:11px;line-height:1.6;margin-top:18px}.error{color:#fda4af}.empty{color:#8ea7bd;font-size:13px;padding:14px 0}.compute-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.compute-actions{display:flex;gap:8px;flex-wrap:wrap}.button.primary{background:#65e4c1;color:#052019;border-color:#65e4c1}.button:disabled{opacity:.55;cursor:wait}.compute-message{font-size:13px;color:#b8cad8;line-height:1.6;margin:8px 0}.compute-error{font-size:12px;color:#fda4af;line-height:1.6;overflow-wrap:anywhere}.compute-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}.compute-stat{border:1px solid #203b50;background:#0a1927;border-radius:12px;padding:12px}.compute-stat strong{display:block;font-size:17px}.compute-stat span{display:block;color:#8ea7bd;font-size:11px;margin-top:4px}@media(max-width:650px){.compute-stats{grid-template-columns:1fr}}
@@ -22,7 +22,7 @@
 <main>
   <header class="top">
     <div class="brand"><div class="mark">Q</div><div><h1>QUN Node</h1><div class="sub">Панель локального узла · 0.1</div></div></div>
-    <div class="pill"><span id="statusDot" class="dot"></span><span id="statusText">Подключение…</span></div>
+    <div class="update-controls"><span class="update-note" id="updateStatus">Автообновление готово к проверке</span><button class="button" id="checkUpdates">Проверить обновления</button><button class="button primary" id="installUpdate" hidden>Перезапустить и установить</button><div class="pill"><span id="statusDot" class="dot"></span><span id="statusText">Подключение…</span></div></div>
   </header>
   <section class="intro">
     <div class="eyebrow">Тестовая инфраструктура QUN</div>
@@ -61,7 +61,32 @@
 </main>
 <script>
   const byId = id => document.getElementById(id);
-  const formatBytes = n => {
+
+  const updateStatus=byId("updateStatus"), checkUpdates=byId("checkUpdates"), installUpdate=byId("installUpdate");
+  function showUpdaterState(state){
+    if(!state)return;
+    updateStatus.textContent=state.message||"Статус обновления неизвестен";
+    checkUpdates.disabled=["checking","downloading"].includes(state.status);
+    checkUpdates.textContent=state.status==="checking"?"Проверяем…":state.status==="downloading"?"Загрузка…":"Проверить обновления";
+    installUpdate.hidden=state.status!=="downloaded";
+  }
+  if(window.qunUpdater){
+    window.qunUpdater.getState().then(showUpdaterState).catch(()=>{updateStatus.textContent="Не удалось получить статус обновления";});
+    window.qunUpdater.onState(showUpdaterState);
+    checkUpdates.addEventListener("click",async()=>{
+      checkUpdates.disabled=true;updateStatus.textContent="Запрашиваем проверку обновлений…";
+      try{showUpdaterState(await window.qunUpdater.check());}
+      catch(error){updateStatus.textContent="Ошибка проверки: "+error.message;checkUpdates.disabled=false;}
+    });
+    installUpdate.addEventListener("click",async()=>{
+      installUpdate.disabled=true;
+      try{showUpdaterState(await window.qunUpdater.install());}
+      catch(error){updateStatus.textContent="Ошибка установки: "+error.message;installUpdate.disabled=false;}
+    });
+  }else{
+    checkUpdates.addEventListener("click",()=>{updateStatus.textContent="Проверка обновлений доступна только в установленном приложении QUN Node.";});
+  }
+\n  const formatBytes = n => {
     if (!Number.isFinite(n)) return "—";
     if (n < 1024) return n + " B";
     const units = ["KB","MB","GB","TB"]; let v=n/1024, i=0;
