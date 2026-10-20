@@ -86,7 +86,8 @@
   }else{
     checkUpdates.addEventListener("click",()=>{updateStatus.textContent="Проверка обновлений доступна только в установленном приложении QUN Node.";});
   }
-\n  const formatBytes = n => {
+
+  const formatBytes = n => {
     if (!Number.isFinite(n)) return "—";
     if (n < 1024) return n + " B";
     const units = ["KB","MB","GB","TB"]; let v=n/1024, i=0;
