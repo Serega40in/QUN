@@ -15,6 +15,12 @@ h1{font-size:clamp(30px,5vw,46px);letter-spacing:-.05em;line-height:1.04;margin:
 <h1>Ваш узел.<br><span style="color:#65e4c1">Под вашим контролем.</span></h1>
 <p class="lead">Панель читает безопасный статус локального агента и список тестовых узлов с управляющего сервера. При явной регистрации на сервер передаются одноразовый код, имя и тип устройства; файлы пользователя не отправляются.</p>
 <div class="actions"><button class="btn primary" id="connect">Подключить локальный узел</button><a class="btn" href="https://github.com/Serega40in/QUN/tree/main/services/qun-node">Исходный код</a></div>
+<section class="card section" id="computeControl">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap"><div><h3 style="margin:0 0 6px">QUN Compute · единый запуск</h3><div class="muted">Управление вычислительным модулем установленной QUN Node — без отдельной программы.</div></div><div class="actions" style="margin:0"><button class="btn primary" id="computeStart">Включить всё</button><button class="btn" id="computeStop" disabled>Остановить вычисления</button></div></div>
+ <div class="line"><span class="muted">Состояние вычислений</span><b id="computeStatus">Проверяем локальный узел…</b></div>
+ <p class="muted" id="computeMessage" style="line-height:1.6;margin-bottom:0">Запустите QUN Node на компьютере, затем нажмите «Включить всё».</p>
+ <p class="muted" id="computeError" style="color:#fda4af;line-height:1.6;overflow-wrap:anywhere" hidden></p>
+</section>
 <div class="grid">
 <section class="card"><div class="label">Состояние узла</div><div class="value" id="status">Не подключён</div><div class="muted" id="platform" style="margin-top:8px">Запустите QUN Node на устройстве</div></section>
 <section class="card"><div class="label">Время работы</div><div class="value" id="uptime">—</div><div class="muted" style="margin-top:8px">Текущий запуск агента</div></section>
@@ -54,6 +60,36 @@ const $=id=>document.getElementById(id);
 function duration(seconds){seconds=Math.max(0,Math.floor(seconds||0));const d=Math.floor(seconds/86400),h=Math.floor(seconds%86400/3600),m=Math.floor(seconds%3600/60);return (d?d+" д ":"")+(h?h+" ч ":"")+m+" мин"}
 function bytes(n){if(!Number.isFinite(n))return "—";const units=["Б","КБ","МБ","ГБ"];let i=0;while(n>=1024&&i<units.length-1){n/=1024;i++}return n.toFixed(i?1:0)+" "+units[i]}
 function state(ok,text){$("dot").className="dot"+(ok?" ok":" err");$("connection").textContent=text}
+async function refreshCompute(){
+ const start=$("computeStart"),stop=$("computeStop");
+ try{
+  const r=await fetch("http://127.0.0.1:8787/compute/status",{cache:"no-store",mode:"cors"});
+  const d=await r.json();if(!r.ok)throw new Error(d.error||"HTTP "+r.status);
+  $("computeStatus").textContent=d.running?"Вычисления включены":"Вычисления выключены";
+  $("computeMessage").textContent=d.message||"";
+  $("computeError").hidden=!d.lastError;$("computeError").textContent=d.lastError||"";
+  start.disabled=Boolean(d.running);stop.disabled=!d.running;
+ }catch(e){
+  $("computeStatus").textContent="Узел не отвечает";
+  $("computeMessage").textContent="Откройте установленное приложение QUN Node на компьютере. Если браузер запросит доступ к локальной сети, разрешите его только для этого действия.";
+  $("computeError").hidden=false;$("computeError").textContent=e.message;
+  start.disabled=false;stop.disabled=true;
+ }
+}
+async function computeAction(action){
+ const start=$("computeStart"),stop=$("computeStop");start.disabled=true;stop.disabled=true;
+ $("computeMessage").textContent=action==="start"?"Включаем вычислительный модуль…":"Останавливаем вычисления…";
+ try{
+  const r=await fetch("http://127.0.0.1:8787/compute/"+action,{method:"POST",mode:"cors",headers:{"Content-Type":"application/json"},body:"{}"});
+  const d=await r.json();if(!r.ok)throw new Error(d.error||"HTTP "+r.status);
+  $("computeStatus").textContent=d.running?"Вычисления включены":"Вычисления выключены";
+  $("computeMessage").textContent=d.message||"Команда выполнена.";
+  $("computeError").hidden=!d.lastError;$("computeError").textContent=d.lastError||"";
+ }catch(e){$("computeError").hidden=false;$("computeError").textContent=e.message;$("computeMessage").textContent="Не удалось управлять вычислениями. Проверьте, что QUN Node запущен."}
+ await refreshCompute();
+}
+$("computeStart").addEventListener("click",()=>computeAction("start"));
+$("computeStop").addEventListener("click",()=>computeAction("stop"));
 async function connect(){
  $("connect").disabled=true;$("connect").textContent="Проверяем…";state(false,"Проверка локального агента");$("status").textContent="Подключение…";
  try{
@@ -127,5 +163,5 @@ $("sendSynthetic").addEventListener("click",sendSynthetic);
 
 $("refreshRegistry").addEventListener("click",refreshRegistry);
 $("connect").addEventListener("click",connect);
-void refreshRegistry();setInterval(refreshRegistry,15000);
+void refreshRegistry();void refreshCompute();setInterval(refreshRegistry,15000);setInterval(refreshCompute,5000);
 </script></body></html>
