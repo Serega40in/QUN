@@ -64,3 +64,8 @@ Then send `tools/list`. For `qun_whoami`, include the same bearer access token i
 - Add rate limiting, structured audit logs, request IDs, and stricter CORS for browser use before broad public launch.
 - Next API milestone: scoped developer API keys with hashed-at-rest secrets, one-time secret display, revocation, expiry, usage tracking, and server-side scope enforcement. Do not implement keys as long-lived raw database values.
 - MCP remote auth support varies by client. This MVP uses bearer-token authentication for protected tools; an OAuth authorization flow for third-party ChatGPT clients is a separate milestone.
+
+
+## Build validation
+
+The Worker uses standard Web Worker TypeScript library types, so the build does not depend on a date-pinned Cloudflare type package. CI runs TypeScript type-checking and the smoke-test suite on pull requests.
