@@ -29,6 +29,22 @@ result = generate("A tiny emerald spirit discovers a music crystal in an enchant
 print(result)
 ```
 
+## Command-line checks
+
+From this directory, with the environment variables configured:
+
+```sh
+python runpod_comfyui.py health
+```
+
+This checks the existing endpoint's health without submitting a generation job. To explicitly submit a paid render:
+
+```sh
+python runpod_comfyui.py generate --prompt "A tiny emerald spirit in a magical forest" --confirm-paid-render
+```
+
+The render command refuses to run unless `--confirm-paid-render` is present.
+
 ## Local tests
 
 From this directory:
