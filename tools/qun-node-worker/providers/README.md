@@ -11,7 +11,7 @@ This adapter is the first provider-side implementation step for QUN Animation St
 - Configure the RunPod worker for S3-compatible output before production. QUN queue results are limited to 100 KB and must contain durable URLs/checksums, not base64 media.
 - This adapter is not yet wired into the production queue. QUN currently claims only `health_check` jobs, intentionally preventing non-GPU nodes from accidentally claiming render jobs.
 
-## Configuration
+## Offline preflight (no account or GPU required)\n\nRun `python preflight_runpod.py` to inspect configuration without network requests, or `python preflight_runpod.py --workflow ./reviewed-workflow.json` to validate an exported workflow. Add `--strict` to fail automation until all prerequisites are present. This command never provisions resources or submits jobs.\n\n## Configuration
 
 Set these environment variables on the trusted worker only (never GitHub Pages):
 
