@@ -100,3 +100,28 @@ def generate(prompt: str, workflow_path: str | Path | None = None, *, api_key: s
         if state in {"FAILED", "CANCELLED", "TIMED_OUT"}:
             raise RunPodError(f"RunPod job {state.lower()}: {str(status.get('error') or state)[:1200]}")
     raise RunPodError(f"RunPod job timed out after {timeout_seconds} seconds (job ID {job_id}).")
+
+if __name__ == "__main__":
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(description="QUN RunPod provider tools")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("health", help="Check endpoint health without submitting a generation job")
+    render_parser = sub.add_parser("generate", help="Submit one GPU generation job (may incur charges)")
+    render_parser.add_argument("--prompt", required=True, help="Prompt for the reviewed workflow")
+    render_parser.add_argument("--workflow", help="Path to reviewed ComfyUI API workflow JSON")
+    render_parser.add_argument("--confirm-paid-render", action="store_true",
+                               help="Explicitly confirm that this request may incur GPU charges")
+    args = parser.parse_args()
+    try:
+        if args.command == "health":
+            result = check_endpoint()
+        else:
+            if not args.confirm_paid_render:
+                parser.error("generate requires --confirm-paid-render because GPU usage may incur charges")
+            result = generate(args.prompt, args.workflow)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    except RunPodError as exc:
+        print(f"QUN provider error: {exc}", file=sys.stderr)
+        raise SystemExit(1)
