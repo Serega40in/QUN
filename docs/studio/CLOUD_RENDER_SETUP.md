@@ -9,7 +9,7 @@ Status: provider adapter and mocked API-contract tests are in the repository. Th
 - RunPod provider adapter: [runpod_comfyui.py](../../tools/qun-node-worker/providers/runpod_comfyui.py)
 - Provider tests: [test_runpod_comfyui.py](../../tools/qun-node-worker/providers/test_runpod_comfyui.py)
 
-## Stage A — create a GPU endpoint only after approving cost
+## Stage 0 — offline preparation (no billing)\n\nRun the [GPU executor preflight](GPU_EXECUTOR_PREFLIGHT.md) before configuring a provider. It performs no network requests and submits no GPU jobs.\n\n## Stage A — create a GPU endpoint only after approving cost
 
 1. Open [RunPod Serverless](https://www.runpod.io/console/serverless) and create a Serverless endpoint using the official [worker-comfyui image](https://github.com/runpod-workers/worker-comfyui).
 2. Choose an image/model combination that is actually listed in the current official image tags. A text-to-image endpoint is only the first proof of GPU connectivity; it is not yet a video model.
