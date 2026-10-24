@@ -34,7 +34,13 @@ def _replace_prompt(value: Any, prompt: str) -> Any:
     return prompt if value == "__QUN_PROMPT__" else value
 
 def _contains_inline_media(value: Any, parent_key: str = "") -> bool:
-    if isinstance(value, dict): return any(_contains_inline_media(v, str(k).lower()) for k, v in value.items())
+    if isinstance(value, dict):
+        media_type = str(value.get("type", "")).lower()
+        if media_type == "base64" and value.get("data"): return True
+        if media_type == "s3_url":
+            data = value.get("data")
+            if not isinstance(data, str) or not data.startswith(("https://", "http://")): return True
+        return any(_contains_inline_media(v, str(k).lower()) for k, v in value.items())
     if isinstance(value, list): return any(_contains_inline_media(v, parent_key) for v in value)
     if not isinstance(value, str): return False
     value = value.strip()
