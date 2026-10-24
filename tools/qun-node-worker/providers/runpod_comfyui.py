@@ -49,6 +49,16 @@ def _contains_inline_media(value: Any, parent_key: str = "") -> bool:
         return not value.startswith(("https://", "http://"))
     return len(value) > 2048 and not value.startswith(("https://", "http://"))
 
+
+def check_endpoint(*, api_key: str | None = None, endpoint_id: str | None = None) -> dict[str, Any]:
+    """Check an existing RunPod endpoint's health without submitting a generation job."""
+    key = api_key or os.environ.get("RUNPOD_API_KEY", "")
+    endpoint = endpoint_id or os.environ.get("RUNPOD_COMFYUI_ENDPOINT_ID", "")
+    if not key or not endpoint:
+        raise RunPodError("Configure RUNPOD_API_KEY and RUNPOD_COMFYUI_ENDPOINT_ID first.")
+    result = _request_json(f"https://api.runpod.ai/v2/{endpoint}/health", None, key)
+    return {"provider": "runpod-comfyui", "endpoint_id": endpoint, "health": result}
+
 def generate(prompt: str, workflow_path: str | Path | None = None, *, api_key: str | None = None,
              endpoint_id: str | None = None, timeout_seconds: int = 900, poll_seconds: float = 2.0) -> dict[str, Any]:
     """Submit a reviewed ComfyUI API workflow to an existing RunPod endpoint.
