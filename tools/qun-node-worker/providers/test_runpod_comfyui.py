@@ -15,8 +15,8 @@ class RunPodAdapterTests(unittest.TestCase):
                          {"text":'a "quoted" prompt', "other":"prefix __QUN_PROMPT__"})
 
     def test_media_detector_accepts_durable_urls(self):
-        self.assertFalse(_contains_inline_media({"message":"https://storage.example/movie.mp4"}))
-        self.assertTrue(_contains_inline_media({"images":["aGVsbG8="]}))
+        self.assertFalse(_contains_inline_media({"images":[{"type":"s3_url","data":"https://storage.example/scene.png"}]}))
+        self.assertTrue(_contains_inline_media({"images":[{"type":"base64","data":"aGVsbG8="}]}))
         self.assertTrue(_contains_inline_media({"result":"data:video/mp4;base64,AAAA"}))
 
     def test_missing_config_fails_without_network(self):
