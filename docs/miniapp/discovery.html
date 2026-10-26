@@ -40,6 +40,7 @@
 <button class="spot" style="left:48%;top:65%" data-place="village"><span class="emoji">🏡</span><b>Посёлок QUN</b><small>Сообщество</small></button>
 <button class="spot" style="left:68%;top:53%" data-place="river"><span class="emoji">💧</span><b>Живая река</b><small>Экология</small></button>
 <button class="spot" style="left:76%;top:76%" data-place="lighthouse"><span class="emoji">🔆</span><b>Маяк идей</b><small>Будущее</small></button>
+<div class="world-upgrade" id="worldUpgrade" aria-live="polite" hidden></div>
 </div>
 <div class="legend"><span><i class="dot"></i> Посещённое место</span><span><i class="dot gold"></i> Новое открытие</span><span>Очки — только игровой прогресс</span></div>
 </section>
@@ -87,6 +88,7 @@ function addJournal(title,body){state.journal.push(title+" — "+body);state.jou
 function gainExperience(amount){state.xp=Math.min(100000,state.xp+amount);const next=Math.floor(state.xp/30)+1;if(next>state.level){state.level=next;toast("Новый уровень! Ты стал внимательнее к миру 🌟")}else state.level=next}
 function setLumiMessage(message){const target=$("lumiMessage");target.replaceChildren();const strong=document.createElement("b");strong.textContent="Луми, твой спутник";const br=document.createElement("br");target.append(strong,br,document.createTextNode(message))}
 function renderGrowth(){
+const upgrade=$("worldUpgrade");upgrade.hidden=!state.build;upgrade.textContent=state.build==="garden"?"🌿 Остров изменился: Сад жизни":"🔭 Остров изменился: Обсерватория";
 $("levelTag").textContent="УРОВЕНЬ "+state.level;
 $("xpText").textContent=(state.xp%30)+" / 30 опыта до нового уровня";
 $("xpFill").style.width=((state.xp%30)/30*100)+"%";
