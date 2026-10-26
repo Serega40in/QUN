@@ -25,9 +25,9 @@ test("QUN World Engine loads, moves, zooms and bounds its region cache", async (
     assert.equal(await page.locator("#region").innerText(), "0 : 0");
     await page.getByRole("button", { name: "Детали: авто" }).click();
     assert.equal(await page.locator("#detail").innerText(), "Детали: эконом");
-    await page.mouse.move(195, 400);
+    await page.mouse.move(380, 400);
     await page.mouse.down();
-    await page.mouse.move(30, 400, { steps: 5 });
+    await page.mouse.move(5, 400, { steps: 8 });
     await page.mouse.up();
     await page.waitForTimeout(100);
     assert.notEqual(await page.locator("#region").innerText(), before, "drag should move observer to another region");
