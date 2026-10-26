@@ -1,0 +1,8 @@
+name = "qun-developer-api"
+main = "src/index.ts"
+compatibility_date = "2026-10-23"
+workers_dev = true
+
+[vars]
+# Set SUPABASE_URL and SUPABASE_ANON_KEY in Cloudflare Worker secrets/vars.
+# Never add a service-role key to this file.
