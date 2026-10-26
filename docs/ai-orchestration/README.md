@@ -17,9 +17,9 @@ Copy this into your AI agent:
 | ID | Task | Status | Task brief and prompt |
 |---|---|---|---|
 | QD-001 | Audit and verify the Discovery game MVP | Ready | [Task prompt](tasks/QD-001-game-audit.md) |
-| ART-001 | Create a coherent Discovery art pack | Ready | [Task prompt](tasks/ART-001-discovery-art-pack.md) |
+| ART-001 | Create a coherent Discovery art pack | Initial vector pack delivered; richer art still open | [Task prompt](tasks/ART-001-discovery-art-pack.md) |
 | ART-002 | Create location icons and UI micro-assets | Backlog | [Task prompt](tasks/ART-002-ui-assets.md) |
-| QD-002 | Integrate approved art into the game | Blocked by ART-001 | [Task prompt](tasks/QD-002-integrate-art.md) |
+| QD-002 | Integrate approved art into the game | Implemented in this PR; pending checks/review | [Task prompt](tasks/QD-002-integrate-art.md) |
 
 ## QUN Discovery art direction
 
@@ -47,4 +47,4 @@ Use lowercase kebab-case filenames, WebP/PNG as appropriate, and optimize file s
 6. Do not pay for or activate resources without approval.
 7. Open a PR and leave it unmerged until review.
 
-**Current-state note:** Discovery's static browser-game MVP was merged via PR #20. Merge does not by itself prove that GitHub Pages is configured for this path, that the page is live, or that it has passed browser/end-to-end tests. Do not claim publication, multiplayer, or QUN Node integration without direct evidence.
+**Current-state note:** Discovery's static browser-game MVP was merged via PR #20. This branch adds an initial hand-authored SVG art pass and static checks; it is not the final high-end rendered-art pass. Merge does not by itself prove GitHub Pages publication or browser/end-to-end test success. Do not claim multiplayer or QUN Node integration without direct evidence.

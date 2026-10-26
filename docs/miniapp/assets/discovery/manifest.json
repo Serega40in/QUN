@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "project": "QUN Discovery",
+  "note": "Original hand-authored SVG illustrations added in this branch. These are vector-art MVP assets, not AI-generated 3D renders. No external image sources or paid generation services were used.",
+  "assets": [
+    {
+      "path": "backgrounds/island-archipelago-bg.svg",
+      "role": "panoramic world illustration",
+      "width": 1600,
+      "height": 900,
+      "format": "SVG",
+      "source": "Hand-authored SVG in QUN repository",
+      "externalReferences": false,
+      "licenseNote": "Follow the repository's applicable license; confirm any redistribution terms before external reuse."
+    },
+    {
+      "path": "locations/forest-sanctuary.svg",
+      "role": "forest location illustration",
+      "width": 1024,
+      "height": 1024,
+      "format": "SVG",
+      "source": "Hand-authored SVG in QUN repository",
+      "externalReferences": false,
+      "licenseNote": "Follow the repository's applicable license; confirm any redistribution terms before external reuse."
+    },
+    {
+      "path": "locations/mountain-observatory.svg",
+      "role": "mountain location illustration",
+      "width": 1024,
+      "height": 1024,
+      "format": "SVG",
+      "source": "Hand-authored SVG in QUN repository",
+      "externalReferences": false,
+      "licenseNote": "Follow the repository's applicable license; confirm any redistribution terms before external reuse."
+    },
+    {
+      "path": "locations/welcoming-village.svg",
+      "role": "village location illustration",
+      "width": 1024,
+      "height": 1024,
+      "format": "SVG",
+      "source": "Hand-authored SVG in QUN repository",
+      "externalReferences": false,
+      "licenseNote": "Follow the repository's applicable license; confirm any redistribution terms before external reuse."
+    },
+    {
+      "path": "locations/river-delta.svg",
+      "role": "river location illustration",
+      "width": 1024,
+      "height": 1024,
+      "format": "SVG",
+      "source": "Hand-authored SVG in QUN repository",
+      "externalReferences": false,
+      "licenseNote": "Follow the repository's applicable license; confirm any redistribution terms before external reuse."
+    },
+    {
+      "path": "locations/golden-lighthouse.svg",
+      "role": "lighthouse location illustration",
+      "width": 1024,
+      "height": 1024,
+      "format": "SVG",
+      "source": "Hand-authored SVG in QUN repository",
+      "externalReferences": false,
+      "licenseNote": "Follow the repository's applicable license; confirm any redistribution terms before external reuse."
+    }
+  ]
+}

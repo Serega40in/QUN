@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+<title id="title">QUN Discovery — Island Archipelago</title><desc id="desc">An original, peaceful fantasy archipelago with emerald islands, turquoise water, a distant observatory, forest, and lighthouse.</desc>
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#123b67"/><stop offset=".48" stop-color="#48a6bd"/><stop offset="1" stop-color="#f4d6a0"/></linearGradient>
+ <linearGradient id="sea" x2="0" y2="1"><stop stop-color="#36b8bc"/><stop offset=".45" stop-color="#168da9"/><stop offset="1" stop-color="#0b456e"/></linearGradient>
+ <linearGradient id="island" x2="0" y2="1"><stop stop-color="#8cbd76"/><stop offset=".42" stop-color="#39866d"/><stop offset="1" stop-color="#164f58"/></linearGradient>
+ <linearGradient id="rock" x2="0" y2="1"><stop stop-color="#789b9b"/><stop offset="1" stop-color="#304f68"/></linearGradient>
+ <linearGradient id="sun" x2="0" y2="1"><stop stop-color="#fff3bd"/><stop offset="1" stop-color="#f3bd68"/></linearGradient>
+ <filter id="soft"><feGaussianBlur stdDeviation="20"/></filter>
+</defs>
+<rect width="1600" height="900" fill="url(#sky)"/>
+<circle cx="1190" cy="205" r="115" fill="#ffe4a0" opacity=".22" filter="url(#soft)"/><circle cx="1190" cy="205" r="70" fill="url(#sun)"/>
+<g fill="#fff8df" opacity=".36"><ellipse cx="275" cy="190" rx="115" ry="24"/><ellipse cx="335" cy="174" rx="68" ry="33"/><ellipse cx="1390" cy="310" rx="105" ry="20"/><ellipse cx="1450" cy="294" rx="61" ry="30"/></g>
+<path d="M0 405 Q220 350 430 405 T860 398 T1280 410 T1600 390 V900 H0Z" fill="#8ac7bd" opacity=".35"/>
+<path d="M0 470 Q170 410 360 468 T720 462 T1080 455 T1440 468 T1600 450 V900 H0Z" fill="url(#sea)"/>
+<g fill="#e1f5d2" opacity=".36"><path d="M70 590q70-16 145 0t150 0"/><path d="M1100 620q65-18 130 0t140 0"/><path d="M820 750q75-15 150 0t140 0"/><path d="M230 790q45-10 90 0t100 0"/></g>
+<!-- distant islands -->
+<path d="M0 470 130 405 205 430 292 370 370 430 470 415 540 470Z" fill="#497f82" opacity=".8"/>
+<path d="M1020 465 1110 400 1180 420 1280 365 1360 420 1460 395 1600 460Z" fill="#467d80" opacity=".86"/>
+<!-- distant observatory peak -->
+<path d="M550 460 700 250 765 330 840 205 975 460Z" fill="#5b8791"/>
+<path d="M700 250 735 301 765 330 840 205 886 278 849 265 822 285 801 263 779 305 755 285 736 311Z" fill="#e8efe0"/>
+<path d="M570 460 700 345 760 400 840 310 950 460Z" fill="#4e827f"/>
+<!-- main island rock and greenery -->
+<path d="M165 580 Q245 495 385 500 Q500 432 650 480 Q805 415 955 480 Q1110 430 1255 495 Q1390 480 1470 585 L1400 675 1260 724 1090 748 900 765 680 742 475 720 280 670Z" fill="url(#rock)"/>
+<path d="M175 568 Q250 493 385 500 Q510 433 650 480 Q810 418 955 480 Q1110 431 1255 495 Q1390 478 1470 578 L1418 614 Q1260 578 1130 622 Q930 575 785 620 Q560 572 390 620 Q270 605 200 624Z" fill="url(#island)"/>
+<!-- ridges -->
+<path d="M520 486 640 435 710 468 795 425 890 478 835 474 790 455 733 490 666 461 615 490Z" fill="#d5e0b2" opacity=".72"/>
+<path d="M1000 500 1080 465 1150 492 1220 470 1305 514 1245 505 1195 492 1144 516 1090 489 1048 515Z" fill="#d5e0b2" opacity=".55"/>
+<!-- village -->
+<g transform="translate(330 505)"><path d="M0 55 28 23 57 55V96H0Z" fill="#f5dfad"/><path d="M-8 57 28 12 65 57Z" fill="#b9654d"/><rect x="22" y="68" width="13" height="28" rx="3" fill="#8c6248"/><rect x="6" y="63" width="10" height="12" rx="2" fill="#79bfc0"/><path d="M76 75 102 47 132 75V108H76Z" fill="#f1d49a"/><path d="M69 76 102 38 139 76Z" fill="#3e7f7b"/><rect x="97" y="83" width="12" height="25" rx="3" fill="#8c6248"/></g>
+<!-- trees -->
+<g fill="#174f54"><path d="M250 590 284 500 318 590Z"/><path d="M277 604 315 504 352 604Z"/><path d="M1150 584 1190 478 1230 584Z"/><path d="M1200 606 1245 492 1290 606Z"/><path d="M1320 595 1355 500 1390 595Z"/></g>
+<g fill="#68ad79"><circle cx="284" cy="525" r="25"/><circle cx="315" cy="535" r="26"/><circle cx="1190" cy="510" r="29"/><circle cx="1245" cy="526" r="31"/><circle cx="1355" cy="526" r="26"/></g>
+<!-- winding golden path -->
+<path d="M440 650 C500 620 490 575 555 568 S680 603 715 565 810 545 850 575 960 604 1030 568" fill="none" stroke="#e8c77f" stroke-width="13" stroke-linecap="round" opacity=".9"/>
+<path d="M440 650 C500 620 490 575 555 568 S680 603 715 565 810 545 850 575 960 604 1030 568" fill="none" stroke="#f9e6ae" stroke-width="4" stroke-linecap="round"/>
+<!-- lighthouse -->
+<g transform="translate(1260 440)"><path d="M0 100 15 15H58L72 100Z" fill="#f4e4bd"/><path d="M13 52H62L66 75H9Z" fill="#267b83"/><rect x="12" y="7" width="50" height="15" rx="3" fill="#d8e9d5"/><path d="M7 7 37 -9 67 7Z" fill="#d59b5c"/><rect x="28" y="-2" width="18" height="11" rx="4" fill="#ffe9a0"/><path d="M36 1 36 -38" stroke="#fff1b2" stroke-width="3" opacity=".8"/></g>
+<!-- water sparkle -->
+<g stroke="#c4f5df" stroke-width="3" stroke-linecap="round" opacity=".72"><path d="M150 720h54"/><path d="M1050 805h76"/><path d="M1360 710h38"/><path d="M620 830h62"/><path d="M80 650h34"/></g>
+</svg>
