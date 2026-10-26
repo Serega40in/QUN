@@ -1,47 +1,39 @@
 # QUN Mauritius — market research
 
-Research status: initial desk research, not a completed market audit. Last checked: 2026-10-26. Never claim a feature is absent in Mauritius until targeted searches and direct product checks support that claim.
+**Last desk-research update:** 26 October 2026. This is not a completed market audit. Public sources are leads; app availability, activity, fees and customer journeys must be checked directly. No user interviews have been completed.
 
 ## Market context
-- DataReportal Digital 2026 estimates 1.01 million internet users and 886,000 social-media user identities at the end of 2025. These are estimates/identities, not unique addressable customers: https://datareportal.com/reports/digital-2026-mauritius
-- Official ICT statistics: https://statsmauritius.govmu.org/Pages/Statistics/ESI/ICT/ICT_Yr25.aspx
-- Mauritius is a relatively small market; a focused product may be easier to validate than a broad super-app launch.
+- The U.S. International Trade Administration describes growing e-commerce in Mauritius, local shopping/deal sites, and smaller businesses using Facebook to reach customers. It also notes payment and infrastructure context. Source: https://www.trade.gov/country-commercial-guides/mauritius-ecommerce
+- Statistics Mauritius ICT statistics: https://statsmauritius.govmu.org/Pages/Statistics/ESI/ICT/ICT_Yr25.aspx
+- A broad market-size estimate is not a substitute for validating a specific QUN use case.
 
-## Competitor leads to verify
-| Area | Known lead | What to check |
-|---|---|---|
-| Messaging | WhatsApp, Facebook Messenger, Telegram | Local usage, business/community workflows, language support |
-| Local marketplace | MoBazar — https://mobazar.mu/ | Seller onboarding, product discovery, chat, pickup/payment flow, fees and trust |
-| Local marketplace | Maubazaar — https://maubazaar.mu/ | Category coverage, seller verification, listings, buyer/seller workflows, traction |
-| Classifieds/shopping | PriceGuru.mu, Marideal.mu, Facebook Marketplace/groups | Active categories, seller reach, delivery, payment options |
-| Social media | Facebook, Instagram, TikTok | Business discovery and community practices |
-| Payments | Local banks, payment gateways and mobile payment products | Merchant onboarding, settlement, fees and integration access |
-| Crypto | Local/international exchanges and custodians | Mauritius licensing status, assets, retail access and disclosures |
-| AI/developers | International AI tools, local IT firms and developer communities | Local-language quality, SMB needs, affordability and integrations |
+## Known service leads
+- Local marketplaces: MoBazar (https://www.mobazar.mu/), Maubazaar (https://maubazaar.mu/), Bazaar Mauritius (https://bazaar-mu.com/), MauMarket (https://maumarket.mu/).
+- Local merchant commerce and delivery: FLIQO (https://fliqo.mu/), mowebstore (https://www.mowebstore.com/), Maucommerce (https://maucommerce.com/).
+- Business and AI tooling: Biro.mu and other providers listed in the Mauritius AI Marketplace (https://aimarketplace.govmu.org/).
+- Payment integration options documented for merchants: Ecwid's Mauritius provider page (https://support.ecwid.com/hc/en-us/articles/360003067920-Payment-options-for-Mauritius), MCB merchant services (https://mcb.mu/corporate/payment-cash/collect/e-commerce/corporate---e-commerce/merchant-services), Absa e-commerce (https://www.absabank.mu/en/sme-and-business/absa-e-commerce-solutions/).
+- SME network: MCCI SME Marketplace (https://www.mcci.org/en/our-services/business-resources/mcci-sme-marketplace/).
+- Virtual assets: FSC Mauritius VAITOS FAQ (https://www.fscmauritius.org/media/119930/faqs-vaitos-act-2021.pdf).
 
-MoBazar publicly describes local-business product discovery, seller verification, direct chat, shop pages and in-person pickup/payment. Its seller onboarding is described as invitation-led during its launch period. Source: https://mobazar.mu/ . Maubazaar also publicly presents itself as a Mauritius marketplace: https://maubazaar.mu/ . These are direct competitors to investigate, not proof of their market share or current traction. QUN Market must not be positioned as the first local marketplace without stronger evidence.
+## Initial conclusions — desk research only
+1. Mauritius already has multiple marketplace and merchant-commerce options. Do not claim QUN Market would be the first or only local marketplace.
+2. “Catalogue + WhatsApp + AI” is already offered in some form by existing merchant tools; this combination alone is not differentiation.
+3. A new messenger has a network-effect problem. A focused community or business workflow must justify switching.
+4. Payment and delivery are operationally complex. The first prototype should not process payments or hold funds.
+5. Crypto/token should not lead the launch; legal classification, licensing, security and compliance need separate review.
+6. Best current next step: interview businesses and residents to identify one repeated, underserved task. A QUN Business Workflow Kit is a hypothesis, not a conclusion.
 
-## Research questions
-### Residents
-Where do people find goods and services? What is difficult about trust, availability, pricing, delivery, language or seller communication? What advantage would justify trying a new service?
+## User-discovery questions
+- Which recurring business/customer task remains painful despite current marketplace, social, store and messaging tools?
+- What does the problem cost in time, lost orders or operational errors?
+- What tool/workaround is used today, and what would users stop using?
+- Which language is preferred for the task: English, French or Kreol Morisien?
+- What trust, privacy, support and payment expectations are essential?
 
-### Small businesses
-How do businesses list products and receive enquiries? Which fees, logistics, settlement or customer-acquisition problems matter? Would a simple multilingual storefront solve more than a full marketplace?
+## Research record template
+For each service: name, official URL, date checked, current availability, supported languages, platforms, onboarding, pricing (public/quoted/unknown), features tested, payment/delivery/refund model, safety controls, sources, confidence and unanswered questions.
 
-### Developers and creators
-Which APIs, payment integrations and AI tools are needed? Is there demand for local open-source projects or automation? What would make contributors trust QUN governance?
+For interviews: obtain consent, anonymize notes, do not collect unnecessary personal information, and separate direct evidence from researcher interpretation.
 
-### Trust and inclusion
-Check accessibility on affordable phones and slower connections, English/French/Kreol Morisien usability, scam prevention, seller verification, moderation, disputes and privacy.
-
-## Evidence template
-For every competitor/interview record name, URL, category, date checked, features, pricing, languages, platforms, payment/delivery/refund model, safety mechanisms, source, confidence and potential QUN differentiation. Do not collect unnecessary personal data; obtain consent before recording or quoting interview participants.
-
-## Initial hypotheses — not conclusions
-1. A lightweight tool for local businesses to present products and answer enquiries may be easier to validate than a general super-app.
-2. Shared QUN identity and messaging may be useful later but need not block a first pilot.
-3. AI-assisted multilingual business content could be a low-friction experiment.
-4. Crypto should not be the lead proposition until regulation and demand are established.
-
-## Exit criteria
-Check at least 10 relevant services directly; interview at least 5 target users/businesses where feasible; source major claims; compare 2–3 pilot options on demand, cost, compliance and time; document a recommendation and success metrics.
+## Next gate
+Verify at least ten services directly; interview at least five businesses and five residents where feasible; compare two or three pilot options by evidence of pain, differentiation, build time, cost and legal/security risk. Do not proceed to public launch without a written recommendation and approved budget.
