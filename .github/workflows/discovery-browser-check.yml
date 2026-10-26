@@ -18,7 +18,9 @@ permissions:
 
 jobs:
   discovery-browser:
-    runs-on: ubuntu-latest
+    # Pin a supported runner image; ubuntu-latest moved to Ubuntu 26.04,
+    # which Playwright 1.56 does not yet support for browser installation.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Checkout
