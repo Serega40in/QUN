@@ -19,7 +19,9 @@ Copy this into your AI agent:
 | QD-001 | Audit and verify the Discovery game MVP | Ready | [Task prompt](tasks/QD-001-game-audit.md) |
 | ART-001 | Create a coherent Discovery art pack | Initial vector pack delivered; richer art still open | [Task prompt](tasks/ART-001-discovery-art-pack.md) |
 | ART-002 | Create location icons and UI micro-assets | Backlog | [Task prompt](tasks/ART-002-ui-assets.md) |
-| QD-002 | Integrate approved art into the game | Implemented in this PR; pending checks/review | [Task prompt](tasks/QD-002-integrate-art.md) |
+| QD-002 | Integrate approved art into the game | Implemented in this PR; static CI passed, review pending | [Task prompt](tasks/QD-002-integrate-art.md) |
+| ART-003 | Upgrade Discovery art to a premium coherent art direction | Ready for an art agent | [Task prompt](tasks/ART-003-discovery-premium-art-direction.md) |
+| QD-003 | Verify Discovery in real browsers and responsive viewports | Ready for browser QA; not yet executed | [QA checklist and agent prompt](tasks/QD-003-discovery-browser-qa.md) |
 
 ## QUN Discovery art direction
 
