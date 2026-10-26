@@ -1,0 +1,41 @@
+name: QUN World Engine browser smoke test
+
+on:
+  pull_request:
+    paths:
+      - "docs/world/engine/**"
+      - "docs/ai-orchestration/tests/world-engine-browser.test.cjs"
+      - ".github/workflows/world-engine-browser-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  world-engine-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install isolated Playwright
+        run: |
+          npm install --prefix /tmp/qun-playwright playwright@1.56.1
+          /tmp/qun-playwright/node_modules/.bin/playwright install --with-deps chromium
+      - name: Start local static server
+        run: |
+          python3 -m http.server 4173 --directory docs >/tmp/qun-world-http.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/world/engine/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/qun-world-http.log
+          exit 1
+      - name: Exercise World Engine in Chromium
+        env:
+          NODE_PATH: /tmp/qun-playwright/node_modules
+        run: node --test docs/ai-orchestration/tests/world-engine-browser.test.cjs

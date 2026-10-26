@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07131f">
+<meta name="description" content="QUN World Engine — лёгкий эксперимент с миром, который раскрывается вокруг наблюдателя.">
+<title>QUN World Engine — живой мир</title>
+<style>
+:root{color-scheme:dark;--bg:#07131f;--panel:rgba(7,19,31,.82);--line:rgba(130,232,205,.24);--mint:#83f3ce;--gold:#ffd88a;--muted:#9db7c7}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#edf9ff}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(12px,2.5vw,28px);gap:12px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.brand,.panel{background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(14px);box-shadow:0 10px 40px #0003;border-radius:18px}
+.brand{padding:12px 16px}.brand strong{display:block;letter-spacing:.18em;font-size:14px}.brand span{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.stats{padding:10px 12px;font-size:12px;color:var(--muted);text-align:right;line-height:1.65}.stats b{color:var(--mint);font-weight:650}
+.bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}.message{padding:14px 16px;max-width:min(520px,72vw);font-size:13px;line-height:1.55;color:#d5e8f0}.message strong{color:var(--gold)}
+.controls{pointer-events:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.controls button{border:1px solid var(--line);background:var(--panel);color:#eafaff;border-radius:13px;padding:11px 14px;font:inherit;font-size:12px;cursor:pointer;backdrop-filter:blur(12px)}.controls button:hover,.controls button:focus-visible{border-color:var(--mint);outline:none}.controls button[aria-pressed=true]{background:#17493e;color:var(--mint)}
+.pad{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);display:grid;grid-template-columns:44px 44px 44px;grid-template-rows:44px 44px;gap:5px;pointer-events:auto;opacity:.8}
+.pad button{border:1px solid var(--line);background:var(--panel);color:#eafaff;border-radius:12px;font-size:18px;touch-action:manipulation}.pad .up{grid-column:2}.pad .left{grid-column:1;grid-row:2}.pad .down{grid-column:2;grid-row:2}.pad .right{grid-column:3;grid-row:2}
+@media(min-width:760px){.pad{display:none}}@media(max-width:560px){.stats{font-size:10px;padding:8px}.brand{padding:10px 12px}.message{max-width:100%;font-size:12px}.bottom{align-items:stretch;flex-direction:column}.controls{justify-content:flex-start}.controls button{padding:9px 11px}.pad{bottom:112px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<canvas id="world" aria-label="Интерактивный процедурный мир QUN. Перемещайтесь с помощью WASD или стрелок."></canvas>
+<div class="hud">
+ <div class="top">
+  <div class="brand"><strong>QUN <span style="display:inline;color:var(--gold)">✦</span> WORLD</strong><span>Мир раскрывается рядом с тобой</span></div>
+  <div class="panel stats" aria-live="polite">РЕГИОН <b id="region">0 : 0</b><br>ДЕТАЛИ <b id="lod">БАЗОВЫЕ</b><br>КЭШ <b id="cache">0 / 25</b></div>
+ </div>
+ <div class="bottom">
+  <div class="panel message"><strong>Приблизься — и увидишь больше.</strong><br>Мир генерируется детерминированно по регионам. Далёкое упрощается, близкое оживает. Нажми на карту или используй WASD / стрелки.</div>
+  <div class="controls">
+   <button id="zoomOut" aria-label="Отдалить">− Отдалить</button><button id="zoomIn" aria-label="Приблизить">＋ Приблизить</button>
+   <button id="detail" aria-pressed="true">Детали: авто</button><button id="center">Вернуться к началу</button>
+  </div>
+ </div>
+</div>
+<div class="pad" aria-label="Мобильное управление"><button class="up" data-move="0,-1">↑</button><button class="left" data-move="-1,0">←</button><button class="down" data-move="0,1">↓</button><button class="right" data-move="1,0">→</button></div>
+<script>
+(()=>{
+'use strict';
+const canvas=document.getElementById('world'),ctx=canvas.getContext('2d',{alpha:false});
+if(!ctx){document.querySelector('.message').textContent='Этот браузер не поддерживает Canvas 2D.';return}
+const ui={region:document.getElementById('region'),lod:document.getElementById('lod'),cache:document.getElementById('cache'),detail:document.getElementById('detail')};
+const CHUNK=320,MAX_CACHE=25,cache=new Map(),keys=new Set();
+let w=innerWidth,h=innerHeight,dpr=1,cx=0,cy=0,zoom=1,autoDetail=true,raf=0,last=0,dirty=true,pointer=null;
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function hash(x,y){let n=Math.imul(x|0,374761393)+Math.imul(y|0,668265263)|0;n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295}
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967295}}
+function resize(){w=innerWidth;h=innerHeight;dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);dirty=true}
+function getChunk(ix,iy){const k=ix+','+iy;if(cache.has(k)){const v=cache.get(k);cache.delete(k);cache.set(k,v);return v}
+ const r=rng(Math.floor(hash(ix,iy)*4294967295)),items=[];
+ for(let i=0,n=18+Math.floor(r()*20);i<n;i++){const x=r()*CHUNK,y=r()*CHUNK;const field=hash(ix*31+Math.floor(x/28),iy*31+Math.floor(y/28));items.push({x,y,size:2+r()*7,kind:field>.79?'crystal':field>.52?'tree':field>.36?'flower':'stone',tone:r()})}
+ const c={items};cache.set(k,c);while(cache.size>MAX_CACHE)cache.delete(cache.keys().next().value);return c}
+function worldPoint(sx,sy){return{x:cx+(sx-w/2)/zoom,y:cy+(sy-h/2)/zoom}}
+function draw(){const time=performance.now()/1000;ctx.fillStyle='#07131f';ctx.fillRect(0,0,w,h);
+ const left=cx-w/(2*zoom),top=cy-h/(2*zoom),right=cx+w/(2*zoom),bottom=cy+h/(2*zoom);
+ const x0=Math.floor(left/CHUNK),x1=Math.floor(right/CHUNK),y0=Math.floor(top/CHUNK),y1=Math.floor(bottom/CHUNK);
+ const detailed=zoom>=1.05,medium=zoom>=.58;
+ // Deep-space atmosphere: a subtle radial glow follows the observer.
+ const g=ctx.createRadialGradient(w*.5,h*.48,5,w*.5,h*.48,Math.max(w,h)*.72);g.addColorStop(0,'#123a3a');g.addColorStop(.42,'#0b2531');g.addColorStop(1,'#07131f');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+ // Regions are streamed only while visible; cache is hard-capped.
+ for(let iy=y0;iy<=y1;iy++)for(let ix=x0;ix<=x1;ix++){
+  const chunk=getChunk(ix,iy),sx=(ix*CHUNK-cx)*zoom+w/2,sy=(iy*CHUNK-cy)*zoom+h/2,size=CHUNK*zoom;
+  if(medium){ctx.strokeStyle='rgba(131,243,206,.075)';ctx.lineWidth=1;ctx.strokeRect(sx,sy,size,size)}
+  const centerHash=hash(ix,iy);
+  ctx.fillStyle=centerHash>.5?'rgba(31,91,76,.10)':'rgba(23,65,83,.12)';ctx.fillRect(sx,sy,size,size);
+  for(const o of chunk.items){const px=sx+o.x*zoom,py=sy+o.y*zoom,rad=o.size*zoom;if(px<-18||py<-18||px>w+18||py>h+18)continue;
+   if(!detailed){if(o.kind==='crystal'&&zoom>.35){ctx.fillStyle='rgba(255,216,138,.65)';ctx.beginPath();ctx.arc(px,py,Math.max(1,rad*.45),0,Math.PI*2);ctx.fill()}continue}
+   if(o.kind==='crystal'){ctx.save();ctx.translate(px,py);ctx.rotate(o.tone*3+time*.08);ctx.fillStyle=o.tone>.5?'#ffd88a':'#83f3ce';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=8*zoom;ctx.beginPath();ctx.moveTo(0,-rad*1.6);ctx.lineTo(rad*.7,0);ctx.lineTo(0,rad*1.3);ctx.lineTo(-rad*.7,0);ctx.closePath();ctx.fill();ctx.restore()}
+   else if(o.kind==='tree'){ctx.fillStyle='rgba(27,103,83,.92)';ctx.beginPath();ctx.arc(px,py,Math.max(1,rad),0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(131,243,206,.25)';ctx.beginPath();ctx.arc(px-rad*.25,py-rad*.25,Math.max(.6,rad*.45),0,Math.PI*2);ctx.fill()}
+   else if(o.kind==='flower'){ctx.fillStyle=o.tone>.5?'#ffd88a':'#83f3ce';ctx.globalAlpha=.5+.5*Math.sin(time*1.4+o.tone*9);ctx.beginPath();ctx.arc(px,py,Math.max(.8,rad*.35),0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+   else{ctx.fillStyle='rgba(153,193,203,.5)';ctx.beginPath();ctx.arc(px,py,Math.max(.8,rad*.4),0,Math.PI*2);ctx.fill()}
+  }
+ }
+ // Observer: always visible, rendered above streamed environment.
+ const pulse=reduced?1:.5+.5*Math.sin(time*2.1),px=w/2,py=h/2;
+ ctx.beginPath();ctx.arc(px,py,13+pulse*4,0,Math.PI*2);ctx.strokeStyle='rgba(131,243,206,.2)';ctx.lineWidth=1;ctx.stroke();
+ const core=ctx.createRadialGradient(px-3,py-4,1,px,py,10);core.addColorStop(0,'#fff9db');core.addColorStop(.35,'#ffd88a');core.addColorStop(1,'#35c9a0');ctx.fillStyle=core;ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);ctx.fill();
+ // A faint crosshair conveys orientation without covering the world.
+ ctx.strokeStyle='rgba(237,249,255,.24)';ctx.beginPath();ctx.moveTo(px-21,py);ctx.lineTo(px-12,py);ctx.moveTo(px+12,py);ctx.lineTo(px+21,py);ctx.moveTo(px,py-21);ctx.lineTo(px,py-12);ctx.moveTo(px,py+12);ctx.lineTo(px,py+21);ctx.stroke();
+ ui.region.textContent=Math.floor(cx/CHUNK)+' : '+Math.floor(cy/CHUNK);ui.lod.textContent=detailed?'МАКСИМАЛЬНЫЕ':medium?'СРЕДНИЕ':'БАЗОВЫЕ';ui.cache.textContent=cache.size+' / '+MAX_CACHE;
+}
+function frame(t){raf=0;if(!dirty&&!keys.size){return}if(t-last<30&&!keys.size){raf=requestAnimationFrame(frame);return}const dt=Math.min((t-last)/1000||0,.05);last=t;
+ if(keys.size){let dx=0,dy=0;if(keys.has('ArrowLeft')||keys.has('a'))dx--;if(keys.has('ArrowRight')||keys.has('d'))dx++;if(keys.has('ArrowUp')||keys.has('w'))dy--;if(keys.has('ArrowDown')||keys.has('s'))dy++;const len=Math.hypot(dx,dy)||1;cx+=dx/len*250*dt/zoom;cy+=dy/len*250*dt/zoom;dirty=true}
+ if(dirty){draw();dirty=false}if(keys.size||(!reduced&&pointer))raf=requestAnimationFrame(frame)}
+function wake(){dirty=true;if(!raf)raf=requestAnimationFrame(frame)}
+function move(dx,dy){cx+=dx*90/zoom;cy+=dy*90/zoom;wake()}
+function setZoom(z){zoom=Math.max(.25,Math.min(2.5,z));wake()}
+addEventListener('resize',resize,{passive:true});resize();wake();
+addEventListener('keydown',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' ','+','='].includes(k)||k==='-')e.preventDefault();if(k==='+'||k==='=')setZoom(zoom*1.2);else if(k==='-')setZoom(zoom/1.2);else if(k==='Escape'){keys.clear()}else{keys.add(k)}wake()});
+addEventListener('keyup',e=>{keys.delete(e.key.length===1?e.key.toLowerCase():e.key);wake()});addEventListener('blur',()=>{keys.clear();wake()});
+document.getElementById('zoomIn').addEventListener('click',()=>setZoom(zoom*1.25));document.getElementById('zoomOut').addEventListener('click',()=>setZoom(zoom/1.25));
+document.getElementById('center').addEventListener('click',()=>{cx=0;cy=0;zoom=1;cache.clear();wake()});
+ui.detail.addEventListener('click',()=>{autoDetail=!autoDetail;ui.detail.textContent=autoDetail?'Детали: авто':'Детали: эконом';ui.detail.setAttribute('aria-pressed',String(autoDetail));zoom=autoDetail?Math.max(zoom,1):Math.min(zoom,.8);wake()});
+document.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',()=>move(...b.dataset.move.split(',').map(Number))));
+canvas.addEventListener('pointerdown',e=>{pointer={x:e.clientX,y:e.clientY,id:e.pointerId};canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(!pointer||pointer.id!==e.pointerId)return;cx-=(e.clientX-pointer.x)/zoom;cy-=(e.clientY-pointer.y)/zoom;pointer.x=e.clientX;pointer.y=e.clientY;wake()});canvas.addEventListener('pointerup',()=>{pointer=null;wake()});canvas.addEventListener('pointercancel',()=>{pointer=null;wake()});
+canvas.addEventListener('wheel',e=>{e.preventDefault();setZoom(zoom*(e.deltaY<0?1.08:.92))},{passive:false});
+})();
+</script>
+</body>
+</html>
