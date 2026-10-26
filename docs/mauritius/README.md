@@ -50,6 +50,9 @@ Complete competitor and customer discovery, identify a high-confidence unmet nee
 
 ## Documents
 - [Market research](MARKET_RESEARCH.md)
+- [Competitor matrix](COMPETITOR_MATRIX.md)
+- [User discovery interview guide](USER_DISCOVERY.md)
+- [Initial pilot recommendation](PILOT_RECOMMENDATION.md)
 - [Legal and compliance checklist](LEGAL_COMPLIANCE.md)
 - [Localization guide](LOCALIZATION.md)
 - [Roadmap](ROADMAP.md)
