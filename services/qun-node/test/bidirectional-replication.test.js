@@ -1,0 +1,276 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { createServer } from "node:net";
+import { mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+
+async function freePort() {
+  const server = createServer();
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const port = server.address().port;
+  await new Promise(resolve => server.close(resolve));
+  return port;
+}
+
+async function waitForHealth(url, child) {
+  const deadline = Date.now() + 7000;
+  while (Date.now() < deadline) {
+    if (child.exitCode !== null) throw new Error("QUN Node exited before becoming healthy");
+    try {
+      const response = await fetch(url + "/health");
+      if (response.ok) return;
+    } catch {}
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  throw new Error("QUN Node health endpoint did not become ready");
+}
+
+async function waitForCondition(fn, message, timeoutMs = 12000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (await fn()) return;
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  throw new Error(message);
+}
+
+function startNode({ port, dataDir, nodeId, peers = "", token }) {
+  return spawn(process.execPath, [path.join(process.cwd(), "src", "server.js")], {
+    cwd: process.cwd(),
+    stdio: ["ignore", "ignore", "pipe"],
+    env: {
+      ...process.env,
+      QUN_NODE_HOST: "127.0.0.1",
+      QUN_NODE_PORT: String(port),
+      QUN_NODE_DATA_DIR: dataDir,
+      QUN_NODE_ID: nodeId,
+      QUN_NODE_PEERS: peers,
+      QUN_NODE_SHARED_TOKEN: token,
+      QUN_NODE_RECONCILE_INTERVAL_MS: "500"
+    }
+  });
+}
+
+async function stopNode(child) {
+  if (child.exitCode !== null) return;
+  child.kill("SIGTERM");
+  await Promise.race([
+    new Promise(resolve => child.once("exit", resolve)),
+    new Promise(resolve => setTimeout(resolve, 1500))
+  ]);
+  if (child.exitCode === null) child.kill("SIGKILL");
+}
+
+test("replication recovers after peer returns and repairs a corrupted copy", { timeout: 30000 }, async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "qun-node-repair-"));
+  const portA = await freePort();
+  const portB = await freePort();
+  const token = "qun-test-only-shared-token-please-change-001";
+  let nodeA;
+  let nodeB;
+  const urlA = "http://127.0.0.1:" + portA;
+  const urlB = "http://127.0.0.1:" + portB;
+  const dataA = path.join(root, "node-a");
+  const dataB = path.join(root, "node-b");
+  const objectId = "replica-repair-01";
+  try {
+    // Node B is deliberately offline when the first write occurs.
+    nodeA = startNode({ port: portA, dataDir: dataA, nodeId: "node-a", peers: urlB, token });
+    await waitForHealth(urlA, nodeA);
+    const dashboard = await fetch(urlA + "/");
+    assert.equal(dashboard.status, 200);
+    assert.match(await dashboard.text(), /QUN Node/);
+
+    // Internal replication endpoints must reject requests without the peer secret.
+    const unauthorizedList = await fetch(urlA + "/internal/replicas/manifests");
+    assert.equal(unauthorizedList.status, 401);
+    const unauthorizedWrite = await fetch(urlA + "/internal/replicas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: "unauthorized", data: "should not be stored" })
+    });
+    assert.equal(unauthorizedWrite.status, 401);
+
+    const dashboardHealthResponse = await fetch(urlA + "/health", {
+      headers: { Origin: "https://serega40in.github.io" }
+    });
+    assert.equal(dashboardHealthResponse.headers.get("access-control-allow-origin"), "https://serega40in.github.io");
+    const deniedOriginResponse = await fetch(urlA + "/health", {
+      headers: { Origin: "https://example.com" }
+    });
+    assert.equal(deniedOriginResponse.headers.get("access-control-allow-origin"), null);
+
+    const health = await (await fetch(urlA + "/health")).json();
+    assert.equal(health.safety.publicEnrollment, false);
+    assert.equal(health.safety.rewardsEnabled, false);
+    assert.equal(health.safety.localOnlyByDefault, true);
+    assert.ok(health.uptimeSeconds >= 0);
+    const put = await fetch(urlA + "/objects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: objectId, data: "synthetic QUN repair test object" })
+    });
+    assert.equal(put.status, 201);
+    const initial = await put.json();
+    assert.equal(initial.replication.succeeded, 0);
+
+    // While B is offline, A receives a new immutable revision with updated synthetic data.
+    // QUN does not overwrite a valid object ID in place: revisions use distinct IDs.
+    const updatedObjectId = "replica-repair-02";
+    const update = await fetch(urlA + "/objects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: updatedObjectId, data: "synthetic QUN repair test object v2 after offline update" })
+    });
+    assert.equal(update.status, 201);
+    assert.equal((await update.json()).replication.succeeded, 0);
+
+    // Once B returns, A's periodic reconciliation should restore both the original and updated revision.
+    nodeB = startNode({ port: portB, dataDir: dataB, nodeId: "node-b", token });
+    await waitForHealth(urlB, nodeB);
+    await waitForCondition(async () => {
+      try {
+        const response = await fetch(urlB + "/objects/" + objectId);
+        return response.ok && (await response.json()).data === "synthetic QUN repair test object";
+      } catch { return false; }
+    }, "Replica was not restored after the peer returned");
+    await waitForCondition(async () => {
+      try {
+        const response = await fetch(urlB + "/objects/" + updatedObjectId);
+        return response.ok && (await response.json()).data === "synthetic QUN repair test object v2 after offline update";
+      } catch { return false; }
+    }, "Updated revision was not replicated after the peer returned");
+
+    // Simulate bit rot / local file corruption on B; A must restore the valid copy.
+    await writeFile(path.join(dataB, "objects", objectId + ".bin"), "corrupted bytes");
+    await waitForCondition(async () => {
+      try {
+        const response = await fetch(urlB + "/objects/" + objectId + "/verify");
+        return response.ok && (await response.json()).valid === true;
+      } catch { return false; }
+    }, "Corrupted replica was not repaired");
+    const bytes = await readFile(path.join(dataB, "objects", objectId + ".bin"), "utf8");
+    assert.equal(bytes, "synthetic QUN repair test object");
+
+    // A malformed manifest must not permanently block a valid peer from repairing it.
+    await writeFile(path.join(dataB, "manifests", objectId + ".json"), "{ malformed json");
+    await waitForCondition(async () => {
+      try {
+        const response = await fetch(urlB + "/objects/" + objectId + "/verify");
+        return response.ok && (await response.json()).valid === true;
+      } catch { return false; }
+    }, "Malformed manifest was not repaired");
+    const repairedManifest = JSON.parse(await readFile(path.join(dataB, "manifests", objectId + ".json"), "utf8"));
+    assert.equal(repairedManifest.objectId, objectId);
+  } finally {
+    if (nodeA) await stopNode(nodeA);
+    if (nodeB) await stopNode(nodeB);
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+
+test("refuses public bind and plaintext remote peers by default", { timeout: 10000 }, async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "qun-node-safety-"));
+  async function rejected(overrides, expected) {
+    const child = spawn(process.execPath, [path.join(process.cwd(), "src", "server.js")], {
+      cwd: process.cwd(),
+      stdio: ["ignore", "ignore", "pipe"],
+      env: {
+        ...process.env,
+        QUN_NODE_HOST: "127.0.0.1",
+        QUN_NODE_PORT: "0",
+        QUN_NODE_DATA_DIR: path.join(root, "data"),
+        QUN_NODE_PEERS: "",
+        QUN_NODE_SHARED_TOKEN: "",
+        ...overrides
+      }
+    });
+    let stderr = "";
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", chunk => { stderr += chunk; });
+    const code = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { child.kill("SIGKILL"); reject(new Error("Safety check process did not exit")); }, 5000);
+      child.once("error", error => { clearTimeout(timer); reject(error); });
+      child.once("exit", value => { clearTimeout(timer); resolve(value); });
+    });
+    assert.notEqual(code, 0, "unsafe configuration should fail startup");
+    assert.match(stderr, expected);
+  }
+  try {
+    await rejected({ QUN_NODE_HOST: "0.0.0.0" }, /refuses a non-local bind by default/i);
+    await rejected({ QUN_NODE_PEERS: "http://example.com" }, /without TLS/i);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+
+test("two independently running peers exchange objects in both directions", { timeout: 30000 }, async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "qun-node-bidirectional-"));
+  const portA = await freePort();
+  let portB = await freePort();
+  while (portB === portA) portB = await freePort();
+  const urlA = "http://127.0.0.1:" + portA;
+  const urlB = "http://127.0.0.1:" + portB;
+  const token = "qun-bidirectional-test-secret-at-least-32";
+  let nodeA;
+  let nodeB;
+
+  async function waitForObject(base, id, expected) {
+    await waitForCondition(async () => {
+      try {
+        const response = await fetch(base + "/objects/" + id);
+        if (!response.ok) return false;
+        const object = await response.json();
+        return object.data === expected && object.sha256 === (await import("../src/storage.js")).sha256(Buffer.from(expected, "utf8"));
+      } catch { return false; }
+    }, "Object " + id + " was not replicated to " + base);
+  }
+
+  try {
+    nodeA = startNode({
+      port: portA,
+      dataDir: path.join(root, "node-a"),
+      nodeId: "bidirectional-a",
+      peers: urlB,
+      token
+    });
+    await waitForHealth(urlA, nodeA);
+    nodeB = startNode({
+      port: portB,
+      dataDir: path.join(root, "node-b"),
+      nodeId: "bidirectional-b",
+      peers: urlA,
+      token
+    });
+    await waitForHealth(urlB, nodeB);
+
+    const fromA = { id: "from-peer-a-001", data: "synthetic payload from independent peer A" };
+    const writeA = await fetch(urlA + "/objects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fromA)
+    });
+    assert.equal(writeA.status, 201);
+    await waitForObject(urlB, fromA.id, fromA.data);
+
+    const fromB = { id: "from-peer-b-001", data: "synthetic payload from independent peer B" };
+    const writeB = await fetch(urlB + "/objects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fromB)
+    });
+    assert.equal(writeB.status, 201);
+    await waitForObject(urlA, fromB.id, fromB.data);
+  } finally {
+    if (nodeA) await stopNode(nodeA);
+    if (nodeB) await stopNode(nodeB);
+    await rm(root, { recursive: true, force: true });
+  }
+});
