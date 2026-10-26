@@ -15,12 +15,12 @@ test("QUN World Engine loads, moves, zooms and bounds its region cache", async (
     const canvas = page.locator("canvas#world");
     assert.equal(await canvas.count(), 1);
     const before = await page.locator("#region").innerText();
-    await page.getByRole("button", { name: "＋ Приблизить" }).click();
+    await page.getByRole("button", { name: "Приблизить" }).click();
     await page.getByRole("button", { name: "＋ Приблизить" }).click();
     await page.getByRole("button", { name: "＋ Приблизить" }).click();
     await page.waitForTimeout(100);
     assert.equal(await page.locator("#lod").innerText(), "МАКСИМАЛЬНЫЕ");
-    await page.getByRole("button", { name: "− Отдалить" }).click();
+    await page.getByRole("button", { name: "Отдалить" }).click();
     await page.getByRole("button", { name: "Вернуться к началу" }).click();
     assert.equal(await page.locator("#region").innerText(), "0 : 0");
     await page.getByRole("button", { name: "Детали: авто" }).click();
