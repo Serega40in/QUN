@@ -10,7 +10,7 @@
 
 Copy this into your AI agent:
 
-> You are a contributing agent for QUN. Start by reading this orchestration hub: https://github.com/Serega40in/QUN/blob/main/docs/ai-orchestration/README.md . Inspect the actual repository state and the chosen task before acting. Use a dedicated `feat/<task-id>-<short-name>` branch. Do not overwrite unrelated files or the main homepage. Follow the task acceptance criteria exactly. Save outputs only to specified paths. Validate actual outputs and report the commands/checks you really ran; never invent tests, previews, provenance, or success. Do not spend money or activate paid services/resources without explicit owner approval. Do not introduce tokens, wallets, payments, financial rewards, personal-data collection, or claims of QUN Node integration unless explicitly authorized. Open a focused PR and do not merge/deploy without approval. Finish with changed paths, commit/PR links, evidence, limitations, and the next best task. If no task is specified, recommend the highest-priority task rather than silently expanding scope.
+> You are a contributing agent for QUN. Start by reading this orchestration hub: https://github.com/Serega40in/QUN/blob/main/docs/ai-orchestration/README.md . Inspect the actual repository state and the chosen task before acting. Use a dedicated feat/<task-id>-<short-name> branch. Do not overwrite unrelated files or the main homepage. Follow the task acceptance criteria exactly. Save outputs only to specified paths. Validate actual outputs and report the commands/checks you really ran; never invent tests, previews, provenance, or success. Do not spend money or activate paid services/resources without explicit owner approval. Do not introduce tokens, wallets, payments, financial rewards, personal-data collection, or claims of QUN Node integration unless explicitly authorized. Open a focused PR and do not merge/deploy without approval. Finish with changed paths, commit/PR links, evidence, limitations, and the next best task. If no task is specified, recommend the highest-priority task rather than silently expanding scope.
 
 ## Task registry
 
@@ -22,20 +22,21 @@ Copy this into your AI agent:
 | QD-002 | Integrate approved art into the game | Merged via PR #21; static CI passed, browser QA still open | [Task prompt](tasks/QD-002-integrate-art.md) |
 | ART-003 | Upgrade Discovery art to a premium coherent art direction | Ready for an art agent | [Task prompt](tasks/ART-003-discovery-premium-art-direction.md) |
 | QD-003 | Verify Discovery in real browsers and responsive viewports | Ready for browser QA; not yet executed | [QA checklist and agent prompt](tasks/QD-003-discovery-browser-qa.md) |
+| GD-001 | Design the fun, child-safe strategy-adventure and progression loop | Blueprint drafted; implementation still pending | [Game design blueprint](tasks/GD-001-discovery-game-design.md) |
 
 ## QUN Discovery art direction
 
-Aim for premium, warm, imaginative stylized 3D environment art with the finish of high-end animated-film concept art, but with original designs—not imitations of specific studios, films, or characters. Strong silhouettes, readable at small sizes, tactile natural materials, cinematic but restrained lighting, emerald/forest greens, ocean blues, and selective warm gold. Mood: wonder, kindness, ecological care, curiosity, peaceful optimism. World: floating island archipelago, friendly stone paths, crystal-clear water, forest sanctuary, mountain observatory, welcoming village, river delta, lighthouse.
+Aim for premium, warm, imaginative stylized environmental art with the finish of high-end animated-film concept art, but with original designs—not imitations of specific studios, films, or characters. Strong silhouettes, readable at small sizes, tactile natural materials, cinematic but restrained lighting, emerald/forest greens, ocean blues, and selective warm gold. Mood: wonder, kindness, ecological care, curiosity, peaceful optimism. World: floating island archipelago, friendly stone paths, crystal-clear water, forest sanctuary, mountain observatory, welcoming village, river delta, lighthouse.
 
 Avoid text, letters, logos, signatures, watermarks, fake UI, borders, muddy details, excessive bloom, horror, combat, dystopia, gambling/crypto motifs, and financial promises. Keep a consistent camera, light direction, color grade, material style, and detail density across the pack.
 
 ## Exact output locations
 
-- `docs/miniapp/assets/discovery/backgrounds/` — backgrounds.
-- `docs/miniapp/assets/discovery/locations/` — location art.
-- `docs/miniapp/assets/discovery/icons/` — icons and UI details.
-- `docs/miniapp/assets/discovery/manifest.json` — filenames, dimensions, format, prompt/version, tool/model if known, provenance/licensing caveats.
-- `docs/miniapp/assets/discovery/README.md` — usage and optimization notes.
+- docs/miniapp/assets/discovery/backgrounds/ — backgrounds.
+- docs/miniapp/assets/discovery/locations/ — location art.
+- docs/miniapp/assets/discovery/icons/ — icons and UI details.
+- docs/miniapp/assets/discovery/manifest.json — filenames, dimensions, format, prompt/version, tool/model if known, provenance/licensing caveats.
+- docs/miniapp/assets/discovery/README.md — usage and optimization notes.
 
 Use lowercase kebab-case filenames, WebP/PNG as appropriate, and optimize file size. Never commit credentials, API keys, personal data, or model checkpoints. Preserve source files when practical, but do not add huge intermediate files.
 
