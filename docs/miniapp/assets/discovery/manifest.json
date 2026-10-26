@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "QUN Discovery",
-  "note": "Original hand-authored SVG illustrations added in this branch. These are vector-art MVP assets, not AI-generated 3D renders. No external image sources or paid generation services were used.",
+  "note": "Original hand-authored SVG illustrations. The location/world pack is a lightweight vector MVP, and Lumi is an original companion character illustration. No external image sources or paid generation services were used.",
   "assets": [
     {
       "path": "backgrounds/island-archipelago-bg.svg",
@@ -60,6 +60,16 @@
       "height": 1024,
       "format": "SVG",
       "source": "Hand-authored SVG in QUN repository",
+      "externalReferences": false,
+      "licenseNote": "Follow the repository's applicable license; confirm any redistribution terms before external reuse."
+    },
+    {
+      "path": "characters/lumi-companion.svg",
+      "role": "original player companion character illustration",
+      "width": 512,
+      "height": 512,
+      "format": "SVG",
+      "source": "Hand-authored original SVG in QUN repository",
       "externalReferences": false,
       "licenseNote": "Follow the repository's applicable license; confirm any redistribution terms before external reuse."
     }

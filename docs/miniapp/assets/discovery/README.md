@@ -10,6 +10,7 @@ This is the first integrated illustration pass for the browser game. It uses han
 - `locations/welcoming-village.svg` — 1024×1024 village.
 - `locations/river-delta.svg` — 1024×1024 river delta.
 - `locations/golden-lighthouse.svg` — 1024×1024 lighthouse.
+- `characters/lumi-companion.svg` — 512×512 original companion character, Lumi.
 
 See [manifest.json](manifest.json) for the machine-readable inventory.
 
@@ -21,7 +22,7 @@ SVGs are resolution-independent and do not require remote requests, external fon
 
 ## Style direction
 
-Emerald/forest greens, ocean and turquoise blues, natural stone, restrained warm gold, gentle light, and peaceful exploration. These first illustrations are clean stylized vector art. A later art task may replace them with a richer cohesive rendered-art pack after owner review.
+Emerald/forest greens, ocean and turquoise blues, natural stone, restrained warm gold, gentle light, and peaceful exploration. These first illustrations are clean stylized vector art. Lumi is a new original companion illustration used in the player panel. A later art task may replace the environment pack with a richer cohesive rendered-art pack after owner review.
 
 ## Provenance and use
 

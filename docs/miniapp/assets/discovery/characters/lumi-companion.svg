@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+<title id="title">Луми — спутник QUN Discovery</title>
+<desc id="desc">Дружелюбное округлое бирюзовое лесное существо с большими синими глазами, маленькими листочками-ушками и золотым кристаллом на лбу.</desc>
+<defs>
+  <radialGradient id="body" cx="32%" cy="22%" r="82%"><stop offset="0" stop-color="#e1fff1"/><stop offset=".36" stop-color="#8ce4d0"/><stop offset=".72" stop-color="#4eb8c4"/><stop offset="1" stop-color="#286b91"/></radialGradient>
+  <linearGradient id="ear" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d7ffb7"/><stop offset="1" stop-color="#43b58d"/></linearGradient>
+  <radialGradient id="eye" cx="32%" cy="22%" r="80%"><stop stop-color="#bafaff"/><stop offset=".35" stop-color="#50c9f0"/><stop offset=".72" stop-color="#326bbd"/><stop offset="1" stop-color="#1a376f"/></radialGradient>
+  <linearGradient id="crystal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff5b4"/><stop offset=".48" stop-color="#f8d16b"/><stop offset="1" stop-color="#c48a37"/></linearGradient>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%"><feGaussianBlur stdDeviation="12"/></filter>
+</defs>
+<ellipse cx="258" cy="430" rx="142" ry="24" fill="#0a233b" opacity=".22" filter="url(#shadow)"/>
+<path d="M151 164Q99 98 143 72Q191 87 205 151Z" fill="url(#ear)" stroke="#287e78" stroke-width="7" stroke-linejoin="round"/>
+<path d="M361 158Q418 91 374 67Q326 86 307 151Z" fill="url(#ear)" stroke="#287e78" stroke-width="7" stroke-linejoin="round"/>
+<path d="M146 111Q163 112 177 143M366 108Q348 112 335 143" fill="none" stroke="#f0ffd7" stroke-width="7" stroke-linecap="round" opacity=".85"/>
+<path d="M111 271Q91 203 142 155Q187 113 258 119Q336 112 379 164Q425 218 399 300Q387 373 316 402Q251 427 191 397Q119 370 111 271Z" fill="url(#body)" stroke="#276c87" stroke-width="8"/>
+<path d="M137 229Q152 164 218 151" fill="none" stroke="#f2fff6" stroke-width="12" stroke-linecap="round" opacity=".72"/>
+<path d="M176 335Q191 319 208 335M307 335Q324 319 341 335" fill="none" stroke="#267e91" stroke-width="7" stroke-linecap="round" opacity=".6"/>
+<ellipse cx="202" cy="264" rx="45" ry="56" fill="#f5ffff" stroke="#246b91" stroke-width="6"/>
+<ellipse cx="316" cy="264" rx="45" ry="56" fill="#f5ffff" stroke="#246b91" stroke-width="6"/>
+<ellipse cx="207" cy="270" rx="30" ry="40" fill="url(#eye)"/>
+<ellipse cx="311" cy="270" rx="30" ry="40" fill="url(#eye)"/>
+<ellipse cx="197" cy="253" rx="11" ry="14" fill="#fff" opacity=".95"/>
+<ellipse cx="301" cy="253" rx="11" ry="14" fill="#fff" opacity=".95"/>
+<circle cx="222" cy="286" r="5" fill="#b8f8ff" opacity=".9"/><circle cx="326" cy="286" r="5" fill="#b8f8ff" opacity=".9"/>
+<ellipse cx="153" cy="310" rx="22" ry="13" fill="#f7b6bc" opacity=".55"/><ellipse cx="365" cy="310" rx="22" ry="13" fill="#f7b6bc" opacity=".55"/>
+<path d="M235 326Q258 348 282 326" fill="none" stroke="#17526b" stroke-width="8" stroke-linecap="round"/>
+<path d="M256 119L274 143L258 168L239 143Z" fill="url(#crystal)" stroke="#a97731" stroke-width="5" stroke-linejoin="round"/>
+<path d="M256 128L256 159L239 143Z" fill="#fff4b6" opacity=".9"/><path d="M256 128L274 143L256 159Z" fill="#e6a94e" opacity=".9"/>
+<path d="M132 354Q99 378 122 402Q146 420 174 393M381 354Q414 378 391 402Q367 420 339 393" fill="none" stroke="#4caeaa" stroke-width="19" stroke-linecap="round"/>
+<path d="M222 393Q211 425 233 438M293 393Q304 425 282 438" fill="none" stroke="#2b829a" stroke-width="17" stroke-linecap="round"/>
+<path d="M210 443Q226 430 244 443M270 443Q288 430 305 443" fill="none" stroke="#1c5d80" stroke-width="7" stroke-linecap="round"/>
+<g fill="#fff8d8" opacity=".8"><path d="M90 190l5 12 12 5-12 5-5 12-5-12-12-5 12-5z"/><path d="M414 205l4 9 9 4-9 4-4 9-4-9-9-4 9-4z"/><circle cx="395" cy="132" r="5"/><circle cx="111" cy="326" r="4"/></g>
+</svg>

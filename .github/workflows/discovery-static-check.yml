@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: 22
       - name: Check game JavaScript and local asset references
-        run: node --test docs/ai-orchestration/tests/discovery-static.test.mjs
+        run: node --test docs/ai-orchestration/tests/discovery-static.test.mjs docs/ai-orchestration/tests/discovery-growth.test.mjs
       - name: Validate SVG XML and manifest
         run: |
           python - <<'PY'
@@ -37,7 +37,7 @@ jobs:
 
           root = Path("docs/miniapp/assets/discovery")
           manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
-          assert len(manifest["assets"]) == 6, "expected six art assets"
+          assert len(manifest["assets"]) == 7, "expected seven art assets"
           for asset in manifest["assets"]:
               path = root / asset["path"]
               assert path.is_file(), f"missing asset: {path}"
