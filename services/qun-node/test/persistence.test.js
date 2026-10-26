@@ -6,15 +6,21 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
+const allocatedPorts = new Set();
+
 async function freePort() {
-  const server = createServer();
-  await new Promise((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", resolve);
-  });
-  const port = server.address().port;
-  await new Promise(resolve => server.close(resolve));
-  return port;
+  for (;;) {
+    const server = createServer();
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const port = server.address().port;
+    await new Promise(resolve => server.close(resolve));
+    if (allocatedPorts.has(port)) continue;
+    allocatedPorts.add(port);
+    return port;
+  }
 }
 
 async function waitForHealth(url, child) {
