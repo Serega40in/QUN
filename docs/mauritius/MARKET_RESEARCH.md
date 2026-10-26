@@ -12,13 +12,14 @@ Research status: initial desk research, not a completed market audit. Last check
 |---|---|---|
 | Messaging | WhatsApp, Facebook Messenger, Telegram | Local usage, business/community workflows, language support |
 | Local marketplace | MoBazar — https://mobazar.mu/ | Seller onboarding, product discovery, chat, pickup/payment flow, fees and trust |
+| Local marketplace | Maubazaar — https://maubazaar.mu/ | Category coverage, seller verification, listings, buyer/seller workflows, traction |
 | Classifieds/shopping | PriceGuru.mu, Marideal.mu, Facebook Marketplace/groups | Active categories, seller reach, delivery, payment options |
 | Social media | Facebook, Instagram, TikTok | Business discovery and community practices |
 | Payments | Local banks, payment gateways and mobile payment products | Merchant onboarding, settlement, fees and integration access |
 | Crypto | Local/international exchanges and custodians | Mauritius licensing status, assets, retail access and disclosures |
 | AI/developers | International AI tools, local IT firms and developer communities | Local-language quality, SMB needs, affordability and integrations |
 
-MoBazar publicly describes local-business product discovery, seller verification, direct chat and in-person pickup/payment. Therefore QUN Market must not be positioned as the first local marketplace without deeper evidence: https://mobazar.mu/
+MoBazar publicly describes local-business product discovery, seller verification, direct chat, shop pages and in-person pickup/payment. Its seller onboarding is described as invitation-led during its launch period. Source: https://mobazar.mu/ . Maubazaar also publicly presents itself as a Mauritius marketplace: https://maubazaar.mu/ . These are direct competitors to investigate, not proof of their market share or current traction. QUN Market must not be positioned as the first local marketplace without stronger evidence.
 
 ## Research questions
 ### Residents
