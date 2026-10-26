@@ -1,0 +1,39 @@
+name: QUN Contributor Checks
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contributor-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-hygiene:
+    name: Repository hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check whitespace errors
+        run: git diff --check ${{ github.event.pull_request.base.sha || 'HEAD~1' }}...HEAD
+
+      - name: Verify contributor essentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s README.md
+          test -s CONTRIBUTING.md
+          test -s GOVERNANCE.md
+          test -s SECURITY.md
+          test -s CODE_OF_CONDUCT.md
+          test -s .github/pull_request_template.md
+          test -s docs/developers/index.html
+          echo "Contributor documentation is present."
