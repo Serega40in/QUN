@@ -37,7 +37,7 @@ test("all manifest assets exist and match their declared SVG dimensions", () => 
 });
 
 test("game references existing local art and keeps a text fallback", () => {
-  const paths = [...html.matchAll(/(?:src|art):["'](assets\\/discovery\\/[^"']+)["']/g)].map(m => m[1]);
+  const paths = [...html.matchAll(/(?:src|art)(?:=|:)["'](assets\/discovery\/[^"']+)["']/g)].map(m => m[1]);
   assert.ok(paths.length >= 6, "expected background and five location art references");
   for (const path of paths) {
     assert.ok(existsSync(resolve(dirname(htmlPath), path)), `broken relative asset path: ${path}`);
