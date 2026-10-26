@@ -14,8 +14,10 @@ describe("QUN Developer API", () => {
     const response = await worker.fetch(new Request("https://api.test/v1/services"), env);
     const body = await response.json() as any;
     expect(response.status).toBe(200);
-    expect(body.data.some((service: any) => service.id === "qun-node")).toBe(true);
-    expect(body.note).toContain("not a claim");
+    const node = body.data.find((service: any) => service.id === "qun-node");
+    expect(node).toBeTruthy();
+    expect(node.description).toContain("not exposed by this MVP");
+    expect(body.note).toContain("API exposure status is listed per service");
   });
 
   it("requires a bearer token for identity", async () => {
