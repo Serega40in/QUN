@@ -20,7 +20,7 @@ test("Discovery plays in a real browser: Lumi, exploration, growth, save and res
 
     await page.locator('[data-place="forest"]').click();
     assert.equal(await page.locator("#points").innerText(), "10");
-    assert.match(await page.locator("#detail").innerText(), /Тихий лес/);
+    assert.match(await page.locator("#detail").innerText(), /Заметь больше, чем ожидал/);
     assert.equal(await page.locator("#seedCount").innerText(), "3");
     assert.equal(await page.locator("#knowledgeCount").innerText(), "1");
 
