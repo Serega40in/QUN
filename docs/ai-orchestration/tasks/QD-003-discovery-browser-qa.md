@@ -1,8 +1,8 @@
 # QD-003 — Discovery real-browser and responsive QA
 
-**Status:** Ready for a browser-testing agent; not yet executed  
-**Game:** [discovery.html](../../miniapp/discovery.html)  
-**Assets:** [Discovery art README](../../miniapp/assets/discovery/README.md)  
+**Status:** Ready for a browser-testing agent; not yet executed
+**Game:** [discovery.html](../../miniapp/discovery.html)
+**Assets:** [Discovery art README](../../miniapp/assets/discovery/README.md)
 **Hub:** [AI orchestration README](../README.md)
 
 ## Goal
