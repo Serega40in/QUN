@@ -7,6 +7,8 @@ import android.provider.ContactsContract
 import android.net.Uri
 import android.os.Bundle
 import android.content.Context
+import android.media.MediaPlayer
+import android.media.MediaRecorder
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -222,6 +224,26 @@ private class QunApi {
         check(r.status.isSuccess()) { r.bodyAsText() }
     }
 
+    suspend fun uploadVoice(token: String, conversationId: String, sender: String, file: File): String {
+        require(file.length() in 1..(9L * 1024L * 1024L)) { "Голосовое должно быть не больше 9 МБ." }
+        val path = "$conversationId/$sender/${java.util.UUID.randomUUID()}.m4a"
+        val r = http.post("$SUPABASE_URL/storage/v1/object/qun-voice-messages/$path") {
+            auth(this, token)
+            contentType(ContentType.parse("audio/mp4"))
+            setBody(file.readBytes())
+        }
+        check(r.status.isSuccess()) { r.bodyAsText() }
+        return path
+    }
+
+    suspend fun downloadVoice(token: String, path: String, destination: File) {
+        val r = http.get("$SUPABASE_URL/storage/v1/object/authenticated/qun-voice-messages/$path") {
+            auth(this, token)
+        }
+        check(r.status.isSuccess()) { r.bodyAsText() }
+        destination.writeBytes(r.bodyAsBytes())
+    }
+
     suspend fun checkUpdate(): UpdateInfo {
         val r = http.get("https://raw.githubusercontent.com/Serega40in/QUN/main/docs/update.json")
         check(r.status.isSuccess()) { r.bodyAsText() }
@@ -236,6 +258,21 @@ private class QunApi {
 }
 
 private val api = QunApi()
+
+private fun createVoiceRecorder(context: Context): Pair<MediaRecorder, File> {
+    val file = File(context.cacheDir, "qun-voice-${System.currentTimeMillis()}.m4a")
+    val recorder = MediaRecorder()
+    recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+    recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+    recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+    recorder.setAudioEncodingBitRate(64_000)
+    recorder.setAudioSamplingRate(44_100)
+    recorder.setMaxFileSize(9L * 1024L * 1024L)
+    recorder.setOutputFile(file.absolutePath)
+    recorder.prepare()
+    recorder.start()
+    return recorder to file
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -910,7 +947,57 @@ private fun ChatScreen(
     var messages by remember { mutableStateOf<List<Message>>(emptyList()) }
     var draft by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
+    var recording by remember { mutableStateOf(false) }
+    var recorder by remember { mutableStateOf<MediaRecorder?>(null) }
+    var pendingVoiceFile by remember { mutableStateOf<File?>(null) }
+    var recordingStartedAt by remember { mutableStateOf(0L) }
+    var voiceDurationSeconds by remember { mutableStateOf(0L) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
+
+    fun beginRecording() {
+        try {
+            val (newRecorder, file) = createVoiceRecorder(context)
+            recorder = newRecorder
+            pendingVoiceFile = file
+            recordingStartedAt = System.currentTimeMillis()
+            voiceDurationSeconds = 0L
+            recording = true
+        } catch (e: Exception) {
+            recorder?.release()
+            recorder = null
+            recording = false
+            pendingVoiceFile?.delete()
+            pendingVoiceFile = null
+            onError("Не удалось начать запись: ${e.message ?: "проверьте микрофон"}")
+        }
+    }
+
+    fun stopRecording() {
+        val file = pendingVoiceFile
+        try {
+            recorder?.stop()
+        } catch (_: Exception) {
+            // A short recording or a recorder reaching its size limit may fail to finalize.
+        } finally {
+            recorder?.release()
+            recorder = null
+            recording = false
+        }
+        if (file == null || !file.exists() || file.length() < 512L) {
+            file?.delete()
+            pendingVoiceFile = null
+            onError("Запись слишком короткая. Попробуйте ещё раз.")
+        } else {
+            voiceDurationSeconds = ((System.currentTimeMillis() - recordingStartedAt) / 1000L).coerceAtLeast(1L)
+        }
+    }
+
+    val microphonePermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) beginRecording() else onError("Для голосовых сообщений нужен доступ к микрофону.")
+    }
 
     suspend fun refresh() {
         try {
@@ -924,6 +1011,14 @@ private fun ChatScreen(
         while (true) {
             refresh()
             delay(1500)
+        }
+    }
+
+    DisposableEffect(conversationId) {
+        onDispose {
+            try { recorder?.stop() } catch (_: Exception) {}
+            recorder?.release()
+            pendingVoiceFile?.delete()
         }
     }
 
@@ -951,47 +1046,108 @@ private fun ChatScreen(
             }
         },
         bottomBar = {
-            Row(
-                Modifier.fillMaxWidth().padding(10.dp),
-                verticalAlignment = Alignment.Bottom
+            Column(
+                Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
-                OutlinedTextField(
-                    draft,
-                    { draft = it },
-                    Modifier.weight(1f),
-                    placeholder = { Text("Сообщение") },
-                    maxLines = 4,
-                    shape = RoundedCornerShape(18.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Button(
-                    onClick = {
-                        val text = draft.trim()
-                        if (text.isBlank()) return@Button
-                        scope.launch {
-                            sending = true
-                            try {
-                                api.sendMessage(
-                                    session.access_token,
-                                    conversationId,
-                                    me.id,
-                                    text
-                                )
-                                draft = ""
-                                refresh()
-                            } catch (e: Exception) {
-                                onError(e.message ?: "Сообщение не отправлено")
-                            } finally {
-                                sending = false
-                            }
-                        }
-                    },
-                    enabled = draft.trim().isNotBlank() && !sending,
-                    colors = ButtonDefaults.buttonColors(containerColor = Navy),
-                    shape = CircleShape,
-                    contentPadding = PaddingValues(14.dp)
-                ) {
-                    Text(if (sending) "…" else "↑", fontSize = 20.sp)
+                if (recording) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(Modifier.size(10.dp).background(Color(0xFFCC3333), CircleShape))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Идёт запись голосового…", color = Navy, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { stopRecording() }) { Text("■ Стоп", color = Emerald) }
+                    }
+                } else if (pendingVoiceFile != null) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("🎙 Голосовое · ${voiceDurationSeconds} сек.", color = Navy, modifier = Modifier.weight(1f))
+                        TextButton(onClick = {
+                            pendingVoiceFile?.delete()
+                            pendingVoiceFile = null
+                            voiceDurationSeconds = 0L
+                        }) { Text("Отмена", color = Color.Gray) }
+                        Button(
+                            onClick = {
+                                val file = pendingVoiceFile ?: return@Button
+                                scope.launch {
+                                    sending = true
+                                    try {
+                                        val path = api.uploadVoice(session.access_token, conversationId, me.id, file)
+                                        api.sendMessage(
+                                            session.access_token,
+                                            conversationId,
+                                            me.id,
+                                            "voice|$path|$voiceDurationSeconds"
+                                        )
+                                        pendingVoiceFile = null
+                                        voiceDurationSeconds = 0L
+                                        file.delete()
+                                        refresh()
+                                    } catch (e: Exception) {
+                                        onError("Не удалось отправить голосовое: ${e.message ?: "ошибка сети"}")
+                                    } finally {
+                                        sending = false
+                                    }
+                                }
+                            },
+                            enabled = !sending,
+                            colors = ButtonDefaults.buttonColors(containerColor = Emerald),
+                            shape = CircleShape,
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                        ) { Text(if (sending) "…" else "↑ Отправить") }
+                    }
+                } else {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        OutlinedTextField(
+                            draft,
+                            { draft = it },
+                            Modifier.weight(1f),
+                            placeholder = { Text("Сообщение") },
+                            maxLines = 4,
+                            shape = RoundedCornerShape(18.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Button(
+                            onClick = {
+                                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                                    beginRecording()
+                                } else {
+                                    microphonePermission.launch(Manifest.permission.RECORD_AUDIO)
+                                }
+                            },
+                            enabled = !sending,
+                            colors = ButtonDefaults.buttonColors(containerColor = Emerald),
+                            shape = CircleShape,
+                            contentPadding = PaddingValues(12.dp)
+                        ) { Text("🎙", fontSize = 18.sp) }
+                        Spacer(Modifier.width(6.dp))
+                        Button(
+                            onClick = {
+                                val text = draft.trim()
+                                if (text.isBlank()) return@Button
+                                scope.launch {
+                                    sending = true
+                                    try {
+                                        api.sendMessage(session.access_token, conversationId, me.id, text)
+                                        draft = ""
+                                        refresh()
+                                    } catch (e: Exception) {
+                                        onError(e.message ?: "Сообщение не отправлено")
+                                    } finally {
+                                        sending = false
+                                    }
+                                }
+                            },
+                            enabled = draft.trim().isNotBlank() && !sending,
+                            colors = ButtonDefaults.buttonColors(containerColor = Navy),
+                            shape = CircleShape,
+                            contentPadding = PaddingValues(14.dp)
+                        ) { Text("↑", fontSize = 20.sp) }
+                    }
                 }
             }
         }
@@ -1002,24 +1158,117 @@ private fun ChatScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(messages, key = { it.id }) { message ->
+                val mine = message.sender_id == me.id
                 Row(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement =
-                        if (message.sender_id == me.id) Arrangement.End else Arrangement.Start
+                    horizontalArrangement = if (mine) Arrangement.End else Arrangement.Start
                 ) {
                     Surface(
-                        color = if (message.sender_id == me.id) Navy else Color.White,
+                        color = if (mine) Navy else Color.White,
                         shape = RoundedCornerShape(18.dp)
                     ) {
-                        Text(
-                            message.body,
-                            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                            color = if (message.sender_id == me.id) Color.White else Navy,
-                            fontSize = 15.sp
-                        )
+                        if (message.body.startsWith("voice|")) {
+                            val parts = message.body.split("|", limit = 3)
+                            if (parts.size == 3) {
+                                VoiceMessageBubble(
+                                    token = session.access_token,
+                                    path = parts[1],
+                                    durationSeconds = parts[2].toLongOrNull() ?: 0L,
+                                    mine = mine,
+                                    onError = onError
+                                )
+                            } else {
+                                Text("Голосовое сообщение недоступно", Modifier.padding(12.dp), color = if (mine) Color.White else Navy)
+                            }
+                        } else {
+                            Text(
+                                message.body,
+                                Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                color = if (mine) Color.White else Navy,
+                                fontSize = 15.sp
+                            )
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun VoiceMessageBubble(
+    token: String,
+    path: String,
+    durationSeconds: Long,
+    mine: Boolean,
+    onError: (String) -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
+    var loading by remember(path) { mutableStateOf(false) }
+    var playing by remember(path) { mutableStateOf(false) }
+    var player by remember(path) { mutableStateOf<MediaPlayer?>(null) }
+
+    DisposableEffect(path) {
+        onDispose {
+            try { player?.stop() } catch (_: Exception) {}
+            player?.release()
+        }
+    }
+
+    Row(
+        Modifier.padding(horizontal = 12.dp, vertical = 8.dp).widthIn(min = 150.dp, max = 250.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Button(
+            onClick = {
+                if (playing) {
+                    try { player?.stop() } catch (_: Exception) {}
+                    player?.release()
+                    player = null
+                    playing = false
+                } else {
+                    scope.launch {
+                        loading = true
+                        try {
+                            val file = File(context.cacheDir, "qun-${path.hashCode()}.m4a")
+                            if (!file.exists() || file.length() == 0L) {
+                                api.downloadVoice(token, path, file)
+                            }
+                            val mediaPlayer = MediaPlayer()
+                            mediaPlayer.setDataSource(file.absolutePath)
+                            mediaPlayer.setOnCompletionListener {
+                                playing = false
+                                player = null
+                                mediaPlayer.release()
+                            }
+                            mediaPlayer.prepare()
+                            mediaPlayer.start()
+                            player = mediaPlayer
+                            playing = true
+                        } catch (e: Exception) {
+                            onError("Не удалось воспроизвести голосовое: ${e.message ?: "ошибка аудио"}")
+                        } finally {
+                            loading = false
+                        }
+                    }
+                }
+            },
+            enabled = !loading,
+            colors = ButtonDefaults.buttonColors(containerColor = if (mine) Emerald else Navy),
+            shape = CircleShape,
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Text(if (loading) "…" else if (playing) "Ⅱ" else "▶", color = Color.White, fontSize = 16.sp)
+        }
+        Spacer(Modifier.width(10.dp))
+        Column {
+            Text("Голосовое", color = if (mine) Color.White else Navy, fontWeight = FontWeight.SemiBold)
+            Text(
+                "${durationSeconds / 60}:${(durationSeconds % 60).toString().padStart(2, '0')}",
+                color = if (mine) Color(0xFFD7E9E4) else Color.Gray,
+                fontSize = 12.sp
+            )
         }
     }
 }
