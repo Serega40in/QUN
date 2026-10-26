@@ -62,7 +62,7 @@ function cloneState(state) {
 }
 
 function applyTransaction(tx, state) {
-  if (!tx || tx.version !== 1 || typeof tx.to !== "string" || !tx.to || tx.to.length > 128) {
+  if (!tx || tx.version !== 1 || typeof tx.to !== "string" || !/^[a-f0-9]{64}$/.test(tx.to)) {
     throw new Error("invalid transaction shape");
   }
   if (!Number.isSafeInteger(tx.amount) || tx.amount <= 0) throw new Error("invalid amount");
@@ -135,6 +135,7 @@ export class QunLedger {
     const nextState = cloneState(this.state);
     for (const tx of transactions) applyTransaction(tx, nextState);
     const previous = this.blocks[this.blocks.length - 1];
+    if (timestamp < previous.timestamp) throw new Error("block timestamp cannot move backwards");
     const block = {
       version: 1,
       height: previous.height + 1,
