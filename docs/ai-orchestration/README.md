@@ -19,7 +19,9 @@ Copy this into your AI agent:
 | QD-001 | Audit and verify the Discovery game MVP | Ready | [Task prompt](tasks/QD-001-game-audit.md) |
 | ART-001 | Create a coherent Discovery art pack | Initial vector pack delivered; richer art still open | [Task prompt](tasks/ART-001-discovery-art-pack.md) |
 | ART-002 | Create location icons and UI micro-assets | Backlog | [Task prompt](tasks/ART-002-ui-assets.md) |
-| QD-002 | Integrate approved art into the game | Implemented in this PR; pending checks/review | [Task prompt](tasks/QD-002-integrate-art.md) |
+| QD-002 | Integrate approved art into the game | Merged via PR #21; static CI passed, browser QA still open | [Task prompt](tasks/QD-002-integrate-art.md) |
+| ART-003 | Upgrade Discovery art to a premium coherent art direction | Ready for an art agent | [Task prompt](tasks/ART-003-discovery-premium-art-direction.md) |
+| QD-003 | Verify Discovery in real browsers and responsive viewports | Ready for browser QA; not yet executed | [QA checklist and agent prompt](tasks/QD-003-discovery-browser-qa.md) |
 
 ## QUN Discovery art direction
 
@@ -47,4 +49,4 @@ Use lowercase kebab-case filenames, WebP/PNG as appropriate, and optimize file s
 6. Do not pay for or activate resources without approval.
 7. Open a PR and leave it unmerged until review.
 
-**Current-state note:** Discovery's static browser-game MVP was merged via PR #20. This branch adds an initial hand-authored SVG art pass and static checks; it is not the final high-end rendered-art pass. Merge does not by itself prove GitHub Pages publication or browser/end-to-end test success. Do not claim multiplayer or QUN Node integration without direct evidence.
+**Current-state note:** Discovery's static browser-game MVP was merged via PR #20. The initial hand-authored SVG art integration and static checks were merged via PR #21. This is a lightweight first art pass, not the final premium rendered-art pass. Merge and green static CI do not prove GitHub Pages publication or browser/end-to-end success. Follow QD-003 for real-browser verification. Do not claim multiplayer or QUN Node integration without direct evidence.
