@@ -30,7 +30,7 @@ async function waitForHealth(url, child) {
   throw new Error("QUN Node health endpoint did not become ready");
 }
 
-test("peer replication endpoints reject missing or incorrect credentials", { timeout: 15000 }, async () => {
+test("peer replication reads and writes require the correct shared secret", { timeout: 15000 }, async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "qun-node-auth-"));
   const port = await freePort();
   const token = "qun-test-peer-auth-token-32-chars-minimum-001";
@@ -50,19 +50,46 @@ test("peer replication endpoints reject missing or incorrect credentials", { tim
   });
   try {
     await waitForHealth(base, child);
-    const missing = await fetch(base + "/internal/replicas/manifests");
-    assert.equal(missing.status, 401);
+    const objectId = "auth-check-object";
+    const body = JSON.stringify({ id: objectId, data: "synthetic authorized peer payload" });
 
-    const wrong = await fetch(base + "/internal/replicas/manifests", {
-      headers: { Authorization: "Bearer definitely-not-the-secret" }
+    for (const headers of [{}, { Authorization: "Bearer definitely-not-the-secret" }]) {
+      const missingOrWrongList = await fetch(base + "/internal/replicas/manifests", { headers });
+      assert.equal(missingOrWrongList.status, 401);
+
+      const missingOrWrongWrite = await fetch(base + "/internal/replicas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body
+      });
+      assert.equal(missingOrWrongWrite.status, 401);
+
+      const missingOrWrongRead = await fetch(base + "/internal/replicas/" + objectId, { headers });
+      assert.equal(missingOrWrongRead.status, 401);
+    }
+
+    const authorizedWrite = await fetch(base + "/internal/replicas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body
     });
-    assert.equal(wrong.status, 401);
+    assert.equal(authorizedWrite.status, 201);
 
-    const authorized = await fetch(base + "/internal/replicas/manifests", {
+    const authorizedList = await fetch(base + "/internal/replicas/manifests", {
       headers: { Authorization: "Bearer " + token }
     });
-    assert.equal(authorized.status, 200);
-    assert.deepEqual((await authorized.json()).manifests, []);
+    assert.equal(authorizedList.status, 200);
+    const listed = await authorizedList.json();
+    assert.equal(listed.manifests.length, 1);
+    assert.equal(listed.manifests[0].objectId, objectId);
+
+    const authorizedRead = await fetch(base + "/internal/replicas/" + objectId, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    assert.equal(authorizedRead.status, 200);
+    const replica = await authorizedRead.json();
+    assert.equal(replica.data, "synthetic authorized peer payload");
+    assert.equal(replica.manifest.objectId, objectId);
   } finally {
     if (child.exitCode === null) {
       child.kill("SIGTERM");
