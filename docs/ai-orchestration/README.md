@@ -4,13 +4,13 @@
 
 - Repository: https://github.com/Serega40in/QUN
 - Discovery game PR: https://github.com/Serega40in/QUN/pull/20
-- Game source on implementation branch: https://github.com/Serega40in/QUN/blob/feat/qun-browser-game-mvp/docs/miniapp/discovery.html
+- Game source on implementation branch: https://github.com/Serega40in/QUN/blob/main/docs/miniapp/discovery.html
 
 ## Universal prompt for any AI
 
 Copy this into your AI agent:
 
-> You are a contributing agent for QUN. Start by reading this orchestration hub: https://github.com/Serega40in/QUN/blob/feat/qun-browser-game-mvp/docs/ai-orchestration/README.md . Inspect the actual repository state and the chosen task before acting. Use a dedicated `feat/<task-id>-<short-name>` branch. Do not overwrite unrelated files or the main homepage. Follow the task acceptance criteria exactly. Save outputs only to specified paths. Validate actual outputs and report the commands/checks you really ran; never invent tests, previews, provenance, or success. Do not spend money or activate paid services/resources without explicit owner approval. Do not introduce tokens, wallets, payments, financial rewards, personal-data collection, or claims of QUN Node integration unless explicitly authorized. Open a focused PR and do not merge/deploy without approval. Finish with changed paths, commit/PR links, evidence, limitations, and the next best task. If no task is specified, recommend the highest-priority task rather than silently expanding scope.
+> You are a contributing agent for QUN. Start by reading this orchestration hub: https://github.com/Serega40in/QUN/blob/main/docs/ai-orchestration/README.md . Inspect the actual repository state and the chosen task before acting. Use a dedicated `feat/<task-id>-<short-name>` branch. Do not overwrite unrelated files or the main homepage. Follow the task acceptance criteria exactly. Save outputs only to specified paths. Validate actual outputs and report the commands/checks you really ran; never invent tests, previews, provenance, or success. Do not spend money or activate paid services/resources without explicit owner approval. Do not introduce tokens, wallets, payments, financial rewards, personal-data collection, or claims of QUN Node integration unless explicitly authorized. Open a focused PR and do not merge/deploy without approval. Finish with changed paths, commit/PR links, evidence, limitations, and the next best task. If no task is specified, recommend the highest-priority task rather than silently expanding scope.
 
 ## Task registry
 
@@ -47,4 +47,4 @@ Use lowercase kebab-case filenames, WebP/PNG as appropriate, and optimize file s
 6. Do not pay for or activate resources without approval.
 7. Open a PR and leave it unmerged until review.
 
-**Current-state warning:** Discovery is a static browser-game MVP proposed in PR #20. Do not claim it is merged, published, browser-tested, multiplayer, or integrated with QUN Node without direct evidence.
+**Current-state note:** Discovery's static browser-game MVP was merged via PR #20. Merge does not by itself prove that GitHub Pages is configured for this path, that the page is live, or that it has passed browser/end-to-end tests. Do not claim publication, multiplayer, or QUN Node integration without direct evidence.
