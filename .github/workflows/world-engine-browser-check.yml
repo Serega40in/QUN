@@ -28,9 +28,9 @@ jobs:
           /tmp/qun-playwright/node_modules/.bin/playwright install --with-deps chromium
       - name: Start local static server
         run: |
-          python3 -m http.server 4173 --directory . >/tmp/qun-world-http.log 2>&1 &
+          python3 -m http.server 4173 --directory docs >/tmp/qun-world-http.log 2>&1 &
           for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:4173/docs/world/engine/index.html >/dev/null; then exit 0; fi
+            if curl --fail --silent http://127.0.0.1:4173/world/engine/index.html >/dev/null; then exit 0; fi
             sleep 1
           done
           cat /tmp/qun-world-http.log
