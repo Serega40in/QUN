@@ -1,9 +1,9 @@
 # ART-003 — QUN Discovery premium art direction
 
-**Status:** Ready for an art agent  
-**Repository:** https://github.com/Serega40in/QUN  
-**Start here:** [AI orchestration hub](../README.md)  
-**Game:** [discovery.html](../../miniapp/discovery.html)  
+**Status:** Ready for an art agent
+**Repository:** https://github.com/Serega40in/QUN
+**Start here:** [AI orchestration hub](../README.md)
+**Game:** [discovery.html](../../miniapp/discovery.html)
 **Current assets:** [asset README](../../miniapp/assets/discovery/README.md)
 
 ## Mission
