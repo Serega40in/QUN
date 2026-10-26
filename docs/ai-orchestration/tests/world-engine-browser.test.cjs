@@ -2,7 +2,7 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { chromium } = require("playwright");
 
-const baseURL = process.env.WORLD_ENGINE_URL || "http://127.0.0.1:4173/world/engine/index.html";
+const baseURL = process.env.WORLD_ENGINE_URL || "http://127.0.0.1:4173/docs/world/engine/index.html";
 
 test("QUN World Engine loads, moves, zooms and bounds its region cache", async () => {
   const browser = await chromium.launch({ headless: true });
