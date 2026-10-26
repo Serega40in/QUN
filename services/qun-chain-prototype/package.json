@@ -1,0 +1,13 @@
+{
+  "name": "qun-chain-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Experimental signed ledger and history verifier for QUN; not a production blockchain",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

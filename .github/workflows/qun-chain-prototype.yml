@@ -1,0 +1,33 @@
+name: QUN Chain Prototype
+
+on:
+  push:
+    branches:
+      - feature/qun-chain-ledger-prototype
+    paths:
+      - "services/qun-chain-prototype/**"
+      - ".github/workflows/qun-chain-prototype.yml"
+  pull_request:
+    paths:
+      - "services/qun-chain-prototype/**"
+      - ".github/workflows/qun-chain-prototype.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ledger-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/qun-chain-prototype
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run ledger tests
+        run: npm test
