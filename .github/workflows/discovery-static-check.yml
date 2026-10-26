@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: 22
       - name: Check game JavaScript and local asset references
-        run: node --test docs/ai-orchestration/tests/discovery-static.test.mjs
+        run: node --test docs/ai-orchestration/tests/discovery-static.test.mjs docs/ai-orchestration/tests/discovery-growth.test.mjs
       - name: Validate SVG XML and manifest
         run: |
           python - <<'PY'
