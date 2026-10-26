@@ -22,7 +22,7 @@ test("inline JavaScript parses without syntax errors", () => {
 });
 
 test("all manifest assets exist and match their declared SVG dimensions", () => {
-  assert.equal(manifest.assets.length, 6);
+  assert.equal(manifest.assets.length, 7);
   for (const asset of manifest.assets) {
     const file = resolve(assetRoot, asset.path);
     assert.ok(existsSync(file), `missing asset: ${asset.path}`);
