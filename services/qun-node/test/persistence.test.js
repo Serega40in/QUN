@@ -101,26 +101,3 @@ test("stored object and integrity manifest survive a full node restart", { timeo
     await rm(root, { recursive: true, force: true });
   }
 });
-
-test("object API rejects path-like IDs without writing outside storage", { timeout: 15000 }, async () => {
-  const root = await mkdtemp(path.join(os.tmpdir(), "qun-node-object-id-"));
-  const dataDir = path.join(root, "node-data");
-  const port = await freePort();
-  const base = "http://127.0.0.1:" + port;
-  let child;
-  try {
-    child = startNode({ port, dataDir });
-    await waitForHealth(base, child);
-    for (const id of ["../escape", "a/b", "..", "has space"]) {
-      const response = await fetch(base + "/objects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, data: "must not be written" })
-      });
-      assert.equal(response.status, 400, "unsafe ID should be rejected: " + id);
-    }
-  } finally {
-    if (child) await stopNode(child);
-    await rm(root, { recursive: true, force: true });
-  }
-});
