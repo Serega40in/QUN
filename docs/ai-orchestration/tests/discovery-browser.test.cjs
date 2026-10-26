@@ -35,12 +35,13 @@ test("Discovery plays in a real browser: Lumi, exploration, growth, save and res
     assert.match(await page.locator("#lumiMessage").innerText(), /больше жизни/);
     assert.match(await page.locator("#journal").innerText(), /Сад жизни/);
 
-    await page.locator("#reset").click();
     page.once("dialog", dialog => dialog.accept());
-    // The click is initiated after registering the confirmation handler below.
+    await page.locator("#reset").click();
+    assert.equal(await page.locator("#points").innerText(), "0", "reset should clear score");
+    assert.equal(await page.locator("#seedCount").innerText(), "2", "reset should restore starter resources");
+    assert.match(await page.locator("#islandTitle").innerText(), /ждёт первого проекта/);
+    assert.deepEqual(pageErrors, [], "no uncaught browser JavaScript errors");
   } finally {
     await browser.close();
   }
-
-  assert.deepEqual(pageErrors, [], "no uncaught browser JavaScript errors");
 });
