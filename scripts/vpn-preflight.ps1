@@ -42,7 +42,7 @@ if ($wg) {
   # Interface names only; never call commands that print private keys or peer details.
   $raw = & $wg.Source show interfaces 2>$null
   if ($LASTEXITCODE -eq 0 -and $raw) {
-    $wgInterfaces = @("$raw".Trim() -split '\s+' | Where-Object { $_ })
+    $wgInterfaces = @((($raw -join "`n") -split '\s+') | Where-Object { $_ })
   }
 }
 if ($wgInterfaces.Count -gt 0) {
