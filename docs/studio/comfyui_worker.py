@@ -21,7 +21,7 @@ def api(path, body=None, timeout=25):
     if not SUPABASE_KEY:
         raise RuntimeError("Set QUN_SUPABASE_PUBLISHABLE_KEY to the Supabase publishable key.")
     data = json.dumps(body or {}).encode()
-    req = Request(SUPABASE_URL + "/functions/v1/qun-compute",
+    req = Request(SUPABASE_URL + "/functions/v1/qun-compute-node",
                   data=data, method="POST",
                   headers={"Content-Type":"application/json", "apikey":SUPABASE_KEY,
                            "Authorization":"Bearer " + SUPABASE_KEY})
