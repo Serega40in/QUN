@@ -37,7 +37,7 @@
 <script type="module">
 import { Client, handle_file } from "https://cdn.jsdelivr.net/npm/@gradio/client@1.15.0/dist/index.min.js";
 const $ = id => document.getElementById(id);
-const SPACE = "zerogpu-aoti/wan2-2-fp8da-aoti-faster";
+const SPACE = "https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space";
 let currentUrl = null;
 let downloadUrl = null;
 let busy = false;
@@ -65,11 +65,11 @@ $('generate').addEventListener('click', async () => {
   if (!prompt) { status('Добавь описание движения.'); $('prompt').focus(); return; }
   busy = true; $('generate').disabled = true; $('download').disabled = true;
   $('result-panel').hidden = true;
-  status('Подключаемся к Hugging Face…\nНе закрывай вкладку. Бесплатная очередь может занять время.');
+  status('Подключаемся напрямую к Gradio Space…\\nИспользуем прямой адрес API вместо загрузки метаданных через Hugging Face. Не закрывай вкладку.');
   try {
     const token = $('token').value.trim();
     const client = token ? await Client.connect(SPACE, { token }) : await Client.connect(SPACE);
-    status('Отправили запрос в ZeroGPU. Генерация может занять несколько минут…');
+    status('Подключение установлено. Отправили запрос в ZeroGPU. Генерация может занять несколько минут…');
     const result = await client.predict('/generate_video', [
       handle_file(file),
       prompt,
@@ -114,7 +114,7 @@ $('generate').addEventListener('click', async () => {
   } catch (error) {
     console.error('QUN ZeroGPU error', error);
     const message = String(error?.message || error || 'Неизвестная ошибка');
-    status('Не удалось получить видео: ' + message + '\nЕсли квота ZeroGPU исчерпана или очередь недоступна, подожди сброса бесплатной квоты. Платная генерация не включается.');
+    status('Не удалось получить видео: ' + message + '\\nПроверь API Space: https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space/gradio_api/openapi.json\\nЕсли Space не отвечает или бесплатная квота исчерпана, попробуй позже. Платная генерация не включается.');
   } finally {
     busy = false; $('generate').disabled = false;
   }
