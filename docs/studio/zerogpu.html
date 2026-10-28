@@ -2,123 +2,30 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#071421"><meta name="description" content="QUN Studio — генерация видео через Hugging Face ZeroGPU с возможностью скачать MP4.">
-<title>QUN Studio — ZeroGPU Video</title>
+<meta name="theme-color" content="#071421"><meta name="description" content="QUN Studio — генерация видео Wan 2.2 через встроенный Hugging Face Space.">
+<title>QUN Studio — Video</title>
 <style>
 :root{color-scheme:dark;--bg:#071421;--panel:#102438;--line:#29475b;--mint:#8af0ce;--text:#f3f8fb;--muted:#a2b7c6;--gold:#f3d18a}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 75% 0,#17465a 0,transparent 42%),var(--bg);color:var(--text);font:15px/1.5 system-ui,Segoe UI,sans-serif}.wrap{max-width:1000px;margin:auto;padding:20px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}.brand{font-weight:900;letter-spacing:.1em}.brand span{color:var(--mint)}a{color:var(--mint)}.panel{background:#0b1c2be8;border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}.field input,.field textarea,.field select{width:100%;background:#071522;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:11px;font:inherit}.field textarea{min-height:92px;resize:vertical}.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:1px solid #397267;background:linear-gradient(135deg,#174f4a,#14384a);color:#e5fff7;border-radius:11px;padding:11px 14px;font:inherit;font-weight:750;cursor:pointer;text-decoration:none}.btn.secondary{background:#102438;border-color:var(--line);color:var(--text)}.btn:disabled{opacity:.5;cursor:wait}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.status{color:var(--mint);font-size:13px;min-height:24px;margin-top:12px;white-space:pre-wrap}.hint{color:var(--muted);font-size:12px}.preview{display:block;width:100%;max-height:65vh;background:#03090e;border-radius:12px;margin-top:12px}.token{margin-top:14px}.warning{border-left:3px solid var(--gold);padding:10px 12px;background:#2a271d55;color:#e8d9b4;font-size:12px;border-radius:0 8px 8px 0;margin-top:12px}.thumb{display:none;max-width:100%;max-height:220px;border-radius:10px;margin-top:10px}.badge{display:inline-block;border:1px solid #315d55;color:var(--mint);border-radius:99px;padding:4px 9px;font-size:11px;margin-bottom:10px}@media(max-width:650px){.wrap{padding:12px}.panel{padding:13px}.grid{grid-template-columns:1fr}.actions .btn{flex:1}.top{align-items:flex-start}}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 75% 0,#17465a 0,transparent 42%),var(--bg);color:var(--text);font:15px/1.5 system-ui,Segoe UI,sans-serif}.wrap{max-width:1100px;margin:auto;padding:20px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}.brand{font-weight:900;letter-spacing:.1em}.brand span{color:var(--mint)}a{color:var(--mint)}.panel{background:#0b1c2be8;border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px}.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:1px solid #397267;background:linear-gradient(135deg,#174f4a,#14384a);color:#e5fff7;border-radius:11px;padding:11px 14px;font:inherit;font-weight:750;cursor:pointer;text-decoration:none}.btn.secondary{background:#102438;border-color:var(--line);color:var(--text)}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.hint{color:var(--muted);font-size:13px}.badge{display:inline-block;border:1px solid #315d55;color:var(--mint);border-radius:99px;padding:4px 9px;font-size:11px;margin-bottom:10px}.warning{border-left:3px solid var(--gold);padding:10px 12px;background:#2a271d55;color:#e8d9b4;font-size:12px;border-radius:0 8px 8px 0;margin-top:12px}.embed{width:100%;height:clamp(850px,110vh,1200px);background:#fff;border:1px solid var(--line);border-radius:12px;margin-top:14px}@media(max-width:650px){.wrap{padding:12px}.panel{padding:13px}.top{align-items:flex-start}.embed{height:1000px}}
 </style>
 </head>
 <body><div class="wrap">
-<header class="top"><div class="brand">QUN <span>STUDIO</span> / ZERO GPU</div><a href="./create.html">← Motion Lab</a></header>
+<header class="top"><div class="brand">QUN <span>STUDIO</span> / VIDEO</div><a href="./create.html">← Motion Lab</a></header>
 <section class="panel">
-<div class="badge">Бесплатный эксперимент · без платного fallback</div>
-<h1 style="font-size:clamp(26px,4vw,40px);line-height:1.1;margin:0 0 10px">Создай видео и <span style="color:var(--mint)">скачай MP4</span></h1>
-<p class="hint">Этот инструмент подключается к публичному Hugging Face Space Wan 2.2 Image-to-Video. Он анимирует загруженную картинку, а не создаёт ролик только из текста. После генерации появятся видеоплеер и отдельная кнопка скачивания.</p>
-<div class="grid" style="margin-top:18px">
-<div class="field"><label for="image">1. Картинка для анимации</label><input id="image" type="file" accept="image/*" required><img id="thumb" class="thumb" alt="Предпросмотр исходного изображения"></div>
-<div class="field"><label for="prompt">2. Как должна двигаться сцена</label><textarea id="prompt" maxlength="2000">A magical emerald spirit gently floats above a glowing fractal garden, leaves and tiny golden particles move in the breeze, slow cinematic camera drift, beautiful soft volumetric light, smooth natural motion.</textarea><div class="hint">Лучше описывать движение, камеру, атмосферу и свет. Картинка станет первым кадром.</div></div>
-<div class="field"><label for="duration">Длительность</label><select id="duration"><option value="2">2 секунды · легче для бесплатной квоты</option><option value="3.5" selected>3,5 секунды</option><option value="5">5 секунд</option></select></div>
-<div class="field"><label for="steps">Качество / шаги</label><select id="steps"><option value="4" selected>4 шага · быстрее</option><option value="6">6 шагов</option><option value="8">8 шагов · дольше</option></select></div>
-</div>
-<div class="field token"><label for="token">Hugging Face read token (необязательно)</label><input id="token" type="password" autocomplete="off" placeholder="hf_… — можно оставить пустым"><div class="hint">Токен используется только в памяти этой вкладки и передаётся напрямую Hugging Face. Он не записывается в QUN, GitHub или localStorage. Для большей безопасности используй токен только с правом чтения.</div></div>
-<div class="warning">Бесплатная GPU-квота ограничена и очередь может быть занята. Здесь нет платного переключения. Не закрывай вкладку до появления результата. Не загружай приватные изображения в сторонний Space.</div>
-<div class="actions"><button class="btn" id="generate">✦ Сгенерировать видео</button><a class="btn secondary" href="https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster" target="_blank" rel="noopener">Открыть оригинальный Space ↗</a></div>
-<div id="status" class="status" role="status">Выбери картинку и запусти генерацию.</div>
+<div class="badge">Бесплатный эксперимент · платная генерация отключена</div>
+<h1 style="font-size:clamp(26px,4vw,40px);line-height:1.1;margin:0 0 10px">Создавай видео прямо в QUN Studio</h1>
+<p class="hint">Мы проверили подход: видео успешно создаётся в оригинальном Hugging Face Space, а прямой вызов API с GitHub Pages падает с <code>TypeError: Failed to fetch</code>. Поэтому основной режим теперь использует официальный встроенный интерфейс Space, а не ненадёжный браузерный API-вызов. Загрузи изображение, задай движение, запусти генерацию и скачай результат в интерфейсе ниже.</p>
+<div class="warning">Генерация выполняется на стороне Hugging Face. Бесплатная GPU-квота и очередь ограничены. QUN не включает платные услуги и не запрашивает твой токен. Не загружай приватные изображения в сторонний сервис.</div>
+<div class="actions"><a class="btn" href="https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster" target="_blank" rel="noopener">Открыть оригинальный Space ↗</a><button class="btn secondary" id="reload" type="button">↻ Перезагрузить встроенный генератор</button></div>
 </section>
-<section id="result-panel" class="panel" hidden>
-<h2 style="margin-top:0">Готовое видео</h2>
-<video id="video" class="preview" controls playsinline></video>
-<div class="actions"><button class="btn" id="download" disabled>⬇ Скачать MP4 на устройство</button><a class="btn secondary" id="open" href="#" target="_blank" rel="noopener">Открыть видео отдельно ↗</a></div>
-<p id="save-hint" class="hint">После скачивания проверь папку «Загрузки» на телефоне или компьютере.</p>
+<section class="panel">
+<h2 style="margin-top:0">Генератор Wan 2.2</h2>
+<p class="hint">Встроенный официальный интерфейс. Если он не отображается или кнопки скачивания не работают внутри встраивания, открой Space в отдельной вкладке по кнопке выше — это тот же генератор, где у тебя уже получилось создать и скачать видео.</p>
+<iframe id="space" class="embed" title="Официальный генератор видео Hugging Face Wan 2.2" src="https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space/?__theme=dark" loading="eager" allow="clipboard-read; clipboard-write; fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
 </section>
-<section id="native-fallback" class="panel" hidden><h2>Резервный режим генерации</h2><p class="hint">Если браузер блокирует API-запрос из GitHub Pages, попробуй встроенный интерфейс оригинального Space. Генерация и скачивание выполняются на стороне Hugging Face.</p><div class="actions"><a class="btn" href="https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster" target="_blank" rel="noopener">Открыть оригинальный генератор</a></div><iframe title="Hugging Face video generator" src="https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space/?__theme=dark" loading="lazy" style="width:100%;height:800px;border:1px solid var(--line);border-radius:12px;margin-top:14px"></iframe></section><footer class="hint" style="text-align:center;padding:12px">QUN Studio · результат скачивается на устройство; постоянное хранение в QUN Storage будет отдельным следующим этапом.</footer>
+<footer class="hint" style="text-align:center;padding:12px">QUN Studio · сохраняй готовый ролик кнопкой Download в генераторе. Автоматическое хранение в QUN Storage — отдельный следующий этап.</footer>
 </div>
-<script type="module">
-import { Client, handle_file } from "https://cdn.jsdelivr.net/npm/@gradio/client@1.15.0/dist/index.min.js";
-const $ = id => document.getElementById(id);
-const SPACE = "https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space";
-let currentUrl = null;
-let downloadUrl = null;
-let busy = false;
-$('image').addEventListener('change', () => {
-  const f = $('image').files?.[0];
-  if (!f) { $('thumb').style.display='none'; return; }
-  $('thumb').src = URL.createObjectURL(f);
-  $('thumb').style.display='block';
-});
-function status(message) { $('status').textContent = message; }
-function getFileUrl(value) {
-  if (typeof value === 'string') return value;
-  if (value && typeof value === 'object') {
-    if (value.url) return value.url;
-    if (value.video?.url) return value.video.url;
-    if (value.path && /^https?:\/\//i.test(value.path)) return value.path;
-  }
-  return null;
-}
-$('generate').addEventListener('click', async () => {
-  if (busy) return;
-  const file = $('image').files?.[0];
-  const prompt = $('prompt').value.trim();
-  if (!file) { status('Сначала выбери изображение.'); $('image').focus(); return; }
-  if (!prompt) { status('Добавь описание движения.'); $('prompt').focus(); return; }
-  busy = true; $('generate').disabled = true; $('download').disabled = true;
-  $('result-panel').hidden = true;
-  status('Подключаемся напрямую к Gradio Space…\\nИспользуем прямой адрес API вместо загрузки метаданных через Hugging Face. Не закрывай вкладку.');
-  try {
-    const token = $('token').value.trim();
-    const client = token ? await Client.connect(SPACE, { token }) : await Client.connect(SPACE);
-    status('Подключение установлено. Отправили запрос в ZeroGPU. Генерация может занять несколько минут…');
-    const result = await client.predict('/generate_video', [
-      handle_file(file),
-      prompt,
-      Number($('steps').value),
-      'low quality, blurry, static image, text, watermark, deformed anatomy, flicker, duplicate limbs',
-      Number($('duration').value),
-      1,
-      1,
-      Math.floor(Math.random() * 2147483647),
-      true
-    ]);
-    const output = result?.data?.[0];
-    const url = getFileUrl(output);
-    if (!url) throw new Error('Генерация завершилась, но Space не вернул ссылку на видео. Открой оригинальный Space и проверь результат.');
-    currentUrl = url;
-    $('video').src = url;
-    $('open').href = url;
-    $('result-panel').hidden = false;
-    status('Видео готово. Подготавливаем скачивание файла…');
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      const blob = await response.blob();
-      if (!blob.size) throw new Error('Получен пустой файл.');
-      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
-      downloadUrl = URL.createObjectURL(blob);
-      $('download').disabled = false;
-      $('download').onclick = () => {
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = 'QUN-Wan22-' + new Date().toISOString().replace(/[:.]/g,'-') + '.mp4';
-        document.body.appendChild(a); a.click(); a.remove();
-        status('Скачивание запрошено. Проверь папку «Загрузки». Если браузер открыл видео вместо сохранения — используй меню ⋮ плеера → Скачать.');
-      };
-      status('Готово! Видео доступно в плеере. Нажми «Скачать MP4 на устройство».');
-    } catch (downloadError) {
-      $('download').disabled = false;
-      $('download').onclick = () => window.open(currentUrl, '_blank', 'noopener');
-      $('download').textContent = '⬇ Открыть / скачать видео';
-      status('Видео сгенерировано, но браузер не разрешил подготовить прямую загрузку (' + downloadError.message + '). Нажми «Открыть / скачать видео» или «Открыть видео отдельно», затем меню ⋮ → Скачать.');
-    }
-  } catch (error) {
-    console.error('QUN ZeroGPU error', error);
-    const message = String(error?.message || error || 'Неизвестная ошибка');
-    $('native-fallback').hidden = false;
-    status('Не удалось вызвать API Space: ' + message + '\\nРезервный интерфейс доступен ниже. Если он не загрузился, открой оригинальный Space в отдельной вкладке.');
-  } finally {
-    busy = false; $('generate').disabled = false;
-  }
-});
+<script>
+document.getElementById('reload').addEventListener('click',function(){const frame=document.getElementById('space');frame.src='https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space/?__theme=dark&t='+Date.now();});
 </script>
 </body></html>
