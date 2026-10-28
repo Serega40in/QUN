@@ -73,7 +73,9 @@ def workflow_file_for_job(job):
     configured = os.environ.get(env_name, "").strip() if env_name else ""
     if configured:
         return Path(configured)
-    # Compatibility with existing installs: all media types fall back to the original workflow.
+    if key in ("music", "dialogue"):
+        raise RuntimeError("No dedicated " + key + " workflow configured. Set " + str(env_name) + " to an operator-owned ComfyUI API workflow file.")
+    # Compatibility with existing installs: other media types fall back to the original workflow.
     return WORKFLOW_FILE
 
 def load_workflow(job):
