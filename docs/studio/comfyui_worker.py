@@ -63,8 +63,11 @@ def workflow_file_for_job(job):
     key = str(requirements.get("workflow_key") or job.get("job_type") or "").strip().lower()
     env_names = {
         "image_generation": "QUN_COMFYUI_WORKFLOW_IMAGE",
+        "image": "QUN_COMFYUI_WORKFLOW_IMAGE",
         "video_generation": "QUN_COMFYUI_WORKFLOW_VIDEO",
+        "video": "QUN_COMFYUI_WORKFLOW_VIDEO",
         "audio_generation": "QUN_COMFYUI_WORKFLOW_AUDIO",
+        "audio": "QUN_COMFYUI_WORKFLOW_AUDIO",
         "music": "QUN_COMFYUI_WORKFLOW_MUSIC",
         "dialogue": "QUN_COMFYUI_WORKFLOW_DIALOGUE",
         "comfyui_workflow": "QUN_COMFYUI_WORKFLOW",
