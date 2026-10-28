@@ -50,7 +50,7 @@ Routing rules:
 - `audio_generation` uses `QUN_COMFYUI_WORKFLOW_AUDIO` by default, or `requirements.workflow_key = "music"` / `"dialogue"` to select the matching specific workflow
 - missing per-type settings fall back to the existing `QUN_COMFYUI_WORKFLOW` for backward compatibility
 
-The worker still runs only workflows you configured. It does not download models, install custom nodes, or expose your ComfyUI server. Audio outputs are detected when the ComfyUI history reports `audio` or `audio_files` entries. A multi-scene music video still needs an assembly stage (for example FFmpeg) to combine scene clips, soundtrack and dialogue into one final file; separate workflow routing is the execution foundation, not a claim that automatic final montage is already complete.
+The worker still runs only workflows you configured. It does not download models, install custom nodes, or expose your ComfyUI server. Audio outputs are detected when the ComfyUI history reports `audio` or `audio_files` entries. QUN Director now supports an optional FFmpeg assembly job: it concatenates completed scene clips and can mux a completed soundtrack. The worker must have FFmpeg installed and must be configured with the real ComfyUI output directory. The assembled MP4 is written locally; uploading it to QUN Storage remains a separate step.
 
 ## Prompt mapping
 
@@ -76,3 +76,12 @@ Replace \`6\` with the actual positive-prompt node ID. This mapping is optional.
 - Output URLs are served by the configured ComfyUI host. A private/local host URL cannot be opened from a phone or another device unless network access is configured. The next stage should upload artifacts to private QUN Storage and expose short-lived signed links.
 - A single configured workflow is used by default. Image/video/audio pipelines should be validated separately; audio support depends on the chosen workflow's output node.
 - This is a first production-oriented adapter, not a claim that end-to-end cloud generation has been tested. Validate the exact workflow and GPU endpoint before relying on it for production.
+
+
+## FFmpeg assembly
+
+Install FFmpeg on the same machine as the worker and verify `ffmpeg -version` works. Set `QUN_COMFYUI_OUTPUT_DIR` to the actual ComfyUI `output` directory (not the worker's folder); optionally set `QUN_FFMPEG_PATH` if FFmpeg is not on PATH.
+
+After at least two video scene jobs succeed, use **Собрать MP4** in QUN Director. The page queues a `comfyui_workflow` job with `requirements.operation = "assemble_video"` and the output metadata from completed jobs. The worker accepts filenames only, rejects path traversal, and resolves files strictly inside `QUN_COMFYUI_OUTPUT_DIR`. A completed music job is muxed into the MP4; otherwise the clip is assembled without music. Scene clips need compatible codecs for FFmpeg stream-copy concatenation.
+
+The final MP4 is saved in the ComfyUI output directory and returned as a ComfyUI `/view` URL. It is not yet uploaded to private QUN Storage; a local ComfyUI URL is only accessible from a browser that can reach that server.
