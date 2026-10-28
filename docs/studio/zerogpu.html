@@ -114,7 +114,7 @@ $('generate').addEventListener('click', async () => {
   } catch (error) {
     console.error('QUN ZeroGPU error', error);
     const message = String(error?.message || error || 'Неизвестная ошибка');
-    status('Не удалось получить видео: ' + message + '\\nПроверь API Space: https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space/gradio_api/openapi.json\\nЕсли Space не отвечает или бесплатная квота исчерпана, попробуй позже. Платная генерация не включается.');
+    status('Браузер не смог обратиться к API Space: ' + message + '\\nЭто похоже на CORS/сетевой сбой. Попробуй генератор напрямую по ссылке «Открыть оригинальный Space» выше. Платная генерация не включается.');
   } finally {
     busy = false; $('generate').disabled = false;
   }
