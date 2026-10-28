@@ -5,6 +5,8 @@ const db = createClient(
   'sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L'
 );
 const $ = id => document.getElementById(id);
+let currentProjectId = null;
+let currentJobIds = [];
 
 function textPlan(film) {
   return [
@@ -104,6 +106,19 @@ $('queue').onclick = async () => {
     if (sessionError) throw sessionError;
     if (!sessionData.session?.access_token) throw new Error('Сессия не найдена. Выйди и войди в QUN Director заново.');
 
+    const projectSlug = 'qun-director-' + Date.now();
+    const { data: project, error: projectError } = await db.from('qun_studio_projects').insert({
+      slug: projectSlug,
+      title: film.title.slice(0, 160),
+      description: film.logline || 'Проект создан QUN Director',
+      status: 'active',
+      created_by: sessionData.session.user.id,
+      metadata: { source: 'QUN Director', language: 'ru', scene_count: 3, has_music: true, has_dialogue: true }
+    }).select('id').single();
+    if (projectError) throw new Error('Не удалось создать проект в библиотеке QUN: ' + projectError.message);
+    currentProjectId = project.id;
+    currentJobIds = [];
+
     for (let index = 0; index < tasks.length; index++) {
       const task = tasks[index];
       $('status').textContent = 'Отправляем ' + (index + 1) + '/' + tasks.length + ': ' + task.title;
@@ -120,6 +135,7 @@ $('queue').onclick = async () => {
       if (data?.error) throw new Error(data.error);
       if (!data?.job?.job_id) throw new Error('Сервер ответил без ID задачи. Ответ: ' + JSON.stringify(data));
       created.push({ title: task.title, id: data.job.job_id, status: data.job.status || 'queued' });
+      currentJobIds.push(data.job.job_id);
       $('status').textContent = 'Добавлено ' + created.length + '/' + tasks.length + ': ' + task.title;
     }
 
@@ -134,5 +150,29 @@ $('queue').onclick = async () => {
   } finally {
     button.disabled = false;
     button.textContent = 'Поставить 5 задач в QUN Compute';
+  }
+};
+
+
+$('refreshJobs').onclick = async () => {
+  const button = $('refreshJobs');
+  button.disabled = true;
+  try {
+    const { data, error } = await db.functions.invoke('qun-compute', { body: { action: 'my_jobs' } });
+    if (error) throw new Error(await invokeError(error));
+    if (data?.error) throw new Error(data.error);
+    const mine = (data.jobs || []).filter(job => currentJobIds.includes(job.job_id));
+    if (!mine.length) throw new Error('В этой сессии не найдено задач. Создай новую очередь или обнови страницу после входа.');
+    const labels = { queued: 'в очереди', running: 'выполняется', succeeded: 'готово', failed: 'ошибка', cancelled: 'отменено', retrying: 'повтор' };
+    $('status').textContent = 'Статус проекта «' + (window.qunFilm?.title || 'QUN') + '»\\n' +
+      mine.map((job, index) => (index + 1) + '. ' + job.title + ' — ' + (labels[job.status] || job.status) +
+        (job.error_message ? '\\n   Ошибка: ' + job.error_message : '') +
+        (job.result?.outputs?.length ? '\\n   Файлы: ' + job.result.outputs.map(x => x.filename || x.url || '').filter(Boolean).join(', ') : '')).join('\\n') +
+      '\\n\\nГотово: ' + mine.filter(job => job.status === 'succeeded').length + '/' + mine.length +
+      '. Сборка MP4 станет доступна после реализации и проверки сборщика.';
+  } catch (error) {
+    $('status').textContent = 'Не удалось обновить статусы: ' + (error.message || String(error));
+  } finally {
+    button.disabled = false;
   }
 };
