@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071525">
+<meta name="description" content="QUN VPN — единая точка подключения через Happ.">
+<title>QUN VPN — Свободное соединение</title>
+<style>
+:root{color-scheme:dark;--bg:#071525;--panel:#10243a;--line:#25435b;--text:#eef7ff;--muted:#9eb5c9;--blue:#4ea5ff;--green:#50dfb0;--gold:#e8c477}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% 0%,#123e55 0,transparent 42%),var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+main{max-width:880px;margin:auto;padding:26px 20px 56px}.brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.12em}.mark{width:42px;height:42px;border:1px solid #66e0c0;transform:rotate(45deg);border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#164f70,#14775d);box-shadow:0 0 30px #36c9a522}.mark span{transform:rotate(-45deg);font-size:19px}.eyebrow{color:var(--green);font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:800;margin-top:56px}h1{font-size:clamp(38px,8vw,68px);line-height:1.02;letter-spacing:-.045em;margin:12px 0 18px}h1 em{font-style:normal;color:var(--green)}.lead{color:var(--muted);font-size:18px;max-width:640px}.panel{margin-top:30px;padding:clamp(20px,5vw,34px);border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,#10263bee,#0b1c2cee);box-shadow:0 22px 70px #0003}.status{display:inline-flex;gap:9px;align-items:center;border:1px solid #8b7440;border-radius:99px;padding:6px 11px;color:var(--gold);font-size:12px;font-weight:700}.dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}h2{font-size:24px;margin:18px 0 6px}.hint{color:var(--muted);font-size:14px}label{display:block;font-weight:700;margin:20px 0 8px}input{width:100%;padding:15px 14px;border:1px solid #35536b;border-radius:12px;background:#071525;color:var(--text);font:inherit;outline:none}input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #4ea5ff22}.buttons{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}a.btn,button.btn{display:inline-flex;justify-content:center;align-items:center;gap:9px;text-decoration:none;border:0;border-radius:12px;padding:13px 18px;font:700 15px system-ui;cursor:pointer}.primary{background:linear-gradient(110deg,#51e0b2,#72caff);color:#071525}.secondary{background:#1a344c;color:var(--text);border:1px solid var(--line)!important}.note{margin-top:16px;padding:13px 14px;background:#0a1b2b;border-left:3px solid var(--gold);border-radius:8px;color:var(--muted);font-size:13px}.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:18px}.step{padding:16px;border:1px solid var(--line);border-radius:15px;background:#0b1b2a}.num{color:var(--green);font-size:12px;font-weight:800;letter-spacing:.12em}.step strong{display:block;margin:5px 0}.step p{margin:0;color:var(--muted);font-size:14px}footer{margin-top:28px;color:#7791a7;font-size:12px}a{color:#8fd9ff}#msg{min-height:24px;margin-top:10px;color:var(--gold);font-size:14px}
+</style>
+</head>
+<body><main>
+<header class="brand"><div class="mark"><span>Q</span></div><span>QUN <span style="color:var(--green)">VPN</span></span></header>
+<div class="eyebrow">Private connection · Project preview</div>
+<h1>Твой интернет.<br><em>Твоё пространство.</em></h1>
+<p class="lead">Единая точка подключения QUN VPN через Happ. Наша цель — одно нажатие вместо сложной ручной настройки.</p>
+<section class="panel" aria-labelledby="connect-title">
+<div class="status"><span class="dot"></span> Сервер QUN ещё не подключён</div>
+<h2 id="connect-title">Подключение через Happ</h2>
+<p class="hint">Для импорта нужен действующий адрес подписки. Сейчас собственный сервер и ссылка QUN ещё не настроены, поэтому мы не будем имитировать подключение.</p>
+<label for="sub">Адрес подписки Happ (если у тебя уже есть свой)</label>
+<input id="sub" type="url" inputmode="url" autocomplete="off" placeholder="https://…/subscription" aria-describedby="sub-help">
+<div class="hint" id="sub-help">Ссылка используется только в этом действии и не сохраняется сайтом. Не вставляй сюда приватный ключ, если не хочешь передавать его в Happ.</div>
+<div class="buttons">
+<button class="btn primary" id="connect" type="button">Открыть в Happ ↗</button>
+<a class="btn secondary" href="https://www.happ.su/" target="_blank" rel="noopener noreferrer">Установить Happ</a>
+</div><div id="msg" role="status" aria-live="polite"></div>
+<div class="note"><strong>Честный статус:</strong> GitHub Pages и Cloudflare могут обслуживать сайт и контрольную логику, но сами по себе не являются VPN-сервером. Для собственного подключения QUN нужно развернуть совместимый сервер и безопасно выдать подписку.</div>
+</section>
+<h2 style="margin-top:34px">Путь к рабочему запуску</h2>
+<div class="steps">
+<div class="step"><span class="num">01 / ИНФРАСТРУКТУРА</span><strong>Проверить бесплатные варианты</strong><p>Сначала проверяем существующий Cloudflare и доступные бесплатные лимиты — без создания платных ресурсов.</p></div>
+<div class="step"><span class="num">02 / СЕРВЕР</span><strong>Поднять совместимый узел</strong><p>Нужен реальный сервер прокси/VPN с доступом по сети. Workers не заменяет VPN-узел.</p></div>
+<div class="step"><span class="num">03 / HAPP</span><strong>Проверить подключение</strong><p>Сгенерировать приватную подписку, открыть Happ, затем проверить фактическое соединение и отключение.</p></div>
+</div>
+<footer>QUN VPN · Предварительная страница проекта. Не является обещанием анонимности или подтверждением работающего VPN-сервера.<br><a href="https://github.com/Serega40in/QUN">Исходный код QUN</a> · <a href="https://www.happ.su/main/ru/faq/adding-configuration-subscription">Инструкция Happ по импорту</a></footer>
+</main>
+<script>
+(function(){
+ const input=document.getElementById('sub'),button=document.getElementById('connect'),msg=document.getElementById('msg');
+ button.addEventListener('click',function(){
+  const raw=input.value.trim();
+  if(!raw){msg.textContent='Сначала нужен адрес подписки. Собственная подписка QUN появится после запуска сервера.';input.focus();return;}
+  let url;try{url=new URL(raw)}catch(e){msg.textContent='Проверь адрес: это должна быть полная ссылка https://…';return;}
+  if(url.protocol!=='https:'&&url.protocol!=='http:'){msg.textContent='Поддерживается веб-ссылка http(s) на подписку.';return;}
+  if(url.username||url.password){msg.textContent='Не вставляй ссылки со встроенным логином или паролем.';return;}
+  const deepLink='happ://add/'+raw;
+  msg.textContent='Передаём ссылку приложению Happ. Если приложение не открылось, скопируй адрес и импортируй его в Happ вручную.';
+  window.location.href=deepLink;
+ });
+})();
+</script></body></html>
