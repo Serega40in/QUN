@@ -140,6 +140,56 @@ def run_comfy(job):
                     "output_prefix":prefix,"note":"URLs point to the configured ComfyUI server; make it reachable by the browser to preview remotely."}
     raise TimeoutError("ComfyUI job exceeded QUN_JOB_TIMEOUT_SECONDS")
 
+def assemble_video(job):
+    """Safely concatenate generated scene files from the configured ComfyUI output directory."""
+    import shutil, subprocess, tempfile
+    req = job.get("requirements") or {}
+    videos = req.get("video_outputs")
+    if not isinstance(videos, list) or len(videos) < 2 or len(videos) > 10:
+        raise RuntimeError("Assembly requires 2–10 completed video outputs.")
+    root = Path(os.environ.get("QUN_COMFYUI_OUTPUT_DIR", "output")).resolve()
+    ffmpeg = os.environ.get("QUN_FFMPEG_PATH", "ffmpeg")
+    if not shutil.which(ffmpeg) and not Path(ffmpeg).is_file():
+        raise RuntimeError("FFmpeg was not found. Install FFmpeg or set QUN_FFMPEG_PATH.")
+    inputs = []
+    for item in videos:
+        filename = str(item.get("filename") or "")
+        subfolder = str(item.get("subfolder") or "")
+        if not filename or Path(filename).name != filename or Path(subfolder).is_absolute() or ".." in Path(subfolder).parts:
+            raise RuntimeError("Unsafe video output reference.")
+        path = (root / subfolder / filename).resolve()
+        if root not in path.parents or path.suffix.lower() not in {".mp4", ".mov", ".mkv", ".webm", ".avi"} or not path.is_file():
+            raise RuntimeError("Video input is missing or outside ComfyUI output: " + filename)
+        inputs.append(path)
+    audio = req.get("audio_output")
+    audio_path = None
+    if isinstance(audio, dict):
+        filename = str(audio.get("filename") or "")
+        subfolder = str(audio.get("subfolder") or "")
+        if not filename or Path(filename).name != filename or Path(subfolder).is_absolute() or ".." in Path(subfolder).parts:
+            raise RuntimeError("Unsafe audio output reference.")
+        audio_path = (root / subfolder / filename).resolve()
+        if root not in audio_path.parents or audio_path.suffix.lower() not in {".mp3", ".wav", ".flac", ".m4a", ".aac", ".ogg", ".opus"} or not audio_path.is_file():
+            raise RuntimeError("Audio input is missing or outside ComfyUI output: " + filename)
+    root.mkdir(parents=True, exist_ok=True)
+    output = root / ("QUN_final_" + str(job.get("job_id", uuid.uuid4())) + ".mp4")
+    with tempfile.TemporaryDirectory(prefix="qun-assemble-") as temp:
+        concat = Path(temp) / "scenes.txt"
+        concat.write_text("\n".join("file '" + str(p).replace("'", "'\\''") + "'" for p in inputs) + "\n", encoding="utf-8")
+        joined = Path(temp) / "joined.mp4"
+        result = subprocess.run([ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-c", "copy", str(joined)], capture_output=True, text=True, timeout=900)
+        if result.returncode:
+            raise RuntimeError("Could not concatenate scenes; use compatible codecs. " + result.stderr[-1000:])
+        if audio_path:
+            result = subprocess.run([ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(joined), "-i", str(audio_path), "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-shortest", str(output)], capture_output=True, text=True, timeout=900)
+            if result.returncode:
+                raise RuntimeError("Could not mux soundtrack. " + result.stderr[-1000:])
+        else:
+            shutil.copy2(joined, output)
+    if output.stat().st_size <= 0:
+        raise RuntimeError("FFmpeg produced an empty MP4.")
+    return {"engine":"ffmpeg", "assembled":True, "outputs":[{"kind":"video", "filename":output.name, "subfolder":"", "type":"output", "url":COMFY_URL + "/view?" + urlencode({"filename":output.name,"subfolder":"","type":"output"})}], "scene_count":len(inputs), "soundtrack_included":bool(audio_path), "bytes":output.stat().st_size, "note":"Saved to ComfyUI output; QUN Storage upload is not included yet."}
+
 def process(job):
     job_id = job.get("job_id")
     if not job_id: raise RuntimeError("Claim response did not include job_id.")
@@ -157,6 +207,8 @@ def process(job):
                 result["comfyui_error"] = str(exc)[:300]
             if not result["comfyui_reachable"]:
                 raise RuntimeError("Node is online, but ComfyUI is not reachable: " + result.get("comfyui_error",""))
+        elif kind == "comfyui_workflow" and (job.get("requirements") or {}).get("operation") == "assemble_video":
+            result = assemble_video(job)
         elif kind in ("image_generation","video_generation","audio_generation","comfyui_workflow"):
             result = run_comfy(job)
         else:
