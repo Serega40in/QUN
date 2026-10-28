@@ -125,6 +125,7 @@ $('queue').onclick = async () => {
       const { data, error } = await db.functions.invoke('qun-compute', {
         body: {
           action: 'create_job',
+          projectId: currentProjectId,
           title: task.title.slice(0, 150),
           prompt: task.prompt,
           jobType: task.jobType,
@@ -139,7 +140,7 @@ $('queue').onclick = async () => {
       $('status').textContent = 'Добавлено ' + created.length + '/' + tasks.length + ': ' + task.title;
     }
 
-    $('status').textContent = 'Готово! В QUN Compute поставлено ' + created.length + ' задач:\n' +
+    $('status').textContent = 'Готово! В QUN Compute поставлено ' + created.length + ' задач в проект «' + film.title + '»:\nПроект ID: ' + currentProjectId + '\n' +
       created.map((task, index) => (index + 1) + '. ' + task.title + ' — ' + task.status + ' — ' + task.id).join('\n') +
       '\n\nВажно: задача диалогов создаёт отдельное аудио, если подключён совместимый workflow_key=dialogue. Финальная сборка клипа пока отдельный этап.';
   } catch (error) {
