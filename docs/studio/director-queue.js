@@ -7,6 +7,7 @@ const db = createClient(
 const $ = id => document.getElementById(id);
 let currentProjectId = null;
 let currentJobIds = [];
+let currentAssemblyJobId = null;
 
 function textPlan(film) {
   return [
@@ -155,6 +156,42 @@ $('queue').onclick = async () => {
 };
 
 
+$('assemble').onclick = async () => {
+  const button = $('assemble');
+  button.disabled = true;
+  try {
+    const { data, error } = await db.functions.invoke('qun-compute', { body: { action: 'my_jobs' } });
+    if (error) throw new Error(await invokeError(error));
+    if (data?.error) throw new Error(data.error);
+    const mine = (data.jobs || []).filter(job => currentJobIds.includes(job.job_id));
+    const scenes = mine.filter(job => job.job_type === 'video_generation').sort((a, b) => {
+      const num = title => Number((title.match(/сцена\s+(\d+)/i) || [])[1] || 0);
+      return num(a.title) - num(b.title);
+    });
+    const music = mine.find(job => job.job_type === 'audio_generation' && /музыка/i.test(job.title));
+    const readyScenes = scenes.filter(job => job.status === 'succeeded');
+    if (readyScenes.length < 2) throw new Error('Нужно минимум две готовые сцены. Сейчас готово: ' + readyScenes.length + '/' + scenes.length + '.');
+    const videoOutputs = readyScenes.flatMap(job => (job.result?.outputs || []).filter(output => output.kind === 'video'));
+    if (videoOutputs.length < 2) throw new Error('В готовых сценах не найдены видеофайлы. Проверь, что ComfyUI workflow выдаёт видео.');
+    const audioOutput = music?.status === 'succeeded' ? (music.result?.outputs || []).find(output => output.kind === 'audio') : null;
+    const requirements = { operation: 'assemble_video', video_outputs: videoOutputs };
+    if (audioOutput) requirements.audio_output = audioOutput;
+    const { data: created, error: createError } = await db.functions.invoke('qun-compute', {
+      body: { action: 'create_job', projectId: currentProjectId, title: (window.qunFilm?.title || 'QUN') + ' — финальная сборка MP4',
+        prompt: 'Собрать готовые сцены в один MP4, добавить музыку если она готова.', jobType: 'comfyui_workflow', requirements }
+    });
+    if (createError) throw new Error(await invokeError(createError));
+    if (created?.error || !created?.job?.job_id) throw new Error(created?.error || 'Сервер не вернул ID задачи сборки.');
+    currentAssemblyJobId = created.job.job_id;
+    $('status').textContent = 'Задача сборки MP4 поставлена в QUN Compute: ' + currentAssemblyJobId +
+      (audioOutput ? '\nМузыка будет добавлена.' : '\nМузыка не готова — сборка будет без неё.');
+  } catch (error) {
+    $('status').textContent = 'Не удалось поставить сборку: ' + (error.message || String(error));
+  } finally {
+    button.disabled = false;
+  }
+};
+
 $('refreshJobs').onclick = async () => {
   const button = $('refreshJobs');
   button.disabled = true;
@@ -162,7 +199,7 @@ $('refreshJobs').onclick = async () => {
     const { data, error } = await db.functions.invoke('qun-compute', { body: { action: 'my_jobs' } });
     if (error) throw new Error(await invokeError(error));
     if (data?.error) throw new Error(data.error);
-    const mine = (data.jobs || []).filter(job => currentJobIds.includes(job.job_id));
+    const mine = (data.jobs || []).filter(job => currentJobIds.includes(job.job_id) || job.job_id === currentAssemblyJobId);
     if (!mine.length) throw new Error('В этой сессии не найдено задач. Создай новую очередь или обнови страницу после входа.');
     const labels = { queued: 'в очереди', running: 'выполняется', succeeded: 'готово', failed: 'ошибка', cancelled: 'отменено', retrying: 'повтор' };
     $('status').textContent = 'Статус проекта «' + (window.qunFilm?.title || 'QUN') + '»\\n' +
