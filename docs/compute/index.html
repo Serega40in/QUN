@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07131f">
+<meta name="description" content="QUN Living Compute — добровольные браузерные вычисления и тестовые Compute Credits.">
+<title>QUN Living Compute — живая вычислительная сеть</title>
+<style>
+:root{color-scheme:dark;--bg:#07131f;--panel:#0d2030;--panel2:#10283a;--line:#234256;--text:#edf7ff;--muted:#9bb1c3;--mint:#65e4c1;--blue:#5da8ff;--gold:#e8cf91;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 75% 0%,#143e4b 0,transparent 38%),var(--bg);color:var(--text);line-height:1.55}a{color:var(--mint)}button,input{font:inherit}button{cursor:pointer}.wrap{max-width:1050px;margin:auto;padding:0 20px}.nav{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid #ffffff14;gap:15px}.brand{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-weight:850}.logo{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#06151f;background:linear-gradient(140deg,#a4ffe2,#468bc5);font-size:22px}.navlinks{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.navlinks a{text-decoration:none}.hero{padding:48px 0 24px}.eyebrow{color:var(--mint);font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:800}.hero h1{font-size:clamp(38px,7vw,66px);line-height:1;letter-spacing:-.06em;margin:14px 0 18px}.hero h1 span{color:var(--mint)}.lead{max-width:720px;color:#b5c8d8;font-size:16px}.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:15px;margin:20px 0}.panel{border:1px solid var(--line);background:linear-gradient(145deg,#102638,#0a1a28);border-radius:20px;padding:23px;min-width:0}.panel h2{font-size:20px;letter-spacing:-.03em;margin:0 0 6px}.sub{color:var(--muted);font-size:13px;margin:0 0 17px}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:12px;color:#c5d7e4}.field input{width:100%;border:1px solid #2a485d;background:#071724;border-radius:11px;padding:12px;color:var(--text);outline:none}.field input:focus{border-color:var(--mint)}.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.btn{border:1px solid var(--line);border-radius:12px;padding:11px 15px;background:#122b3d;color:var(--text);font-weight:750}.btn.primary{background:var(--mint);color:#062019;border-color:var(--mint)}.btn.danger{border-color:#784c4c;background:#311c25;color:#ffc5c5}.btn:disabled{opacity:.45;cursor:not-allowed}.status{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px;margin:14px 0}.dot{width:8px;height:8px;border-radius:50%;background:#73889a}.dot.good{background:var(--mint);box-shadow:0 0 12px #65e4c166}.dot.warn{background:var(--gold)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.metric{padding:13px;border:1px solid #203d50;border-radius:13px;background:#091a27}.metric strong{display:block;font-size:25px;letter-spacing:-.04em}.metric span{font-size:11px;color:var(--muted)}.consent{display:flex;align-items:flex-start;gap:10px;padding:13px;border:1px solid #29475b;border-radius:12px;background:#091a27;margin:14px 0}.consent input{margin-top:5px;accent-color:var(--mint)}.consent label{font-size:12px;color:#c3d4e1}.consent small{display:block;color:var(--muted);margin-top:5px}.notice{border:1px solid #66583a;background:#211f18;color:#e9d6a8;border-radius:12px;padding:13px;font-size:12px;line-height:1.65}.notice strong{display:block;margin-bottom:3px}.feed{display:grid;gap:8px;margin-top:14px}.item{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #ffffff10;padding:9px 0;font-size:12px}.item span{color:var(--muted)}.hidden{display:none!important}.footer{padding:26px 0 40px;color:#7f96a8;font-size:11px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.progress{height:5px;border-radius:5px;background:#10283a;overflow:hidden;margin:14px 0}.progress i{display:block;height:100%;width:0;background:var(--mint);transition:width .15s}.small{font-size:11px;color:var(--muted)}@media(max-width:780px){.grid{grid-template-columns:1fr}.panel{padding:18px}.hero{padding-top:36px}.navlinks a:nth-child(2){display:none}}@media(max-width:440px){.wrap{padding:0 14px}.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.metric{padding:10px}.metric strong{font-size:21px}.hero h1{font-size:40px}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body><div class="wrap">
+<header class="nav"><a class="brand" href="../"><span class="logo">Q</span><span>QUN Living Compute<small style="display:block;font-size:10px;color:var(--muted);font-weight:500">Живая вычислительная сеть</small></span></a><nav class="navlinks"><a href="../node/">QUN Node ↗</a><a href="../qun-wallet/">QUN Wallet ↗</a><a href="https://github.com/Serega40in/QUN">Исходный код ↗</a></nav></header>
+<main>
+<section class="hero"><div class="eyebrow">Вместе создаём сеть</div><h1>Каждое устройство.<br><span>Полезный вклад.</span></h1><p class="lead">Добровольный браузерный вычислительный узел QUN. Войди через QUN ID, прочитай условия, включи участие — пока вкладка открыта и видима, браузер сможет выполнять небольшие проверяемые микрозадачи. Никаких скрытых вычислений.</p></section>
+<div class="grid">
+<section class="panel" id="account">
+<h2>QUN ID</h2><p class="sub">Вход в существующий аккаунт или регистрация нового.</p>
+<div id="authForm">
+<div class="field"><label for="login">Логин QUN ID</label><input id="login" autocomplete="username" placeholder="например, serega40in"></div>
+<div class="field"><label for="password">Пароль</label><input id="password" type="password" autocomplete="current-password" minlength="8" placeholder="Не менее 8 символов"></div>
+<div class="field hidden" id="displayField"><label for="displayName">Отображаемое имя (для регистрации)</label><input id="displayName" maxlength="60" placeholder="Как вас показывать в сети"></div>
+<div class="row"><button class="btn primary" id="loginBtn">Войти</button><button class="btn" id="registerBtn">Создать QUN ID</button></div>
+<p class="small">Пароль отправляется только в защищённый endpoint авторизации QUN. Не вводите пароль от других сервисов.</p>
+</div>
+<div id="accountState" class="hidden"><div class="status"><i class="dot good"></i><span id="accountLabel">Вы вошли</span></div><div class="row"><button class="btn" id="refreshBtn">Обновить статус</button><button class="btn" id="logoutBtn">Выйти</button></div></div>
+<div id="authMessage" class="status" aria-live="polite">Подключение к QUN…</div>
+</section>
+<section class="panel">
+<h2>Вычислительный вклад</h2><p class="sub">Данные обновляются после подтверждённой задачи.</p>
+<div class="metrics"><div class="metric"><strong id="credits">0</strong><span>Compute Credits*</span></div><div class="metric"><strong id="tasks">0</strong><span>Подтверждено</span></div><div class="metric"><strong id="state">—</strong><span>Участие</span></div></div>
+<div class="status"><i class="dot" id="workerDot"></i><span id="workerStatus">Войдите, чтобы начать</span></div>
+<div class="progress"><i id="progress"></i></div><p class="small" id="progressText">Браузер не выполняет задачи, пока вы явно не включите участие.</p>
+<div class="row"><button class="btn primary" id="enableBtn" disabled>Разрешить и начать</button><button class="btn danger" id="stopBtn" disabled>Остановить</button></div>
+<div class="consent"><input type="checkbox" id="consentCheck"><label for="consentCheck"><strong>Я разрешаю QUN выполнять микрозадачи в этой вкладке.</strong><small>Задачи ограничены по сложности и времени. Работа приостанавливается, когда вкладка скрыта. Можно остановить в любой момент. Тестовые начисления не являются криптовалютой и не имеют денежной стоимости.</small></label></div>
+<div class="notice"><strong>Прозрачный тестовый режим</strong>Сейчас браузер выполняет проверяемую SHA-256 proof-of-work задачу. Это доказывает, что браузер действительно выполнил вычисление, но пока не является полезной обработкой для внешнего заказчика. Никакие личные файлы или данные браузера не читаются и не передаются.</div>
+</section>
+</div>
+<section class="panel"><h2>История вклада</h2><p class="sub">Последние подтверждённые вычисления для вашего QUN ID.</p><div id="history" class="feed"><p class="small">Войдите в аккаунт, чтобы увидеть историю.</p></div><p class="small">* QUN Compute Credits — внутренние тестовые единицы учёта, не токен, не деньги и не обещание будущей выплаты.</p></section>
+</main>
+<footer class="footer"><span>QUN · Living Compute · Testnet</span><span><a href="../">Главная QUN</a> · <a href="../node/">QUN Node</a> · <a href="https://github.com/Serega40in/QUN/blob/main/docs/architecture/distributed-backend.md">Архитектура</a></span></footer>
+</div>
+<script>
+(() => {
+const SUPABASE_URL = "https://qdxjltqlnphvzafapncm.supabase.co";
+const PUBLIC_KEY = "sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L";
+const AUTH_URL = SUPABASE_URL + "/functions/v1/qun-auth";
+const COMPUTE_URL = SUPABASE_URL + "/functions/v1/qun-browser-compute";
+const sb = window.supabase.createClient(SUPABASE_URL, PUBLIC_KEY);
+const $ = id => document.getElementById(id);
+let running = false, stopRequested = false, authBusy = false;
+const enc = new TextEncoder();
+const hex = bytes => Array.from(new Uint8Array(bytes)).map(b=>b.toString(16).padStart(2,"0")).join("");
+function message(text,kind=""){ $("authMessage").innerHTML = '<i class="dot '+(kind==="good"?"good":kind==="warn"?"warn":"")+'"></i><span></span>'; $("authMessage").querySelector("span").textContent=text; }
+function workerMessage(text,kind=""){ $("workerStatus").textContent=text; $("workerDot").className="dot "+(kind==="good"?"good":kind==="warn"?"warn":""); }
+async function authRequest(action) {
+ const body={action,login:$("login").value.trim(),username:$("login").value.trim().replace(/^@/,""),password:$("password").value};
+ if(action==="register") body.display_name=$("displayName").value.trim()||body.username;
+ const response=await fetch(AUTH_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":PUBLIC_KEY},body:JSON.stringify(body)});
+ const data=await response.json().catch(()=>({error:"Сервер вернул некорректный ответ."}));
+ if(!response.ok||!data.session) throw new Error(data.error||"Не удалось войти.");
+ const {error}=await sb.auth.setSession({access_token:data.session.access_token,refresh_token:data.session.refresh_token});
+ if(error) throw error;
+ return data;
+}
+async function api(action, payload={}) {
+ const {data:{session}}=await sb.auth.getSession();
+ if(!session?.access_token) throw new Error("Сессия не найдена. Войдите снова.");
+ const response=await fetch(COMPUTE_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":PUBLIC_KEY,"Authorization":"Bearer "+session.access_token},body:JSON.stringify({action,...payload})});
+ const data=await response.json().catch(()=>({error:"Некорректный ответ сервера."}));
+ if(!response.ok) throw new Error(data.error||"Ошибка вычислительной сети.");
+ return data;
+}
+function renderHistory(items=[]){
+ const el=$("history"); el.replaceChildren();
+ if(!items.length){const p=document.createElement("p");p.className="small";p.textContent="Пока нет подтверждённых задач.";el.append(p);return;}
+ items.forEach(item=>{const row=document.createElement("div");row.className="item";const left=document.createElement("span");left.textContent=new Date(item.createdAt).toLocaleString("ru-RU");const right=document.createElement("strong");right.textContent="+"+item.credits+" credit · "+String(item.proofHash||"").slice(0,10);row.append(left,right);el.append(row);});
+}
+async function refreshStatus(){
+ try{const s=await api("status");$("credits").textContent=s.totalCredits||0;$("tasks").textContent=s.contributionCount||0;$("state").textContent=s.enabled?"Вкл.":"Выкл.";$("consentCheck").checked=!!s.enabled;$("enableBtn").disabled=!s.enabled?false:true;$("stopBtn").disabled=!s.enabled&&!running;renderHistory(s.recent||[]);if(s.enabled&&!running)workerMessage("Разрешение сохранено. Нажмите «Разрешить и начать», чтобы запустить вкладку.","good");else if(!s.enabled&&!running)workerMessage("Участие выключено.");}
+ catch(e){message(e.message,"warn");}
+}
+async function showAccount(user){
+ if(user){$("authForm").classList.add("hidden");$("accountState").classList.remove("hidden");$("accountLabel").textContent="QUN ID · "+(user.user_metadata?.qun_username||user.email?.split("@")[0]||"участник");$("enableBtn").disabled=false;await refreshStatus();}
+ else{$("authForm").classList.remove("hidden");$("accountState").classList.add("hidden");$("credits").textContent="0";$("tasks").textContent="0";$("state").textContent="—";$("enableBtn").disabled=true;$("stopBtn").disabled=true;workerMessage("Войдите, чтобы начать");renderHistory([]);}
+}
+async function solve(challenge,onProgress){
+ const target="0".repeat(challenge.difficulty);let nonce=0;const start=performance.now();
+ while(nonce<=2000000&&!stopRequested){
+   const digest=hex(await crypto.subtle.digest("SHA-256",enc.encode(challenge.challenge+":"+nonce)));
+   if(digest.startsWith(target))return {nonce,proofHash:digest,elapsedMs:Math.round(performance.now()-start)};
+   nonce++;
+   if(nonce%256===0){onProgress(Math.min(99,Math.round(nonce/20000)));await new Promise(resolve=>setTimeout(resolve,0));}
+ }
+ if(stopRequested)throw new Error("Вычисление остановлено пользователем.");
+ throw new Error("Лимит вычисления достигнут. Попробуйте ещё раз.");
+}
+async function runLoop(){
+ if(running)return;
+ running=true;stopRequested=false;$("enableBtn").disabled=true;$("stopBtn").disabled=false;
+ try{
+   while(running&&!stopRequested){
+     if(document.hidden){workerMessage("Пауза: вкладка не видна.");await new Promise(r=>setTimeout(r,1200));continue;}
+     const consent=await api("status");if(!consent.enabled){workerMessage("Участие выключено.");break;}
+     workerMessage("Запрашиваем безопасную микрозадачу…","good");
+     const task=await api("issue_challenge");
+     workerMessage("Вычисляем SHA-256 proof-of-work…","good");$("progress").style.width="0%";
+     const proof=await solve(task,p=>{$("progress").style.width=p+"%";$("progressText").textContent="Проверяемый хеш-поиск · лимит 2 000 000 попыток";});
+     if(stopRequested)break;
+     const accepted=await api("submit_proof",{challengeId:task.challengeId,nonce:proof.nonce,proofHash:proof.proofHash});
+     $("progress").style.width="100%";$("progressText").textContent="Задача подтверждена за "+(proof.elapsedMs/1000).toFixed(2)+" с.";
+     $("credits").textContent=Number($("credits").textContent||0)+accepted.contribution.credits;
+     $("tasks").textContent=accepted.contributionCount;$("state").textContent="Вкл.";
+     const entry={credits:accepted.contribution.credits,createdAt:accepted.contribution.createdAt,proofHash:accepted.contribution.proofHash};
+     const current=Array.from($("history").querySelectorAll(".item")).slice(0,9).map(el=>({createdAt:el.firstChild.textContent,credits:1,proofHash:el.lastChild.textContent}));
+     renderHistory([entry,...current]);
+     workerMessage("Задача подтверждена · +1 тестовый Compute Credit","good");
+     await new Promise(resolve=>setTimeout(resolve,8500));
+   }
+ }catch(e){if(!stopRequested){workerMessage(e.message,"warn");message(e.message,"warn");}}
+ finally{running=false;$("enableBtn").disabled=false;$("stopBtn").disabled=true;$("progress").style.width="0%";if(stopRequested)workerMessage("Вычисления остановлены пользователем.");}
+}
+$("loginBtn").addEventListener("click",async()=>{if(authBusy)return;authBusy=true;$("loginBtn").disabled=true;try{await authRequest("login");message("Вы вошли через QUN ID.","good");const {data:{user}}=await sb.auth.getUser();await showAccount(user);}catch(e){message(e.message,"warn");}finally{authBusy=false;$("loginBtn").disabled=false;}});
+$("registerBtn").addEventListener("click",async()=>{if(authBusy)return;authBusy=true;$("registerBtn").disabled=true;try{if(!$("displayField").classList.contains("shown")){$("displayField").classList.remove("hidden");$("displayField").classList.add("shown");$("password").autocomplete="new-password";message("Заполните отображаемое имя и нажмите «Создать QUN ID» ещё раз.");return;}await authRequest("register");message("QUN ID создан.","good");const {data:{user}}=await sb.auth.getUser();await showAccount(user);}catch(e){message(e.message,"warn");}finally{authBusy=false;$("registerBtn").disabled=false;}});
+$("enableBtn").addEventListener("click",async()=>{
+ try{if(! $("consentCheck").checked){message("Сначала отметьте согласие на участие.","warn");return;}await api("consent",{enabled:true});message("Согласие сохранено. Браузерный исполнитель запускается.","good");await refreshStatus();runLoop();}
+ catch(e){message(e.message,"warn");}
+});
+$("stopBtn").addEventListener("click",async()=>{stopRequested=true;running=false;try{await api("consent",{enabled:false});$("consentCheck").checked=false;$("state").textContent="Выкл.";}catch(e){message(e.message,"warn");}workerMessage("Останавливаем задачу и отключаем участие…","warn");});
+$("refreshBtn").addEventListener("click",refreshStatus);
+$("logoutBtn").addEventListener("click",async()=>{stopRequested=true;running=false;await sb.auth.signOut();await showAccount(null);message("Вы вышли из QUN ID.");});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&running)workerMessage("Пауза: вкладка скрыта.","warn");});
+(async()=>{try{const {data:{session}}=await sb.auth.getSession();if(session){const {data:{user}}=await sb.auth.getUser();await showAccount(user);message("Сессия QUN ID восстановлена.","good");}else{message("Войдите через QUN ID, чтобы подключить браузер.","");}}catch(e){message(e.message,"warn");}})();
+})();
+</script>
+</body></html>
