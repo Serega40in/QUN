@@ -57,12 +57,34 @@ def walk_replace(value, prompt, prefix):
         return value.replace("{{PROMPT}}", prompt).replace("{{OUTPUT_PREFIX}}", prefix)
     return value
 
+def workflow_file_for_job(job):
+    """Choose only operator-configured workflows; never accept a path from the job payload."""
+    requirements = job.get("requirements") or {}
+    key = str(requirements.get("workflow_key") or job.get("job_type") or "").strip().lower()
+    env_names = {
+        "image_generation": "QUN_COMFYUI_WORKFLOW_IMAGE",
+        "video_generation": "QUN_COMFYUI_WORKFLOW_VIDEO",
+        "audio_generation": "QUN_COMFYUI_WORKFLOW_AUDIO",
+        "music": "QUN_COMFYUI_WORKFLOW_MUSIC",
+        "dialogue": "QUN_COMFYUI_WORKFLOW_DIALOGUE",
+        "comfyui_workflow": "QUN_COMFYUI_WORKFLOW",
+    }
+    env_name = env_names.get(key)
+    configured = os.environ.get(env_name, "").strip() if env_name else ""
+    if configured:
+        return Path(configured)
+    if key in ("music", "dialogue"):
+        raise RuntimeError("No dedicated " + key + " workflow configured. Set " + str(env_name) + " to an operator-owned ComfyUI API workflow file.")
+    # Compatibility with existing installs: other media types fall back to the original workflow.
+    return WORKFLOW_FILE
+
 def load_workflow(job):
     workflow = job.get("workflow") or {}
     if not workflow:
-        if not WORKFLOW_FILE.is_file():
-            raise RuntimeError("No workflow supplied. Add a ComfyUI API-format workflow to QUN_COMFYUI_WORKFLOW.")
-        workflow = json.loads(WORKFLOW_FILE.read_text(encoding="utf-8"))
+        selected_file = workflow_file_for_job(job)
+        if not selected_file.is_file():
+            raise RuntimeError("No configured ComfyUI workflow for " + str(job.get("job_type")) + ". Configure " + selected_file.name + " or the matching QUN_COMFYUI_WORKFLOW_* variable.")
+        workflow = json.loads(selected_file.read_text(encoding="utf-8"))
     if not isinstance(workflow, dict) or not workflow:
         raise RuntimeError("Workflow must be a non-empty ComfyUI API-format JSON object.")
     prompt = str(job.get("prompt") or "")
@@ -86,11 +108,11 @@ def output_files(history_entry):
     outputs = history_entry.get("outputs", {}) if isinstance(history_entry, dict) else {}
     for node_id, output in outputs.items():
         if not isinstance(output, dict): continue
-        for kind in ("images", "gifs", "videos"):
+        for kind in ("images", "gifs", "videos", "audio", "audio_files"):
             for item in output.get(kind, []) or []:
                 if not isinstance(item, dict) or not item.get("filename"): continue
                 query = urlencode({"filename":item["filename"], "subfolder":item.get("subfolder",""), "type":item.get("type","output")})
-                found.append({"kind":"video" if kind in ("gifs","videos") else "image",
+                found.append({"kind":"audio" if kind in ("audio","audio_files") else "video" if kind in ("gifs","videos") else "image",
                               "filename":item["filename"], "subfolder":item.get("subfolder",""),
                               "type":item.get("type","output"), "url":COMFY_URL+"/view?"+query})
     return found

@@ -30,6 +30,28 @@ python .\comfyui_worker.py
 
 The publishable key is public by design, but the node token is a secret. Never use a Supabase service-role/secret key in this worker.
 
+## Separate media workflows (image / video / music / dialogue)
+
+One node can serve different kinds of jobs using separate **operator-owned** ComfyUI API workflow JSON files. This avoids forcing audio tasks through a video graph. Export each graph with **Save (API Format)** and put `{{PROMPT}}` in the relevant prompt text field.
+
+Configure only the workflows you actually have installed:
+
+```powershell
+$env:QUN_COMFYUI_WORKFLOW_IMAGE = ".\\workflow-image-api.json"
+$env:QUN_COMFYUI_WORKFLOW_VIDEO = ".\\workflow-video-api.json"
+$env:QUN_COMFYUI_WORKFLOW_MUSIC = ".\\workflow-music-api.json"
+$env:QUN_COMFYUI_WORKFLOW_DIALOGUE = ".\\workflow-dialogue-api.json"
+python .\\comfyui_worker.py
+```
+
+Routing rules:
+- `image_generation` uses `QUN_COMFYUI_WORKFLOW_IMAGE`
+- `video_generation` uses `QUN_COMFYUI_WORKFLOW_VIDEO`
+- `audio_generation` uses `QUN_COMFYUI_WORKFLOW_AUDIO` by default, or `requirements.workflow_key = "music"` / `"dialogue"` to select the matching specific workflow
+- missing per-type settings fall back to the existing `QUN_COMFYUI_WORKFLOW` for backward compatibility
+
+The worker still runs only workflows you configured. It does not download models, install custom nodes, or expose your ComfyUI server. Audio outputs are detected when the ComfyUI history reports `audio` or `audio_files` entries. A multi-scene music video still needs an assembly stage (for example FFmpeg) to combine scene clips, soundtrack and dialogue into one final file; separate workflow routing is the execution foundation, not a claim that automatic final montage is already complete.
+
 ## Prompt mapping
 
 The simplest and recommended mapping is to put \`{{PROMPT}}\` inside the positive prompt's text field in the exported API workflow. The worker replaces this exact placeholder before submitting the workflow.
