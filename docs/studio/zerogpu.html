@@ -32,7 +32,7 @@
 <div class="actions"><button class="btn" id="download" disabled>⬇ Скачать MP4 на устройство</button><a class="btn secondary" id="open" href="#" target="_blank" rel="noopener">Открыть видео отдельно ↗</a></div>
 <p id="save-hint" class="hint">После скачивания проверь папку «Загрузки» на телефоне или компьютере.</p>
 </section>
-<footer class="hint" style="text-align:center;padding:12px">QUN Studio · результат скачивается на устройство; постоянное хранение в QUN Storage будет отдельным следующим этапом.</footer>
+<section id="native-fallback" class="panel" hidden><h2>Резервный режим генерации</h2><p class="hint">Если браузер блокирует API-запрос из GitHub Pages, попробуй встроенный интерфейс оригинального Space. Генерация и скачивание выполняются на стороне Hugging Face.</p><div class="actions"><a class="btn" href="https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster" target="_blank" rel="noopener">Открыть оригинальный генератор</a></div><iframe title="Hugging Face video generator" src="https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space/?__theme=dark" loading="lazy" style="width:100%;height:800px;border:1px solid var(--line);border-radius:12px;margin-top:14px"></iframe></section><footer class="hint" style="text-align:center;padding:12px">QUN Studio · результат скачивается на устройство; постоянное хранение в QUN Storage будет отдельным следующим этапом.</footer>
 </div>
 <script type="module">
 import { Client, handle_file } from "https://cdn.jsdelivr.net/npm/@gradio/client@1.15.0/dist/index.min.js";
