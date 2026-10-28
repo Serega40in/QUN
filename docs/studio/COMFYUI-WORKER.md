@@ -4,7 +4,7 @@ This is the next execution layer for the existing QUN Compute queue. It runs on 
 
 ## Important status
 
-- The queue API is the existing Supabase Edge Function \`qun-compute\`.
+- The queue API is the existing Supabase Edge Function \`qun-compute-node\` (node-authenticated endpoint). The user-facing job API is \`qun-compute\`.
 - This worker uses the existing node credential pair (\`QUN_NODE_ID\`, \`QUN_NODE_TOKEN\`) and never uses a Supabase service-role key.
 - ComfyUI must be installed and running separately, with a workflow exported in **API format**.
 - To use a remote ComfyUI instance, set \`QUN_COMFYUI_URL\` to an endpoint reachable from the worker. For previews to load in a browser, that endpoint must also be reachable by the browser; do not expose ComfyUI publicly without authentication/network restrictions.
