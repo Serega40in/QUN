@@ -114,7 +114,8 @@ $('generate').addEventListener('click', async () => {
   } catch (error) {
     console.error('QUN ZeroGPU error', error);
     const message = String(error?.message || error || 'Неизвестная ошибка');
-    status('Браузер не смог обратиться к API Space: ' + message + '\\nЭто похоже на CORS/сетевой сбой. Попробуй генератор напрямую по ссылке «Открыть оригинальный Space» выше. Платная генерация не включается.');
+    $('native-fallback').hidden = false;
+    status('Не удалось вызвать API Space: ' + message + '\\nРезервный интерфейс доступен ниже. Если он не загрузился, открой оригинальный Space в отдельной вкладке.');
   } finally {
     busy = false; $('generate').disabled = false;
   }
