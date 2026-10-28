@@ -31,3 +31,13 @@ QUN Compute is the first shared job queue for the QUN distributed compute layer.
 3. Connect ComfyUI using a private worker-side endpoint; never expose its unauthenticated API publicly.
 4. Configure durable storage, integrity hashes, quotas and retention.
 5. Add queue limits, per-user rate limits and observability before opening the network to outside contributors.
+
+## QUN Living Compute — browser prototype (2026-10-29)
+- Browser UI: https://serega40in.github.io/QUN/compute/
+- New Supabase Edge Function: `qun-browser-compute` (manual access-token validation through Supabase Auth).
+- New tables: `qun_browser_preferences`, `qun_browser_challenges`, `qun_browser_contributions`; RLS enabled and direct grants revoked from `anon` and `authenticated`.
+- Existing QUN ID username/password login is reused via `qun-auth`.
+- Explicit opt-in is required. The browser runs a small SHA-256 proof-of-work challenge only inside this page, pauses between tasks while the page is hidden, and can be stopped at any time.
+- Successful proofs receive **QUN Compute Credits**, internal test units only; they are not cryptocurrency and have no monetary value.
+- This proves browser-side computation and authenticated contribution accounting, not yet useful paid compute. It does not execute arbitrary remote code or process personal files.
+- This browser MVP is separate from the existing `qun_compute_jobs` queue. Integration with useful allowlisted tasks requires a task contract, isolation, verification, abuse limits and browser integration tests first.
