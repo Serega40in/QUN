@@ -20,9 +20,9 @@ main{max-width:880px;margin:auto;padding:26px 20px 56px}.brand{display:flex;alig
 <div class="status"><span class="dot"></span> Сервер QUN ещё не подключён</div>
 <h2 id="connect-title">Подключение через Happ</h2>
 <p class="hint">Для импорта нужен действующий адрес подписки. Сейчас собственный сервер и ссылка QUN ещё не настроены, поэтому мы не будем имитировать подключение.</p>
-<label for="sub">Адрес подписки Happ (если у тебя уже есть свой)</label>
-<input id="sub" type="url" inputmode="url" autocomplete="off" placeholder="https://…/subscription" aria-describedby="sub-help">
-<div class="hint" id="sub-help">Ссылка используется только в этом действии и не сохраняется сайтом. Не вставляй сюда приватный ключ, если не хочешь передавать его в Happ.</div>
+<label for="sub">Ссылка-подписка или ключ Happ (если уже есть)</label>
+<input id="sub" type="url" inputmode="url" autocomplete="off" placeholder="https://…/subscription или vless://…" aria-describedby="sub-help">
+<div class="hint" id="sub-help">Данные используются только для открытия Happ и не сохраняются сайтом. Ключ или подписка дают доступ к серверу — не отправляй их посторонним.</div>
 <div class="buttons">
 <button class="btn primary" id="connect" type="button">Открыть в Happ ↗</button>
 <a class="btn secondary" href="https://www.happ.su/" target="_blank" rel="noopener noreferrer">Установить Happ</a>
@@ -42,10 +42,14 @@ main{max-width:880px;margin:auto;padding:26px 20px 56px}.brand{display:flex;alig
  const input=document.getElementById('sub'),button=document.getElementById('connect'),msg=document.getElementById('msg');
  button.addEventListener('click',function(){
   const raw=input.value.trim();
-  if(!raw){msg.textContent='Сначала нужен адрес подписки. Собственная подписка QUN появится после запуска сервера.';input.focus();return;}
-  let url;try{url=new URL(raw)}catch(e){msg.textContent='Проверь адрес: это должна быть полная ссылка https://…';return;}
-  if(url.protocol!=='https:'&&url.protocol!=='http:'){msg.textContent='Поддерживается веб-ссылка http(s) на подписку.';return;}
-  if(url.username||url.password){msg.textContent='Не вставляй ссылки со встроенным логином или паролем.';return;}
+  if(!raw){msg.textContent='Нужна ссылка-подписка или ключ. Собственные данные QUN появятся после запуска сервера.';input.focus();return;}
+  const isHttps = /^https:\/\//i.test(raw);
+  if(isHttps){
+   let url;try{url=new URL(raw)}catch(e){msg.textContent='Проверь, что ссылка указана полностью.';return;}
+   if(url.username||url.password){msg.textContent='Не вставляй ссылки со встроенным логином или паролем.';return;}
+  }else if(!/^(vless|vmess|trojan|ss|socks):\/\//i.test(raw)){
+   msg.textContent='Поддерживаются HTTPS-подписки и ключи Happ форматов vless://, vmess://, trojan://, ss:// или socks://.';return;
+  }
   const deepLink='happ://add/'+raw;
   msg.textContent='Передаём ссылку приложению Happ. Если приложение не открылось, скопируй адрес и импортируй его в Happ вручную.';
   window.location.href=deepLink;
