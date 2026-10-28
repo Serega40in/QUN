@@ -37,7 +37,7 @@
 <script type="module">
 import { Client, handle_file } from "https://cdn.jsdelivr.net/npm/@gradio/client@1.15.0/dist/index.min.js";
 const $ = id => document.getElementById(id);
-const SPACE = "zerogpu-aoti/wan2-2-fp8da-aoti-faster";
+const SPACE = "https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space";
 let currentUrl = null;
 let downloadUrl = null;
 let busy = false;
@@ -69,7 +69,7 @@ $('generate').addEventListener('click', async () => {
   try {
     const token = $('token').value.trim();
     const client = token ? await Client.connect(SPACE, { token }) : await Client.connect(SPACE);
-    status('Отправили запрос в ZeroGPU. Генерация может занять несколько минут…');
+    status('Подключение установлено. Отправили запрос в ZeroGPU. Генерация может занять несколько минут…');
     const result = await client.predict('/generate_video', [
       handle_file(file),
       prompt,
