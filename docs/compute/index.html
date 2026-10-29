@@ -49,7 +49,7 @@ const AUTH_URL = SUPABASE_URL + "/functions/v1/qun-auth";
 const COMPUTE_URL = SUPABASE_URL + "/functions/v1/qun-browser-compute";
 const sb = window.supabase.createClient(SUPABASE_URL, PUBLIC_KEY);
 const $ = id => document.getElementById(id);
-let running = false, stopRequested = false, authBusy = false;
+let running = false, stopRequested = false, authBusy = false, recentItems = [];
 const enc = new TextEncoder();
 const hex = bytes => Array.from(new Uint8Array(bytes)).map(b=>b.toString(16).padStart(2,"0")).join("");
 function message(text,kind=""){ $("authMessage").innerHTML = '<i class="dot '+(kind==="good"?"good":kind==="warn"?"warn":"")+'"></i><span></span>'; $("authMessage").querySelector("span").textContent=text; }
@@ -75,10 +75,10 @@ async function api(action, payload={}) {
 function renderHistory(items=[]){
  const el=$("history"); el.replaceChildren();
  if(!items.length){const p=document.createElement("p");p.className="small";p.textContent="Пока нет подтверждённых задач.";el.append(p);return;}
- items.forEach(item=>{const row=document.createElement("div");row.className="item";const left=document.createElement("span");left.textContent=new Date(item.createdAt).toLocaleString("ru-RU");const right=document.createElement("strong");right.textContent="+"+item.credits+" credit · "+String(item.proofHash||"").slice(0,10);row.append(left,right);el.append(row);});
+ items.forEach(item=>{const row=document.createElement("div");row.className="item";const left=document.createElement("span");const date=new Date(item.createdAt);left.textContent=Number.isNaN(date.getTime())?"Недавний вклад":date.toLocaleString("ru-RU");const right=document.createElement("strong");right.textContent="+"+item.credits+" credit · "+String(item.proofHash||"").slice(0,10);row.append(left,right);el.append(row);});
 }
 async function refreshStatus(){
- try{const s=await api("status");$("credits").textContent=s.totalCredits||0;$("tasks").textContent=s.contributionCount||0;$("state").textContent=s.enabled?"Вкл.":"Выкл.";$("consentCheck").checked=!!s.enabled;$("enableBtn").disabled=!s.enabled?false:true;$("stopBtn").disabled=!s.enabled&&!running;renderHistory(s.recent||[]);if(s.enabled&&!running)workerMessage("Разрешение сохранено. Нажмите «Разрешить и начать», чтобы запустить вкладку.","good");else if(!s.enabled&&!running)workerMessage("Участие выключено.");}
+ try{const s=await api("status");$("credits").textContent=s.totalCredits||0;$("tasks").textContent=s.contributionCount||0;$("state").textContent=s.enabled?"Вкл.":"Выкл.";$("consentCheck").checked=!!s.enabled;recentItems=s.recent||[];renderHistory(recentItems);$("enableBtn").disabled=running;$("stopBtn").disabled=!s.enabled&&!running;if(s.enabled&&!running)workerMessage("Разрешение сохранено. Нажмите «Разрешить и начать», чтобы запустить вкладку.","good");else if(!s.enabled&&!running)workerMessage("Участие выключено.");}
  catch(e){message(e.message,"warn");}
 }
 async function showAccount(user){
@@ -88,6 +88,8 @@ async function showAccount(user){
 async function solve(challenge,onProgress){
  const target="0".repeat(challenge.difficulty);let nonce=0;const start=performance.now();
  while(nonce<=2000000&&!stopRequested){
+   while(document.hidden&&!stopRequested) await new Promise(resolve=>setTimeout(resolve,250));
+   if(stopRequested) break;
    const digest=hex(await crypto.subtle.digest("SHA-256",enc.encode(challenge.challenge+":"+nonce)));
    if(digest.startsWith(target))return {nonce,proofHash:digest,elapsedMs:Math.round(performance.now()-start)};
    nonce++;
@@ -113,8 +115,8 @@ async function runLoop(){
      $("credits").textContent=Number($("credits").textContent||0)+accepted.contribution.credits;
      $("tasks").textContent=accepted.contributionCount;$("state").textContent="Вкл.";
      const entry={credits:accepted.contribution.credits,createdAt:accepted.contribution.createdAt,proofHash:accepted.contribution.proofHash};
-     const current=Array.from($("history").querySelectorAll(".item")).slice(0,9).map(el=>({createdAt:el.firstChild.textContent,credits:1,proofHash:el.lastChild.textContent}));
-     renderHistory([entry,...current]);
+     recentItems=[entry,...recentItems].slice(0,10);
+     renderHistory(recentItems);
      workerMessage("Задача подтверждена · +1 тестовый Compute Credit","good");
      await new Promise(resolve=>setTimeout(resolve,8500));
    }
