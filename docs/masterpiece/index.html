@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071421"><meta name="description" content="QUN Masterpiece — открытая галерея творчества, созданного людьми с помощью ИИ.">
+<title>QUN Masterpiece — твори и делись</title>
+<style>
+:root{color-scheme:dark;--bg:#071421;--panel:#0d2030;--panel2:#132c40;--line:#254257;--text:#f2f8fc;--muted:#9ab2c4;--mint:#8af0ce;--gold:#f3d18a}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 70% -20%,#1d5b68 0,transparent 42%),radial-gradient(ellipse at 5% 20%,#122c50 0,transparent 38%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:auto;padding:18px 20px 60px}.top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:6px 0 20px;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:12px;font-weight:900;letter-spacing:.06em}.mark{width:44px;height:44px;border:1px solid #76e9cb88;border-radius:15px;display:grid;place-items:center;color:var(--mint);font-size:22px;background:linear-gradient(135deg,#1d4d64,#0d2034);box-shadow:0 0 30px #2acaa322}.sub{font-size:10px;letter-spacing:.16em;color:var(--muted);font-weight:650}.btn{border:1px solid #397267;background:linear-gradient(135deg,#174f4a,#14384a);color:#e2fff7;border-radius:12px;padding:10px 14px;font-weight:750;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}.btn.alt{background:#102438;border-color:var(--line);color:var(--text)}.btn:disabled{opacity:.5;cursor:not-allowed}.top-actions,.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.hero{padding:36px 0 26px;display:grid;grid-template-columns:1.25fr .75fr;gap:24px;align-items:center}.eyebrow{color:var(--mint);font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:850}h1{font-size:clamp(34px,6vw,62px);line-height:1.02;letter-spacing:-.045em;margin:10px 0 14px}.hero p{color:var(--muted);max-width:670px;margin:0}.hero-art{min-height:200px;border:1px solid #2d5d62;border-radius:22px;padding:22px;background:radial-gradient(ellipse at 60% 30%,#327e79 0,transparent 42%),linear-gradient(135deg,#10283d,#102f36 60%,#17243b);position:relative;overflow:hidden}.orb{position:absolute;width:150px;height:150px;border-radius:40%;border:1px solid #a5ffe488;transform:rotate(35deg);right:13%;top:12%;box-shadow:0 0 65px #50dfb733,inset 0 0 35px #50dfb722}.orb:before,.orb:after{content:"";position:absolute;inset:20px;border:1px solid #f3d18a99;border-radius:35%;transform:rotate(30deg)}.orb:after{inset:40px;border-color:#8af0ce99;transform:rotate(30deg)}.hero-art strong{position:absolute;left:22px;bottom:20px;font-size:17px}.hero-art small{position:absolute;left:22px;bottom:3px;color:#b4d2d9}.layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:18px}.panel{border:1px solid var(--line);background:#0b1c2be8;border-radius:19px;padding:18px;min-width:0}.panel h2,.panel h3{margin:0 0 9px}.muted{color:var(--muted)}.field{width:100%;background:#071522;border:1px solid var(--line);color:var(--text);border-radius:11px;padding:11px 12px;outline:none}.field:focus{border-color:#4b9c8a}textarea.field{resize:vertical;min-height:90px}.stack{display:grid;gap:10px}.authbox{border-top:1px solid var(--line);margin-top:16px;padding-top:15px}.status{min-height:20px;font-size:12px;color:var(--muted);overflow-wrap:anywhere}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.tab{background:#102438;border:1px solid var(--line);color:#c0d2de;border-radius:99px;padding:8px 12px}.tab.active{background:#174c48;border-color:#438a7a;color:#effff9}.feedhead{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}.feed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.post{overflow:hidden;border:1px solid #284257;border-radius:16px;background:#0d2131;min-width:0}.media{width:100%;aspect-ratio:4/3;object-fit:cover;background:linear-gradient(135deg,#112b43,#173b42);display:block}.postbody{padding:14px}.posttitle{font-weight:800;font-size:16px;overflow-wrap:anywhere}.posttext{color:#c0d1dd;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0}.meta{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:11px;align-items:center}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.actions .btn{font-size:12px;padding:7px 10px}.empty{grid-column:1/-1;padding:40px 16px;text-align:center;border:1px dashed #2a4c60;border-radius:16px;color:var(--muted)}.empty b{display:block;color:var(--text);font-size:18px;margin-bottom:6px}.badge{font-size:10px;border:1px solid #274858;color:#9bdccf;border-radius:99px;padding:3px 7px}.footer{text-align:center;color:#68879a;font-size:11px;margin-top:24px}.hidden{display:none!important}.authrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.small{font-size:12px}
+@media(max-width:850px){.hero{grid-template-columns:1fr}.hero-art{min-height:150px}.layout{grid-template-columns:1fr}.feed{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.shell{padding:12px 11px 38px}.top{align-items:flex-start}.top-actions .btn{font-size:12px;padding:8px 10px}.hero{padding:26px 0 18px}.panel{padding:13px}.feed{grid-template-columns:1fr}.authrow{grid-template-columns:1fr}.hero-art{min-height:125px}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body><div class="shell">
+<header class="top"><div class="brand"><div class="mark">Q</div><div>QUN <span style="color:var(--mint)">MASTERPIECE</span><div class="sub">OPEN CREATIVE GALLERY</div></div></div><div class="top-actions"><a class="btn alt" href="../studio/">← QUN Studio</a><button class="btn alt hidden" id="signout">Выйти</button></div></header>
+<section class="hero"><div><div class="eyebrow">Imagine · Create · Share</div><h1>Мир твоих<br><span style="color:var(--mint)">творческих идей.</span></h1><p>Создавай арты, делись клипами и историями, находи вдохновение и авторов. QUN Masterpiece объединяет творчество людей и возможности ИИ — шаг за шагом.</p><div class="row" style="margin-top:18px"><a class="btn" href="../studio/">✦ Перейти к созданию</a><span class="badge">Открытая галерея</span></div></div><div class="hero-art"><div class="orb"></div><strong>Идея становится миром</strong><small>QUN · Creative Universe</small></div></section>
+<div class="layout"><aside class="panel"><h2>Опубликовать работу</h2><p class="muted small">Войди в QUN, чтобы поделиться произведением с сообществом. Публикация будет публичной.</p><div id="identity" class="status">Проверяем сессию QUN…</div>
+<form id="publish-form" class="stack"><input id="title" class="field" maxlength="140" placeholder="Название произведения" required><textarea id="description" class="field" maxlength="4000" placeholder="Расскажи об идее, процессе или мире…"></textarea><input id="media-url" class="field" type="url" placeholder="Ссылка на изображение или видео (необязательно)"><select id="media-type" class="field"><option value="image">Изображение / арт</option><option value="video">Видео / клип</option></select><button class="btn" id="publish" type="submit">Опубликовать в галерее</button><div id="publish-status" class="status"></div></form>
+<div class="authbox"><h3>Аккаунт QUN</h3><form id="auth-form" class="stack"><input id="email" class="field" type="email" autocomplete="email" placeholder="Электронная почта" required><input id="password" class="field" type="password" autocomplete="current-password" minlength="6" placeholder="Пароль (от 6 символов)" required><div class="authrow"><button class="btn" id="login" type="submit">Войти</button><button class="btn alt" id="signup" type="button">Создать аккаунт</button></div></form><div id="auth-status" class="status"></div></div>
+<div class="authbox"><h3>Творческий помощник</h3><p class="muted small">ГигаЧат поможет развить идею, название или промпт. Для работы нужен серверный секрет GIGACHAT_CREDENTIALS.</p><textarea id="idea" class="field" maxlength="2500" placeholder="Например: маленький хранитель звёзд возвращает свет ночному лесу…"></textarea><button id="refine" class="btn alt" type="button" style="width:100%;margin-top:8px">✧ Развить идею с ИИ</button><div id="idea-status" class="status"></div><textarea id="idea-result" class="field hidden" readonly style="margin-top:8px"></textarea></div></aside>
+<main class="panel"><div class="feedhead"><div><div class="eyebrow">Community showcase</div><h2 style="margin:4px 0">Галерея сообщества</h2><div id="feed-count" class="muted small">Загружаем произведения…</div></div><button id="refresh" class="btn alt">↻ Обновить</button></div><div class="tabs"><button class="tab active" data-filter="all">Все работы</button><button class="tab" data-filter="image">Арты</button><button class="tab" data-filter="video">Видео</button></div><div id="feed" class="feed"><div class="empty"><b>Загружаем галерею…</b>Секунду, собираем работы сообщества.</div></div></main></div>
+<div class="footer">QUN Masterpiece · Создавай с заботой. Публикуй с уважением к авторам и правам на материалы.</div></div>
+<script>
+(function(){
+const URL='https://qdxjltqlnphvzafapncm.supabase.co';
+const KEY='sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L';
+const db=window.supabase.createClient(URL,KEY);
+const $=id=>document.getElementById(id);
+let session=null,filter='all',posts=[];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const notice=(id,msg)=>{$(id).textContent=msg};
+function updateSession(s){session=s;$('signout').classList.toggle('hidden',!s);$('identity').textContent=s?'Вошёл аккаунт: '+(s.user.email||s.user.id):'Галерея открыта для просмотра. Войди, чтобы публиковать, ставить отметки и комментировать.';$('publish').disabled=!s;}
+async function loadFeed(){
+$('feed').innerHTML='<div class="empty"><b>Загружаем галерею…</b>Обновляем ленту.</div>';
+let res=await db.from('social_posts').select('id,user_id,content,media_url,media_type,media_urls,visibility,like_count,comment_count,created_at').eq('visibility','public').order('created_at',{ascending:false}).limit(60);
+if(res.error){$('feed').innerHTML='<div class="empty"><b>Галерея пока недоступна</b>'+esc(res.error.message)+'</div>';$('feed-count').textContent='Ошибка загрузки';return}
+posts=res.data||[];
+const ids=[...new Set(posts.map(p=>p.user_id))];
+let prof={};
+if(ids.length){const pr=await db.from('social_profiles').select('user_id,username,display_name,avatar_url').in('user_id',ids);if(!pr.error)(pr.data||[]).forEach(p=>prof[p.user_id]=p)}
+posts=posts.map(p=>({...p,author:prof[p.user_id]||{display_name:'Автор QUN',username:'qun'}}));
+renderFeed();
+}
+function renderFeed(){
+const list=posts.filter(p=>filter==='all'||p.media_type===filter);
+$('feed-count').textContent=list.length+' произведений'+(filter==='all'?'':' · фильтр применён');
+if(!list.length){$('feed').innerHTML='<div class="empty"><b>Здесь начинается история</b>Пока нет опубликованных работ в этой категории. Стань одним из первых авторов!</div>';return}
+$('feed').innerHTML=list.map(p=>{
+const urls=Array.isArray(p.media_urls)?p.media_urls:[];const src=p.media_url||urls[0]||'';
+const media=src?(p.media_type==='video'?'<video class="media" controls preload="metadata" src="'+esc(src)+'"></video>':'<img class="media" loading="lazy" src="'+esc(src)+'" alt="'+esc(p.content.slice(0,100))+'" onerror="this.style.display=\'none\'">'):'<div class="media" style="display:grid;place-items:center;color:#8af0ce;font-size:44px">✧</div>';
+const author=p.author.display_name||p.author.username||'Автор QUN';
+return '<article class="post">'+media+'<div class="postbody"><div class="posttitle">'+esc(p.content.split('\n')[0]||'Без названия')+'</div><div class="posttext">'+esc(p.content.split('\n').slice(1).join('\n'))+'</div><div class="meta"><span>'+esc(author)+(p.author.username?' · @'+esc(p.author.username):'')+'</span><span>'+new Date(p.created_at).toLocaleDateString('ru-RU')+'</span></div><div class="actions"><button class="btn alt like" data-id="'+p.id+'">♡ '+Number(p.like_count||0)+'</button><button class="btn alt comment" data-id="'+p.id+'">Комментарий · '+Number(p.comment_count||0)+'</button><button class="btn alt copy" data-id="'+p.id+'">Ссылка / текст</button></div><div id="comments-'+p.id+'" class="hidden"></div></div></article>';
+}).join('');
+}
+$('feed').addEventListener('click',async e=>{
+const b=e.target.closest('button');if(!b)return;const id=b.dataset.id;const p=posts.find(x=>x.id===id);if(!p)return;
+if(b.classList.contains('copy')){const share=location.origin+location.pathname+'#work-'+id;try{await navigator.clipboard.writeText(share+'\n'+p.content);b.textContent='Скопировано'}catch{prompt('Скопируй ссылку и описание:',share+'\n'+p.content)}return}
+if(!session){alert('Войди в аккаунт QUN, чтобы взаимодействовать с публикациями.');return}
+if(b.classList.contains('like')){
+const check=await db.from('social_likes').select('post_id').eq('post_id',id).eq('user_id',session.user.id).maybeSingle();
+if(check.error){alert('Не удалось проверить отметку: '+check.error.message);return}
+let result;
+if(check.data)result=await db.from('social_likes').delete().eq('post_id',id).eq('user_id',session.user.id);
+else result=await db.from('social_likes').insert({post_id:id,user_id:session.user.id});
+if(result.error)alert('Не удалось обновить отметку: '+result.error.message);else await loadFeed();
+}
+if(b.classList.contains('comment')){
+const box=$('comments-'+id);box.classList.toggle('hidden');if(!box.classList.contains('hidden'))await loadComments(id,box);
+}
+});
+async function loadComments(id,box){
+box.innerHTML='<div class="status">Загружаем комментарии…</div>';
+const r=await db.from('social_comments').select('id,user_id,content,created_at').eq('post_id',id).order('created_at',{ascending:true}).limit(30);
+if(r.error){box.innerHTML='<div class="status">'+esc(r.error.message)+'</div>';return}
+box.innerHTML=(r.data||[]).map(c=>'<p class="small"><b>Участник QUN</b> · '+new Date(c.created_at).toLocaleDateString('ru-RU')+'<br>'+esc(c.content)+'</p>').join('')+
+'<form class="comment-form stack" data-post="'+id+'" style="margin-top:10px"><input class="field" maxlength="3000" required placeholder="Напиши добрый и полезный комментарий"><button class="btn alt" type="submit">Отправить</button></form>';
+box.querySelector('form').addEventListener('submit',async ev=>{ev.preventDefault();const input=ev.currentTarget.querySelector('input');const btn=ev.currentTarget.querySelector('button');btn.disabled=true;const out=await db.from('social_comments').insert({post_id:id,user_id:session.user.id,content:input.value.trim()});if(out.error)alert('Ошибка: '+out.error.message);else await loadFeed();btn.disabled=false;});
+}
+$('publish-form').addEventListener('submit',async e=>{
+e.preventDefault();if(!session){notice('publish-status','Сначала войди в аккаунт QUN.');return}
+const title=$('title').value.trim(),desc=$('description').value.trim(),url=$('media-url').value.trim(),type=$('media-type').value;
+if(url&&!/^https:\/\//i.test(url)){notice('publish-status','Для публичной публикации нужна HTTPS-ссылка.');return}
+$('publish').disabled=true;notice('publish-status','Публикуем произведение…');
+const content=title+(desc?'\n'+desc:'');
+const r=await db.from('social_posts').insert({user_id:session.user.id,content:content,media_url:url||null,media_type:url?type:null,visibility:'public'});
+if(r.error)notice('publish-status','Не удалось опубликовать: '+r.error.message);
+else{$('publish-form').reset();notice('publish-status','Опубликовано! Работа появилась в общей галерее.');await loadFeed()}
+$('publish').disabled=!session;
+});
+$('auth-form').addEventListener('submit',async e=>{e.preventDefault();notice('auth-status','Выполняем вход…');const r=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(r.error)notice('auth-status',r.error.message);else{updateSession(r.data.session);notice('auth-status','Вход выполнен.');}});
+$('signup').addEventListener('click',async()=>{notice('auth-status','Создаём аккаунт…');const r=await db.auth.signUp({email:$('email').value.trim(),password:$('password').value});if(r.error)notice('auth-status',r.error.message);else notice('auth-status',r.data.session?'Аккаунт создан, вы вошли.':'Проверь почту, чтобы подтвердить регистрацию.');});
+$('signout').addEventListener('click',async()=>{await db.auth.signOut();updateSession(null);});
+$('refresh').addEventListener('click',loadFeed);
+document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));renderFeed()}));
+$('refine').addEventListener('click',async()=>{
+const idea=$('idea').value.trim();if(!idea){notice('idea-status','Сначала опиши идею.');return}
+const btn=$('refine');btn.disabled=true;notice('idea-status','Обращаемся к творческому помощнику…');
+try{const {data,error}=await db.functions.invoke('qun-gigachat-director',{body:{idea:idea,task:'creative_brief'}});if(error)throw error;if(data?.error)throw new Error(data.error);$('idea-result').value=data.result||data.text||JSON.stringify(data,null,2);$('idea-result').classList.remove('hidden');notice('idea-status','Готово. Используй результат как основу промпта или сценария.')}
+catch(err){notice('idea-status','Помощник пока не подключён: '+(err.message||String(err))+'. Проверь секрет GIGACHAT_CREDENTIALS в Supabase.')}
+finally{btn.disabled=false}
+});
+db.auth.getSession().then(({data})=>updateSession(data.session));
+db.auth.onAuthStateChange((_event,s)=>updateSession(s));
+loadFeed();
+})();
+</script></body></html>
