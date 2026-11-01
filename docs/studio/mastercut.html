@@ -40,7 +40,7 @@ label{font-size:13px;color:#d6e7f0;display:block;margin:9px 0 5px}.field{min-wid
 <section class="card">
 <h2>1. Выбери сцены</h2><p class="hint">Добавь видео из библиотеки или загрузи файлы с компьютера. Порядок можно изменить стрелками.</p>
 <div id="libraryVideos" class="library"><div class="empty">Загружаем библиотеку…</div></div>
-<label for="localVideos">Добавить видео с компьютера</label><input id="localVideos" type="file" accept="video/*" multiple>
+<label for="localVideos">Добавить видео с компьютера</label><input id="localVideos" type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v,.ogv,.avi" multiple>
 <div style="height:12px"></div><div class="eyebrow">Последовательность фильма</div><div id="queue" class="queue"><div class="empty">Пока нет сцен. Выбери видео выше.</div></div>
 </section>
 
@@ -155,9 +155,31 @@ function probeDuration(fileOrBlob) {
     const url = URL.createObjectURL(fileOrBlob);
     const video = document.createElement('video');
     video.preload = 'metadata';
-    video.onloadedmetadata = () => { const duration = video.duration; URL.revokeObjectURL(url); resolve(duration); };
-    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Не удалось прочитать видеофайл.')); };
+    let settled = false;
+    const finish = (error,duration) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      video.onloadedmetadata = null;
+      video.onerror = null;
+      video.removeAttribute('src');
+      video.load();
+      URL.revokeObjectURL(url);
+      if (error) reject(error); else resolve(duration);
+    };
+    const timer = setTimeout(() => finish(new Error('Браузер не смог прочитать метаданные видео за 30 секунд. Проверь, воспроизводится ли WebM в Chrome.')),30000);
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      if (Number.isFinite(duration) && duration > 0) finish(null,duration);
+      else finish(new Error('У видео не определилась длительность.'));
+    };
+    video.onerror = () => {
+      const code = video.error?.code || 0;
+      const details = ({1:'загрузка отменена',2:'ошибка чтения файла',3:'кодек или декодирование не поддерживается',4:'формат или источник не поддерживается'})[code] || 'неизвестная ошибка декодирования';
+      finish(new Error('Chrome не смог декодировать видео ('+details+'). Для WebM попробуй повторно экспортировать запись с кодеком VP8.'));
+    };
     video.src = url;
+    video.load();
   });
 }
 async function addScene(scene) {
@@ -191,8 +213,15 @@ function renderQueue() {
   $('durationHint').textContent = scenes.length ? 'Суммарная длина сцен: '+formatTime(total)+' ('+scenes.length+' фрагм.)'+(audioTrack?' · выбран музыкальный трек':'') : 'Добавь видео, чтобы увидеть длительность.';
 }
 $('localVideos').addEventListener('change', async e => {
-  for (const file of Array.from(e.target.files || [])) {
-    if (!file.type.startsWith('video/')) continue;
+  const files = Array.from(e.target.files || []);
+  for (const file of files) {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    const knownVideoExtension = ['mp4','webm','mov','m4v','ogv','avi'].includes(ext);
+    if (!file.type.startsWith('video/') && !knownVideoExtension) {
+      $('status').textContent = 'Пропущен файл «'+file.name+'»: выбери MP4, WebM, MOV, M4V, OGV или AVI.';
+      continue;
+    }
+    $('status').textContent = 'Проверяем '+(ext.toUpperCase() || 'видео')+': '+file.name;
     await addScene({id:'local:'+crypto.randomUUID(),name:file.name,file,url:null,bucket:null,path:null,duration:0});
   }
   e.target.value = '';
