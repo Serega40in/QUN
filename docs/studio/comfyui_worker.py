@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
+from qun_storage import persist_outputs
 
 SUPABASE_URL = os.environ.get("QUN_SUPABASE_URL", "https://qdxjltqlnphvzafapncm.supabase.co").rstrip("/")
 SUPABASE_KEY = os.environ.get("QUN_SUPABASE_PUBLISHABLE_KEY", "")
@@ -235,6 +236,15 @@ def process(job):
             result = run_comfy(job)
         else:
             raise RuntimeError("Unsupported job type: " + str(kind))
+        result = persist_outputs(
+            job, result,
+            api=api,
+            node_id=NODE_ID,
+            node_token=NODE_TOKEN,
+            supabase_url=SUPABASE_URL,
+            publishable_key=SUPABASE_KEY,
+            output_dir=Path(os.environ.get("QUN_COMFYUI_OUTPUT_DIR", "output")),
+        )
         api("/complete", {"action":"complete_job","nodeId":NODE_ID,"nodeToken":NODE_TOKEN,
                           "jobId":job_id,"result":result})
         print(f"Job {job_id} completed: {kind}", flush=True)
