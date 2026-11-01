@@ -32,11 +32,11 @@ h1{font-size:clamp(30px,5vw,46px);line-height:1.05;letter-spacing:-.04em;margin:
 <h2>1. Замысел</h2><p class="hint">Опиши идею или вставь название песни, настроение, историю. Режиссёр сохранит твою авторскую задумку.</p>
 <textarea id="idea" class="field" rows="4" maxlength="2500" placeholder="Например: «Земля вспомнит небо». Земля пробуждается, золотая искра раскрывает изумрудные корни, а человек обнаруживает связь между планетой и звёздами. Атмосфера — тихая надежда, единство и внутренний свет."></textarea>
 <div class="grid">
-<div><label class="label" for="sceneCount">Количество сцен</label><select id="sceneCount" class="field"><option value="4">4 сцены · короткий клип</option><option value="6" selected>6 сцен · стандарт</option><option value="8">8 сцен · расширенный</option><option value="10">10 сцен · длинный</option><option value="12">12 сцен · максимальный</option></select></div>
+<div><label class="label" for="sceneCount">Количество сцен</label><select id="sceneCount" class="field"><option value="2" selected>2 сцены · быстрый AI-клип</option><option value="4">4 сцены · свой GPU-узел</option><option value="6">6 сцен · свой GPU-узел</option><option value="8">8 сцен · свой GPU-узел</option><option value="10">10 сцен · свой GPU-узел</option><option value="12">12 сцен · свой GPU-узел</option></select></div>
 <div><label class="label" for="musicSelect">Музыка из QUN Library</label><select id="musicSelect" class="field"><option value="">Без музыки</option></select></div>
 </div>
 <label class="label" for="audioFile">Или загрузить музыкальный файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/aac,audio/mp4,audio/webm" class="field">
-<p class="hint">При выборе музыки фильм будет продолжен до конца трека: короткая последовательность сцен будет повторяться целиком. Для более разнообразного видеоряда можно увеличить число сцен.</p>
+<p class="hint">Быстрый режим без собственного GPU: до 2 коротких AI-сцен через Wan 2.2 ZeroGPU, с автоматическими стартовыми кадрами QUN. Затем Mastercut сам соберёт фильм и продлит видеоряд до конца музыки. Бесплатная внешняя очередь может быть занята или временно недоступна; платные HF-токены не используются. Для 4–12 новых сцен подключи собственный GPU Render Node.</p>
 </section>
 
 <section class="card">
@@ -52,7 +52,7 @@ h1{font-size:clamp(30px,5vw,46px);line-height:1.05;letter-spacing:-.04em;margin:
 <div id="briefPanel" class="brief hidden"><div id="brief"></div></div>
 <div id="result" class="result"></div>
 </section>
-<p class="footer">QUN Masterpiece · GigaChat + QUN Compute + ComfyUI + FFmpeg + QUN Storage</p>
+<p class="footer">QUN Masterpiece · GigaChat + Wan 2.2 ZeroGPU / QUN Compute + Mastercut + QUN Storage</p>
 </div></div>
 <script src="../assets/qun-auth.js"></script>
 <script type="module" src="./director-automation.js"></script>
