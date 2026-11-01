@@ -38,6 +38,18 @@ jobs:
           node-version: "20"
       - name: Check Director JavaScript syntax
         run: node --input-type=module --check < docs/studio/director-automation.js
+      - name: Check Mastercut inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("docs/studio/mastercut.html").read_text(encoding="utf-8")
+          match = re.search(r'<script type="module">(.*?)</script>', html, re.S)
+          if not match:
+              raise SystemExit("Mastercut module script not found")
+          Path("/tmp/qun-mastercut.mjs").write_text(match.group(1), encoding="utf-8")
+          PY
+          node --check /tmp/qun-mastercut.mjs
       - name: Check QUN GPU Art inline JavaScript syntax
         run: |
           python - <<'PY'
