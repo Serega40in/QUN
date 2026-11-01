@@ -154,29 +154,54 @@ function probeDuration(fileOrBlob) {
   return new Promise((resolve,reject) => {
     const url = URL.createObjectURL(fileOrBlob);
     const video = document.createElement('video');
-    video.preload = 'metadata';
+    video.preload = 'auto';
+    video.muted = true;
+    video.playsInline = true;
     let settled = false;
-    const finish = (error,duration) => {
-      if (settled) return;
-      settled = true;
+    let startedFallback = false;
+    const cleanup = () => {
       clearTimeout(timer);
       video.onloadedmetadata = null;
       video.onerror = null;
+      video.onended = null;
       video.removeAttribute('src');
       video.load();
       URL.revokeObjectURL(url);
+    };
+    const finish = (error,duration) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
       if (error) reject(error); else resolve(duration);
     };
-    const timer = setTimeout(() => finish(new Error('Браузер не смог прочитать метаданные видео за 30 секунд. Проверь, воспроизводится ли WebM в Chrome.')),30000);
+    const timer = setTimeout(() => finish(new Error('Не удалось определить длительность за 90 секунд. Проверь воспроизведение файла в Chrome.')),90000);
+    const fallbackDurationFromPlayback = async () => {
+      if (startedFallback || settled) return;
+      startedFallback = true;
+      // Chrome MediaRecorder WebM files may omit the EBML Duration element.
+      // Such files report video.duration === Infinity even though their frames decode.
+      // Play to EOF at an accelerated rate and use the final media timestamp.
+      video.onended = () => {
+        const measured = Number(video.currentTime);
+        if (Number.isFinite(measured) && measured > 0.05) finish(null, measured + 0.04);
+        else finish(new Error('WebM воспроизводится, но конечная длительность не определилась.'));
+      };
+      try {
+        video.playbackRate = 8;
+        await video.play();
+      } catch (_) {
+        finish(new Error('У файла нет метаданных длительности, а браузер не смог запустить пробное воспроизведение.'));
+      }
+    };
     video.onloadedmetadata = () => {
       const duration = video.duration;
       if (Number.isFinite(duration) && duration > 0) finish(null,duration);
-      else finish(new Error('У видео не определилась длительность.'));
+      else fallbackDurationFromPlayback();
     };
     video.onerror = () => {
       const code = video.error?.code || 0;
       const details = ({1:'загрузка отменена',2:'ошибка чтения файла',3:'кодек или декодирование не поддерживается',4:'формат или источник не поддерживается'})[code] || 'неизвестная ошибка декодирования';
-      finish(new Error('Chrome не смог декодировать видео ('+details+'). Для WebM попробуй повторно экспортировать запись с кодеком VP8.'));
+      finish(new Error('Chrome не смог декодировать видео ('+details+'). Для WebM попробуй VP8 или контрольный файл с добавленной длительностью.'));
     };
     video.src = url;
     video.load();
