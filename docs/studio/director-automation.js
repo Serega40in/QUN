@@ -88,7 +88,8 @@ function renderVideoLibrary() {
     return;
   }
   box.innerHTML = videoAssets.map(asset =>
-    '<label class="asset-choice"><input type="checkbox" data-existing-video="' + esc(asset.id) + '">' +
+    '<label class="asset-choice"><input type="checkbox" data-existing-video="' + esc(asset.id) + '"' +
+    (selectedVideoIds.includes(asset.id) ? " checked" : "") + '>' +
     '<span><b>' + esc(asset.title) + '</b><small>' + esc(asset.provider || "QUN Library") + '</small></span></label>'
   ).join("");
   box.querySelectorAll("[data-existing-video]").forEach(input => {
