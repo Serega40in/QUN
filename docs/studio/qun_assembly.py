@@ -98,10 +98,6 @@ def assemble_film(job: dict, *, output_dir: Path, ffmpeg_path: str, publishable_
         command = [ffmpeg_path, "-hide_banner", "-loglevel", "error", "-y"]
         for path in inputs:
             command += ["-i", str(path)]
-        audio_index = None
-        if audio_path:
-            audio_index = len(inputs)
-            command += ["-i", str(audio_path)]
 
         filters = []
         labels = []
@@ -115,19 +111,31 @@ def assemble_film(job: dict, *, output_dir: Path, ffmpeg_path: str, publishable_
             )
             labels.append("[" + label + "]")
         filters.append("".join(labels) + "concat=n=" + str(len(inputs)) + ":v=1:a=0[vout]")
-
-        command += ["-filter_complex", ";".join(filters), "-map", "[vout]"]
-        if audio_index is not None:
-            command += ["-map", str(audio_index) + ":a:0", "-c:a", "aac", "-b:a", "192k", "-shortest"]
-        else:
-            command += ["-an"]
+        montage = temp / "montage.mp4"
         command += [
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
-            "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(output),
+            "-filter_complex", ";".join(filters), "-map", "[vout]",
+            "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
+            "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(montage),
         ]
         result = subprocess.run(command, capture_output=True, text=True, timeout=1800)
         if result.returncode:
-            raise RuntimeError("FFmpeg assembly failed: " + result.stderr[-1800:])
+            raise RuntimeError("FFmpeg scene normalization failed: " + result.stderr[-1800:])
+
+        if audio_path:
+            repeat = bool(requirements.get("repeat_video_to_audio", True))
+            mux = [ffmpeg_path, "-hide_banner", "-loglevel", "error", "-y"]
+            if repeat:
+                mux += ["-stream_loop", "-1"]
+            mux += ["-i", str(montage), "-i", str(audio_path),
+                    "-map", "0:v:0", "-map", "1:a:0",
+                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
+                    "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
+                    "-shortest", "-movflags", "+faststart", str(output)]
+            result = subprocess.run(mux, capture_output=True, text=True, timeout=3600)
+            if result.returncode:
+                raise RuntimeError("FFmpeg soundtrack mux failed: " + result.stderr[-1800:])
+        else:
+            shutil.copy2(montage, output)
 
     if not output.is_file() or output.stat().st_size <= 0:
         raise RuntimeError("FFmpeg did not create a valid MP4.")
