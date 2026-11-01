@@ -9,8 +9,25 @@ from urllib.error import URLError, HTTPError
 
 SUPABASE_URL = os.environ.get("QUN_SUPABASE_URL", "https://qdxjltqlnphvzafapncm.supabase.co").rstrip("/")
 SUPABASE_KEY = os.environ.get("QUN_SUPABASE_PUBLISHABLE_KEY", "")
-NODE_ID = os.environ.get("QUN_NODE_ID", "")
-NODE_TOKEN = os.environ.get("QUN_NODE_TOKEN", "")
+def load_node_credentials():
+    node_id = os.environ.get("QUN_NODE_ID", "").strip()
+    node_token = os.environ.get("QUN_NODE_TOKEN", "").strip()
+    if node_id and node_token:
+        return node_id, node_token
+    registry_path = Path(os.environ.get(
+        "QUN_NODE_REGISTRY_FILE",
+        str(Path.home() / ".config" / "qun" / "render-node.json")
+    )).expanduser()
+    try:
+        stored = json.loads(registry_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return node_id, node_token
+    except Exception as exc:
+        raise RuntimeError("Could not read QUN_NODE_REGISTRY_FILE: " + str(exc)) from exc
+    return node_id or str(stored.get("nodeId", "")).strip(), node_token or str(stored.get("nodeToken", "")).strip()
+
+
+NODE_ID, NODE_TOKEN = load_node_credentials()
 COMFY_URL = os.environ.get("QUN_COMFYUI_URL", "http://127.0.0.1:8188").rstrip("/")
 WORKFLOW_FILE = Path(os.environ.get("QUN_COMFYUI_WORKFLOW", "workflow-api.json"))
 POLL_SECONDS = max(2, int(os.environ.get("QUN_POLL_SECONDS", "5")))
@@ -45,6 +62,8 @@ def heartbeat_loop(job_id):
         try:
             api("/heartbeat", {"action":"heartbeat_job","nodeId":NODE_ID,
                                "nodeToken":NODE_TOKEN,"jobId":job_id})
+            api("/heartbeat", {"action":"node_heartbeat","nodeId":NODE_ID,
+                               "nodeToken":NODE_TOKEN})
         except Exception as exc:
             print("Heartbeat warning:", exc, flush=True)
 
@@ -237,9 +256,13 @@ def main():
     if len(NODE_TOKEN) != 64 or any(c not in "0123456789abcdef" for c in NODE_TOKEN):
         print("QUN_NODE_TOKEN must be the 64-character lowercase hex token stored by QUN Node.", file=sys.stderr)
         return 2
-    print("QUN Studio ComfyUI worker starting. Safe mode: configured workflows only.", flush=True)
+    print("QUN Studio ComfyUI worker starting. Safe mode: owner-scoped media jobs and configured workflows only.", flush=True)
+    last_node_heartbeat = 0.0
     while True:
         try:
+            if time.monotonic() - last_node_heartbeat >= 30:
+                api("/heartbeat", {"action":"node_heartbeat","nodeId":NODE_ID,"nodeToken":NODE_TOKEN})
+                last_node_heartbeat = time.monotonic()
             response = api("/claim", {"action":"claim_job","nodeId":NODE_ID,"nodeToken":NODE_TOKEN})
             job = response.get("job")
             if job:
