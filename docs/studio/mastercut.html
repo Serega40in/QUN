@@ -107,7 +107,7 @@ async function loadLibrary() {
   $('libraryVideos').innerHTML = '<div class="empty">Загружаем видео…</div>';
   $('libraryAudio').innerHTML = '<div class="empty">Загружаем аудио…</div>';
   const {data,error} = await db.from('qun_studio_assets')
-    .select('id,title,asset_type,asset_url,preview_url,prompt,tags,metadata,created_at')
+    .select('id,title,asset_type,provider,asset_url,preview_url,prompt,tags,metadata,created_at')
     .eq('created_by', currentUser.id)
     .in('asset_type',['video','audio'])
     .order('created_at',{ascending:false})
@@ -225,6 +225,22 @@ function waitEvent(target,success,error,timeoutMs) {
     target.addEventListener(error,onError,{once:true});
   });
 }
+function waitSegment(video,seconds) {
+  return new Promise(resolve => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      video.removeEventListener('ended', finish);
+      video.removeEventListener('error', finish);
+      resolve();
+    };
+    const timer = setTimeout(finish, Math.max(50, seconds * 1000));
+    video.addEventListener('ended', finish, {once:true});
+    video.addEventListener('error', finish, {once:true});
+  });
+}
 function canvasSize() {
   const aspect = $('aspect').value;
   if (aspect === '9:16') return {width:720,height:1280};
@@ -327,10 +343,7 @@ async function buildFilm() {
       try {video.currentTime=0;} catch (_) {}
       await video.play();
       const segment=Math.min(scene.duration,targetDuration-elapsed);
-      await Promise.race([
-        waitEvent(video,'ended','error',Math.ceil(segment*1000)+2500).catch(()=>{}),
-        new Promise(resolve=>setTimeout(resolve,segment*1000))
-      ]);
+      await waitSegment(video,segment);
       video.pause();
       elapsed+=segment;
       index++;
@@ -346,7 +359,7 @@ async function buildFilm() {
     const blob=new Blob(chunks,{type:mime});
     if (!blob.size) throw new Error('Браузер не сформировал видеофайл.');
     if (blob.size>95*1024*1024) {
-      const localUrl=URL.createObjectURL(blob);createdUrls.push(localUrl);
+      const localUrl=URL.createObjectURL(blob);
       $('result').innerHTML='<div class="notice">Фильм собран, но файл превышает лимит приватного QUN Storage (95 МБ). Его можно сохранить на компьютер.</div><a class="btn" href="'+localUrl+'" download="QUN-Mastercut.'+ext+'">Скачать готовый фильм</a>';
       $('status').textContent='Сборка завершена локально. В библиотеку не загружено из-за размера файла '+(blob.size/1024/1024).toFixed(1)+' МБ.';
       return;
