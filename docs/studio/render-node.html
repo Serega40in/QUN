@@ -30,7 +30,9 @@ h1{font-size:clamp(30px,5vw,46px);line-height:1.05;letter-spacing:-.04em;margin:
 </section>
 <section class="card">
 <h2>2. Запустить регистрацию на Linux-сервере</h2><p class="hint">После клонирования QUN репозитория или загрузки файла регистрации выполни команды ниже. Понадобится Python 3 и публичный ключ Supabase (он не является секретом).</p>
-<pre id="commands">export QUN_SUPABASE_PUBLISHABLE_KEY="SUPABASE_PUBLISHABLE_KEY"
+<pre id="commands">git clone --depth 1 https://github.com/Serega40in/QUN.git ~/qun-repo
+cd ~/qun-repo/docs/studio
+export QUN_SUPABASE_PUBLISHABLE_KEY="sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L"
 python3 register_gpu_worker.py</pre>
 <p class="small">Файл регистрации спросит название узла и одноразовый код. Индивидуальный секрет сохранится локально в ~/.config/qun/render-node.json с правами 600. Не отправляй этот файл никому.</p>
 </section>
