@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071421">
+<title>QUN Mastercut — Создать клип целиком</title>
+<style>
+:root{color-scheme:dark;--bg:#071421;--panel:#0e2234;--panel2:#132d42;--line:#254257;--text:#f3f8fb;--muted:#9ab2c4;--mint:#8af0ce;--gold:#f3d18a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 75% -18%,#1d5b68 0,transparent 44%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--mint)}button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1120px;margin:auto;padding:20px 18px 56px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:6px 0 18px}.brand{font-weight:850;letter-spacing:.1em}.brand span{color:var(--mint)}.links{display:flex;gap:8px;flex-wrap:wrap}.link,.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:1px solid #397267;background:linear-gradient(135deg,#174f4a,#14384a);color:#dffff6;border-radius:11px;padding:9px 13px;font-weight:700}.link.secondary,.btn.secondary{background:#102438;border-color:var(--line);color:var(--text)}.btn:disabled{opacity:.45;cursor:not-allowed}
+h1{font-size:clamp(30px,5vw,48px);line-height:1.06;letter-spacing:-.04em;margin:23px 0 10px}.lead{color:var(--muted);max-width:760px;margin:0 0 20px}.eyebrow{color:var(--mint);font-size:11px;letter-spacing:.17em;text-transform:uppercase;font-weight:800}
+.card{background:#0b1c2bd9;border:1px solid var(--line);border-radius:17px;padding:17px;margin:14px 0}.card h2{font-size:18px;margin:0 0 7px}.hint{font-size:12px;color:var(--muted);margin:3px 0 12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.library{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.asset{display:flex;align-items:center;gap:10px;border:1px solid #28465a;background:#091a28;border-radius:12px;padding:9px;min-width:0}.thumb{width:86px;aspect-ratio:16/9;object-fit:cover;border-radius:7px;background:#10283a;flex:none}.assetinfo{min-width:0;flex:1}.assetinfo b{display:block;font-size:12px;overflow-wrap:anywhere}.assetinfo small{color:var(--muted);font-size:10px}.asset .btn{padding:7px 9px;font-size:11px;white-space:nowrap}
+input[type=file],input[type=text],select{max-width:100%;background:#071522;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px;width:100%}
+label{font-size:13px;color:#d6e7f0;display:block;margin:9px 0 5px}.field{min-width:0}
+.queue{display:grid;gap:8px}.clip{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;border:1px solid #28465a;background:#091a28}.clipname{min-width:0;overflow-wrap:anywhere}.clipname small{display:block;color:var(--muted);font-size:11px}.actions{display:flex;gap:6px;flex:none}.actions button{background:#112b3c;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px 8px}
+.preview{width:100%;max-height:420px;aspect-ratio:16/9;display:block;background:#030b12;border:1px solid var(--line);border-radius:12px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.status{white-space:pre-wrap;color:var(--mint);font-size:13px;min-height:20px;margin:9px 0;overflow-wrap:anywhere}.notice{border:1px solid #31535e;background:#102b37;color:#c9eadf;padding:11px 13px;border-radius:12px;font-size:12px;margin:14px 0}.auth{max-width:430px;margin:45px auto;padding:22px;border:1px solid var(--line);border-radius:17px;background:#0b1c2b}.auth input{margin:7px 0}.result video{width:100%;max-height:460px;display:block;background:#000;border-radius:12px;margin:12px 0}.empty{border:1px dashed #2b4c61;border-radius:12px;color:var(--muted);padding:18px;text-align:center;font-size:13px;grid-column:1/-1}
+@media(max-width:720px){.grid{grid-template-columns:1fr}.library{grid-template-columns:1fr}.shell{padding:13px 11px 40px}.card{padding:13px}.thumb{width:72px}.clip{align-items:flex-start;flex-direction:column}.actions{width:100%}.actions button{flex:1}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header><div class="brand">QUN <span>MASTERcut</span></div><nav class="links"><a class="link secondary" href="./index.html">QUN Studio</a><a class="link secondary" href="./director.html">QUN Director</a></nav></header>
+<section id="auth" class="auth" hidden>
+<div class="eyebrow">QUN creative core</div><h2>Войти в студию</h2><p class="hint">Используй свой QUN ID. Файлы останутся в твоей приватной библиотеке.</p>
+<input id="loginIdentifier" autocomplete="username" placeholder="Логин QUN ID или email">
+<input id="password" type="password" autocomplete="current-password" placeholder="Пароль">
+<div class="row"><button class="btn" id="login">Войти</button><button class="btn secondary" id="signup">Создать QUN ID</button></div>
+<div class="status" id="authstatus"></div>
+</section>
+<div id="app" hidden>
+<div class="eyebrow">Imagine · Arrange · Master</div>
+<h1>Создать клип <span style="color:var(--mint)">целиком.</span></h1>
+<p class="lead">Собери готовые видеофрагменты в один фильм, добавь свою музыку и сохрани результат прямо в QUN Library. Монтаж выполняется в браузере — без платного видеосервиса.</p>
+<div class="notice">Первая версия автоматически склеивает уже созданные фрагменты и накладывает выбранный трек. Если браузер не поддерживает MP4-запись, результат будет сохранён в WebM — этот формат уже разрешён в QUN Storage.</div>
+
+<section class="card">
+<h2>1. Выбери сцены</h2><p class="hint">Добавь видео из библиотеки или загрузи файлы с компьютера. Порядок можно изменить стрелками.</p>
+<div id="libraryVideos" class="library"><div class="empty">Загружаем библиотеку…</div></div>
+<label for="localVideos">Добавить видео с компьютера</label><input id="localVideos" type="file" accept="video/*" multiple>
+<div style="height:12px"></div><div class="eyebrow">Последовательность фильма</div><div id="queue" class="queue"><div class="empty">Пока нет сцен. Выбери видео выше.</div></div>
+</section>
+
+<section class="card">
+<h2>2. Музыка</h2><p class="hint">Выбери аудио из QUN Library или загрузи трек. Локальный аудиофайл используется только для этой сборки и не отправляется отдельно в библиотеку.</p>
+<div id="libraryAudio" class="library"><div class="empty">Ищем музыку в библиотеке…</div></div>
+<label for="localAudio">Загрузить музыку с компьютера</label><input id="localAudio" type="file" accept="audio/*">
+<div class="hint" id="audioChoice">Музыка не выбрана.</div>
+</section>
+
+<section class="card">
+<h2>3. Настройки фильма</h2>
+<div class="grid">
+<div class="field"><label for="aspect">Формат кадра</label><select id="aspect"><option value="16:9">16:9 — YouTube / экран</option><option value="9:16">9:16 — Shorts / Reels</option><option value="1:1">1:1 — квадрат</option></select></div>
+<div class="field"><label for="fit">Размещение кадра</label><select id="fit"><option value="contain">Сохранить весь кадр</option><option value="cover">Заполнить экран</option></select></div>
+<div class="field"><label for="title">Название фильма</label><input id="title" type="text" maxlength="100" value="Земля вспомнит небо"></div>
+<div class="field"><label for="repeat">Продолжение до конца музыки</label><select id="repeat"><option value="no">Не повторять сцены</option><option value="yes">Повторять видеоряд до конца трека</option></select></div>
+</div>
+<p class="hint" id="durationHint">Добавь видео, чтобы увидеть длительность.</p>
+<label class="row" style="gap:8px"><input id="fade" type="checkbox" checked style="width:auto"> Мягкое затемнение между сценами</label>
+</section>
+
+<section class="card">
+<h2>4. Предпросмотр и сборка</h2>
+<canvas id="previewCanvas" class="preview" width="1280" height="720"></canvas>
+<div class="row" style="margin-top:12px"><button class="btn" id="build">✦ Создать клип целиком</button><button class="btn secondary" id="refresh">↻ Обновить библиотеку</button><button class="btn secondary" id="signout">Выйти</button></div>
+<div class="status" id="status" role="status" aria-live="polite"></div>
+<div id="result" class="result"></div>
+</section>
+<p class="hint">QUN Mastercut · локальная обработка в браузере · приватное сохранение в QUN Storage</p>
+</div>
+</div>
+
+<script src="../assets/qun-auth.js"></script>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+const SUPABASE_URL = 'https://qdxjltqlnphvzafapncm.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L';
+const BUCKET = 'qun-studio-media';
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+let currentUser = null;
+let libraryAssets = [];
+let scenes = [];
+let audioTrack = null;
+let isBuilding = false;
+
+function setAuth(session) {
+  currentUser = session?.user || null;
+  $('auth').hidden = !!session;
+  $('app').hidden = !session;
+  if (session) loadLibrary();
+}
+function readableError(error) {
+  return error?.message || String(error || 'Неизвестная ошибка.');
+}
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return '—';
+  const total = Math.round(seconds);
+  return Math.floor(total / 60) + ':' + String(total % 60).padStart(2,'0');
+}
+async function loadLibrary() {
+  $('libraryVideos').innerHTML = '<div class="empty">Загружаем видео…</div>';
+  $('libraryAudio').innerHTML = '<div class="empty">Загружаем аудио…</div>';
+  const {data,error} = await db.from('qun_studio_assets')
+    .select('id,title,asset_type,asset_url,preview_url,prompt,tags,metadata,created_at')
+    .eq('created_by', currentUser.id)
+    .in('asset_type',['video','audio'])
+    .order('created_at',{ascending:false})
+    .limit(100);
+  if (error) {
+    $('libraryVideos').innerHTML = '<div class="empty">Не удалось открыть библиотеку: '+escapeHTML(error.message)+'</div>';
+    $('libraryAudio').innerHTML = '';
+    return;
+  }
+  libraryAssets = await Promise.all((data || []).map(async asset => {
+    const bucket = asset.metadata?.storage_bucket;
+    const path = asset.metadata?.storage_path;
+    let url = asset.asset_url || asset.preview_url || null;
+    if (bucket && path) {
+      const {data:signed} = await db.storage.from(bucket).createSignedUrl(path, 7200);
+      url = signed?.signedUrl || null;
+    }
+    return {...asset, _url:url, _bucket:bucket || null, _path:path || null};
+  }));
+  renderLibrary();
+}
+function renderLibrary() {
+  const videos = libraryAssets.filter(x => x.asset_type === 'video' && x._url);
+  const audio = libraryAssets.filter(x => x.asset_type === 'audio' && x._url);
+  $('libraryVideos').innerHTML = videos.length ? videos.map(a =>
+    '<div class="asset"><video class="thumb" src="'+escapeHTML(a._url)+'" muted preload="metadata" playsinline></video><div class="assetinfo"><b>'+escapeHTML(a.title)+'</b><small>'+escapeHTML(a.provider || 'QUN Library')+'</small></div><button class="btn" data-add="'+escapeHTML(a.id)+'">Добавить</button></div>'
+  ).join('') : '<div class="empty">В библиотеке пока нет сохранённых видео. Можно добавить файл с компьютера.</div>';
+  $('libraryAudio').innerHTML = audio.length ? audio.map(a =>
+    '<div class="asset"><div class="thumb" style="display:grid;place-items:center;color:var(--mint);font-size:27px">♫</div><div class="assetinfo"><b>'+escapeHTML(a.title)+'</b><small>Аудио из QUN Library</small></div><button class="btn secondary" data-audio="'+escapeHTML(a.id)+'">Выбрать</button></div>'
+  ).join('') : '<div class="empty">Готовых аудиотреков в библиотеке пока нет. Загрузи песню с компьютера.</div>';
+  document.querySelectorAll('[data-add]').forEach(button => button.onclick = () => {
+    const asset = libraryAssets.find(x => x.id === button.dataset.add);
+    if (asset) addScene({id:'asset:'+asset.id,name:asset.title,file:null,url:asset._url,bucket:asset._bucket,path:asset._path,duration:0});
+  });
+  document.querySelectorAll('[data-audio]').forEach(button => button.onclick = () => {
+    const asset = libraryAssets.find(x => x.id === button.dataset.audio);
+    if (asset) {
+      audioTrack = {id:'asset:'+asset.id,name:asset.title,file:null,url:asset._url,bucket:asset._bucket,path:asset._path};
+      $('audioChoice').textContent = 'Выбрано: '+asset.title;
+    }
+  });
+}
+function probeDuration(fileOrBlob) {
+  return new Promise((resolve,reject) => {
+    const url = URL.createObjectURL(fileOrBlob);
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => { const duration = video.duration; URL.revokeObjectURL(url); resolve(duration); };
+    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Не удалось прочитать видеофайл.')); };
+    video.src = url;
+  });
+}
+async function addScene(scene) {
+  if (scenes.some(x => x.id === scene.id)) return;
+  try {
+    if (scene.file) scene.duration = await probeDuration(scene.file);
+    else if (scene.bucket && scene.path) {
+      const {data,error} = await db.storage.from(scene.bucket).download(scene.path);
+      if (error) throw error;
+      scene.duration = await probeDuration(data);
+    } else if (scene.url) {
+      const response = await fetch(scene.url);
+      if (!response.ok) throw new Error('Не удалось прочитать файл из библиотеки.');
+      scene.duration = await probeDuration(await response.blob());
+    }
+    if (!Number.isFinite(scene.duration) || scene.duration <= 0) throw new Error('У видео не определилась длительность.');
+    scenes.push(scene);
+    renderQueue();
+  } catch (error) {
+    $('status').textContent = 'Не удалось добавить «'+scene.name+'»: '+readableError(error);
+  }
+}
+function renderQueue() {
+  $('queue').innerHTML = scenes.length ? scenes.map((scene,index) =>
+    '<div class="clip"><div class="clipname"><b>'+(index+1)+'. '+escapeHTML(scene.name)+'</b><small>'+formatTime(scene.duration)+' · '+(scene.file?'файл с компьютера':'QUN Library')+'</small></div><div class="actions"><button data-up="'+index+'" title="Выше">↑</button><button data-down="'+index+'" title="Ниже">↓</button><button data-remove="'+index+'" title="Удалить">Удалить</button></div></div>'
+  ).join('') : '<div class="empty">Пока нет сцен. Выбери видео выше.</div>';
+  document.querySelectorAll('[data-up]').forEach(b => b.onclick = () => {const i=Number(b.dataset.up);if(i>0){[scenes[i-1],scenes[i]]=[scenes[i],scenes[i-1]];renderQueue();}});
+  document.querySelectorAll('[data-down]').forEach(b => b.onclick = () => {const i=Number(b.dataset.down);if(i<scenes.length-1){[scenes[i+1],scenes[i]]=[scenes[i],scenes[i+1]];renderQueue();}});
+  document.querySelectorAll('[data-remove]').forEach(b => b.onclick = () => {scenes.splice(Number(b.dataset.remove),1);renderQueue();});
+  const total = scenes.reduce((sum,x)=>sum+x.duration,0);
+  $('durationHint').textContent = scenes.length ? 'Суммарная длина сцен: '+formatTime(total)+' ('+scenes.length+' фрагм.)'+(audioTrack?' · выбран музыкальный трек':'') : 'Добавь видео, чтобы увидеть длительность.';
+}
+$('localVideos').addEventListener('change', async e => {
+  for (const file of Array.from(e.target.files || [])) {
+    if (!file.type.startsWith('video/')) continue;
+    await addScene({id:'local:'+crypto.randomUUID(),name:file.name,file,url:null,bucket:null,path:null,duration:0});
+  }
+  e.target.value = '';
+});
+$('localAudio').addEventListener('change', e => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  audioTrack = {id:'local:'+crypto.randomUUID(),name:file.name,file,url:null,bucket:null,path:null};
+  $('audioChoice').textContent = 'Выбрано с компьютера: '+file.name+' (файл останется на этом устройстве)';
+  $('durationHint').textContent = $('durationHint').textContent.replace(/$/, ' · музыка: '+file.name);
+});
+async function blobFor(item) {
+  if (item.file) return item.file;
+  if (item.bucket && item.path) {
+    const {data,error} = await db.storage.from(item.bucket).download(item.path);
+    if (error) throw error;
+    return data;
+  }
+  const response = await fetch(item.url);
+  if (!response.ok) throw new Error('Не удалось скачать '+item.name+' из библиотеки (HTTP '+response.status+').');
+  return await response.blob();
+}
+function waitEvent(target,success,error,timeoutMs) {
+  return new Promise((resolve,reject) => {
+    const timer = setTimeout(() => {cleanup();reject(new Error('Истекло время ожидания медиафайла.'));},timeoutMs || 30000);
+    const cleanup = () => {clearTimeout(timer);target.removeEventListener(success,onSuccess);target.removeEventListener(error,onError);};
+    const onSuccess = () => {cleanup();resolve();};
+    const onError = () => {cleanup();reject(new Error('Браузер не смог прочитать медиафайл.'));};
+    target.addEventListener(success,onSuccess,{once:true});
+    target.addEventListener(error,onError,{once:true});
+  });
+}
+function canvasSize() {
+  const aspect = $('aspect').value;
+  if (aspect === '9:16') return {width:720,height:1280};
+  if (aspect === '1:1') return {width:1080,height:1080};
+  return {width:1280,height:720};
+}
+function drawScene(ctx,canvas,video) {
+  const gradient = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+  gradient.addColorStop(0,'#071421');gradient.addColorStop(1,'#0b2636');
+  ctx.fillStyle=gradient;ctx.fillRect(0,0,canvas.width,canvas.height);
+  if (!video || !video.videoWidth || !video.videoHeight) return;
+  const fit = $('fit').value;
+  const scale = fit === 'cover' ? Math.max(canvas.width/video.videoWidth,canvas.height/video.videoHeight) : Math.min(canvas.width/video.videoWidth,canvas.height/video.videoHeight);
+  const width = video.videoWidth*scale, height = video.videoHeight*scale;
+  ctx.drawImage(video,(canvas.width-width)/2,(canvas.height-height)/2,width,height);
+  if ($('fade').checked) {
+    const edge = 0.28;
+    const incoming = Math.min(1,Math.max(0,video.currentTime/edge));
+    const remaining = Math.max(0,video.duration-video.currentTime);
+    const outgoing = Math.min(1,Math.max(0,remaining/edge));
+    const alpha = 1-Math.min(incoming,outgoing);
+    if (alpha > 0) {ctx.fillStyle='rgba(0,0,0,'+alpha.toFixed(3)+')';ctx.fillRect(0,0,canvas.width,canvas.height);}
+  }
+}
+async function buildFilm() {
+  if (isBuilding) return;
+  if (!scenes.length) { $('status').textContent='Сначала добавь хотя бы один видеофрагмент.'; return; }
+  isBuilding = true;
+  const button = $('build');button.disabled=true;button.textContent='Собираем…';$('result').innerHTML='';
+  const createdUrls=[];
+  let audioContext=null,audioElement=null,recorder=null,canvasStream=null;
+  try {
+    $('status').textContent='Подготавливаем видеофрагменты…';
+    const loadedScenes=[];
+    for (let i=0;i<scenes.length;i++) {
+      $('status').textContent='Загружаем сцену '+(i+1)+'/'+scenes.length+': '+scenes[i].name;
+      const blob=await blobFor(scenes[i]);
+      const url=URL.createObjectURL(blob);createdUrls.push(url);
+      const video=document.createElement('video');
+      video.preload='auto';video.muted=true;video.playsInline=true;video.src=url;
+      await waitEvent(video,'loadedmetadata','error',60000);
+      if (!Number.isFinite(video.duration)||video.duration<=0) throw new Error('У сцены «'+scenes[i].name+'» нет корректной длительности.');
+      loadedScenes.push({video:video,duration:video.duration,name:scenes[i].name});
+    }
+    let audioDuration=0;
+    if (audioTrack) {
+      $('status').textContent='Подготавливаем музыкальную дорожку…';
+      const audioBlob=await blobFor(audioTrack);
+      const audioUrl=URL.createObjectURL(audioBlob);createdUrls.push(audioUrl);
+      audioElement=document.createElement('audio');audioElement.preload='auto';audioElement.src=audioUrl;
+      await waitEvent(audioElement,'loadedmetadata','error',60000);
+      audioDuration=audioElement.duration;
+      if (!Number.isFinite(audioDuration)||audioDuration<=0) throw new Error('Не удалось определить длину музыкального файла.');
+    }
+    const totalScenes=loadedScenes.reduce((sum,x)=>sum+x.duration,0);
+    const repeat=audioElement && $('repeat').value==='yes';
+    const targetDuration=audioElement ? (repeat?audioDuration:Math.min(audioDuration,totalScenes)) : totalScenes;
+    if (!targetDuration || targetDuration>600) throw new Error('Длительность сборки должна быть от 1 секунды до 10 минут.');
+    if (audioElement && repeat && totalScenes<audioDuration) {
+      $('status').textContent='Видеоряд будет повторяться до конца музыки. Для более разнообразного фильма добавь дополнительные сцены.';
+    }
+    const size=canvasSize();
+    const canvas=$('previewCanvas');canvas.width=size.width;canvas.height=size.height;
+    const ctx=canvas.getContext('2d');
+    if (!canvas.captureStream || !window.MediaRecorder) throw new Error('Этот браузер не поддерживает запись видео с холста. Попробуй актуальную версию Chrome или Edge.');
+    drawScene(ctx,canvas,loadedScenes[0].video);
+    canvasStream=canvas.captureStream(30);
+    let audioDestination=null;
+    if (audioElement) {
+      const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+      if (!AudioContextClass) throw new Error('В браузере недоступен Web Audio API.');
+      audioContext=new AudioContextClass();
+      await audioContext.resume();
+      audioDestination=audioContext.createMediaStreamDestination();
+      const source=audioContext.createMediaElementSource(audioElement);
+      source.connect(audioDestination);
+      audioElement.volume=1;
+    }
+    const tracks=[...canvasStream.getVideoTracks(),...(audioDestination?audioDestination.stream.getAudioTracks():[])];
+    const stream=new MediaStream(tracks);
+    const candidates=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+    const mimeType=candidates.find(type=>MediaRecorder.isTypeSupported(type));
+    recorder=mimeType?new MediaRecorder(stream,{mimeType,videoBitsPerSecond:Math.max(700000,Math.min(3000000,Math.floor((80*1024*1024*8/targetDuration)-160000))),audioBitsPerSecond:128000}):new MediaRecorder(stream);
+    const chunks=[];
+    recorder.ondataavailable=event=>{if(event.data&&event.data.size)chunks.push(event.data);};
+    const recorderError=new Promise((resolve,reject)=>{recorder.onerror=event=>reject(event.error||new Error('Ошибка записи браузера.'));});
+    let activeVideo=loadedScenes[0].video;
+    let drawing=true;
+    const drawLoop=()=>{if(!drawing)return;drawScene(ctx,canvas,activeVideo);requestAnimationFrame(drawLoop);};
+    drawLoop();
+    const stopped=new Promise(resolve=>{recorder.onstop=resolve;});
+    recorder.start(1000);
+    if (audioElement) await audioElement.play();
+    let elapsed=0,index=0;
+    while(elapsed<targetDuration-0.025) {
+      if (index>=loadedScenes.length&&!repeat) break;
+      const scene=loadedScenes[index%loadedScenes.length];
+      const video=scene.video;
+      activeVideo=video;
+      try {video.currentTime=0;} catch (_) {}
+      await video.play();
+      const segment=Math.min(scene.duration,targetDuration-elapsed);
+      await Promise.race([
+        waitEvent(video,'ended','error',Math.ceil(segment*1000)+2500).catch(()=>{}),
+        new Promise(resolve=>setTimeout(resolve,segment*1000))
+      ]);
+      video.pause();
+      elapsed+=segment;
+      index++;
+      $('status').textContent='Собираем фильм: '+Math.min(elapsed,targetDuration).toFixed(1)+' / '+targetDuration.toFixed(1)+' сек. · сцена '+(index);
+      if (index>2000) throw new Error('Превышено безопасное число повторов сцен.');
+    }
+    if (audioElement) audioElement.pause();
+    drawing=false;
+    recorder.stop();
+    await Promise.race([stopped,recorderError]);
+    const mime=recorder.mimeType||'video/webm';
+    const ext=mime.includes('mp4')?'mp4':'webm';
+    const blob=new Blob(chunks,{type:mime});
+    if (!blob.size) throw new Error('Браузер не сформировал видеофайл.');
+    if (blob.size>95*1024*1024) {
+      const localUrl=URL.createObjectURL(blob);createdUrls.push(localUrl);
+      $('result').innerHTML='<div class="notice">Фильм собран, но файл превышает лимит приватного QUN Storage (95 МБ). Его можно сохранить на компьютер.</div><a class="btn" href="'+localUrl+'" download="QUN-Mastercut.'+ext+'">Скачать готовый фильм</a>';
+      $('status').textContent='Сборка завершена локально. В библиотеку не загружено из-за размера файла '+(blob.size/1024/1024).toFixed(1)+' МБ.';
+      return;
+    }
+    $('status').textContent='Фильм собран. Сохраняем в приватную QUN Library…';
+    const title=$('title').value.trim()||'QUN Masterpiece';
+    const path=currentUser.id+'/'+crypto.randomUUID()+'.'+ext;
+    const {error:uploadError}=await db.storage.from(BUCKET).upload(path,blob,{contentType:mime,upsert:false,cacheControl:'3600'});
+    if (uploadError) throw new Error('Фильм готов, но загрузить его в QUN Storage не удалось: '+uploadError.message);
+    const description='Автоматическая сборка из '+scenes.length+' видеофрагментов. Музыка: '+(audioTrack?audioTrack.name:'не добавлена')+'.';
+    const {data:asset,error:assetError}=await db.from('qun_studio_assets').insert({
+      title:title.slice(0,160),asset_type:'video',provider:'qun-mastercut-browser',asset_url:null,preview_url:null,
+      prompt:description,status:'ready',tags:['QUN','Masterpiece','Mastercut','Film'],created_by:currentUser.id,
+      metadata:{storage_bucket:BUCKET,storage_path:path,content_type:mime,size_bytes:blob.size,duration_seconds:targetDuration,scene_count:scenes.length,source:'Browser MediaRecorder',audio_track:audioTrack?audioTrack.name:null,aspect:$('aspect').value}
+    }).select('id,title,created_at').single();
+    if (assetError) throw new Error('Видео загружено в QUN Storage, но запись в каталоге не создана: '+assetError.message);
+    const {data:signed,error:signedError}=await db.storage.from(BUCKET).createSignedUrl(path,7*24*60*60,{download:title.replace(/[^a-zA-Z0-9А-Яа-я _-]/g,'').slice(0,80)+'.'+ext});
+    const finalUrl=signed?.signedUrl||null;
+    $('result').innerHTML=(finalUrl?'<video controls playsinline preload="metadata" src="'+escapeHTML(finalUrl)+'"></video><a class="btn" href="'+escapeHTML(finalUrl)+'" target="_blank" rel="noopener">Скачать фильм ↓</a> ':'')+'<a class="link secondary" href="./index.html">Открыть QUN Library ↗</a>';
+    $('status').textContent='Готово! «'+title+'» сохранён в QUN Library · '+formatTime(targetDuration)+' · '+(blob.size/1024/1024).toFixed(1)+' МБ · '+ext.toUpperCase()+(signedError?' (созданную ссылку можно получить из библиотеки)':'');
+  } catch(error) {
+    $('status').textContent='Не удалось завершить сборку: '+readableError(error);
+  } finally {
+    if (audioElement) {try{audioElement.pause();audioElement.src='';}catch(_){}}
+    if (audioContext) {try{await audioContext.close();}catch(_){}}
+    if (recorder && recorder.state!=='inactive') {try{recorder.stop();}catch(_){}}
+    if (canvasStream) canvasStream.getTracks().forEach(track=>track.stop());
+    createdUrls.forEach(url=>{try{URL.revokeObjectURL(url);}catch(_){}});
+    isBuilding=false;button.disabled=false;button.textContent='✦ Создать клип целиком';
+  }
+}
+$('build').addEventListener('click',buildFilm);
+$('refresh').addEventListener('click',loadLibrary);
+$('login').addEventListener('click',async()=>{
+  const button=$('login');button.disabled=true;$('authstatus').textContent='Подключаем QUN ID…';
+  try {await QUNAuth.login(db,$('loginIdentifier').value,$('password').value);$('authstatus').textContent='Вход выполнен.';}
+  catch(error){$('authstatus').textContent=readableError(error);}
+  finally{button.disabled=false;}
+});
+$('signup').addEventListener('click',async()=>{
+  const button=$('signup');button.disabled=true;$('authstatus').textContent='Создаём QUN ID…';
+  try {const login=QUNAuth.cleanLogin($('loginIdentifier').value);await QUNAuth.register(db,{username:login,display_name:login,password:$('password').value});$('authstatus').textContent='QUN ID создан.';}
+  catch(error){$('authstatus').textContent=readableError(error);}
+  finally{button.disabled=false;}
+});
+$('signout').addEventListener('click',async()=>{await db.auth.signOut();setAuth(null);});
+const {data:{session}}=await db.auth.getSession();
+setAuth(session);
+db.auth.onAuthStateChange((_event,newSession)=>setAuth(newSession));
+renderQueue();
+</script>
+</body>
+</html>
