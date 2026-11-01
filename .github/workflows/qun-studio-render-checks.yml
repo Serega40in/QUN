@@ -44,7 +44,7 @@ jobs:
           from pathlib import Path
           import re
           html = Path("docs/studio/gpu-art.html").read_text(encoding="utf-8")
-          match = re.search(r"<script>([\\s\\S]*?)</script>", html)
+          match = re.search(r"<script>([\s\S]*?)</script>", html)
           if not match:
               raise SystemExit("QUN GPU Art script block not found")
           Path("/tmp/qun-gpu-art.js").write_text(match.group(1), encoding="utf-8")
