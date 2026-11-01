@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071421"><meta name="description" content="QUN GPU Art — процедурная графика и анимация на WebGL в браузере.">
+<title>QUN GPU Art — Creative Lab</title>
+<style>
+:root{color-scheme:dark;--bg:#071421;--panel:#0d2030;--line:#254257;--text:#f3f8fb;--muted:#9ab2c4;--mint:#8af0ce;--gold:#f3d18a}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 80% -15%,#1b5b66 0,transparent 42%),radial-gradient(ellipse at 5% 30%,#142b50 0,transparent 38%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+button,select,input{font:inherit}button{cursor:pointer}.shell{max-width:1440px;margin:auto;padding:18px 22px 54px}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:7px 0 18px;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:12px;font-weight:850;letter-spacing:.09em}.mark{width:42px;height:42px;border:1px solid #76e9cb88;border-radius:14px;display:grid;place-items:center;color:var(--mint);font-size:21px;background:linear-gradient(135deg,#1d4d64,#0d2034);box-shadow:0 0 30px #2acaa322}.brand small{display:block;font-size:10px;letter-spacing:.17em;color:var(--muted);font-weight:600}.links{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid #397267;background:linear-gradient(135deg,#174f4a,#14384a);color:#dffff6;border-radius:11px;padding:10px 13px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}.btn.secondary{background:#102438;border-color:var(--line);color:var(--text)}.btn:disabled{opacity:.45;cursor:not-allowed}.hero{padding:28px 0 22px}.eyebrow{color:var(--mint);font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:800}.hero h1{font-size:clamp(32px,5vw,52px);line-height:1.04;letter-spacing:-.045em;margin:7px 0 10px}.hero p{color:var(--muted);margin:0;max-width:780px}.workspace{display:grid;grid-template-columns:310px minmax(0,1fr);gap:17px;align-items:start}.panel{border:1px solid var(--line);background:#0b1c2bef;border-radius:18px;padding:17px;min-width:0}.panel h2{font-size:17px;margin:0 0 14px}.group{padding:13px 0;border-top:1px solid #1d394c}.group:first-of-type{border-top:0;padding-top:0}.field{display:grid;gap:7px;margin:0 0 13px}.field:last-child{margin-bottom:0}.field label{display:flex;justify-content:space-between;gap:12px;color:#d4e3ec;font-size:12px;font-weight:650}.field output{color:var(--mint);font-variant-numeric:tabular-nums}select,input[type=range]{width:100%}select{background:#071522;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px;min-width:0}input[type=range]{accent-color:#72dfc1}.hint{font-size:11px;color:var(--muted);margin-top:4px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.actions .wide{grid-column:1/-1}.preview{border:1px solid var(--line);background:#06111b;border-radius:18px;overflow:hidden;min-width:0}.preview-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 15px;border-bottom:1px solid var(--line);flex-wrap:wrap}.preview-head strong{font-size:13px}.status{font-size:11px;color:var(--muted)}.canvas-wrap{display:grid;place-items:center;padding:12px;min-height:250px;background:radial-gradient(ellipse at 50% 50%,#102b39,#06111b 72%)}canvas{display:block;width:min(100%,1100px);height:auto;aspect-ratio:16/9;background:#071421;border-radius:8px;box-shadow:0 18px 60px #0008}.preview-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 15px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}.message{min-height:20px;color:var(--mint);font-size:12px}.recording{color:#ff9d9d!important}.fineprint{color:#718fa3;font-size:11px;line-height:1.5;margin:16px 2px 0}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--mint);margin-right:6px;box-shadow:0 0 10px #8af0ce88}
+@media(max-width:900px){.workspace{grid-template-columns:1fr}.panel{order:2}.preview{order:1}}@media(max-width:560px){.shell{padding:12px 11px 38px}.top{align-items:flex-start;flex-direction:column}.links{width:100%}.links .btn{flex:1;font-size:12px;padding:9px}.panel{padding:13px}.canvas-wrap{padding:5px;min-height:150px}.actions{grid-template-columns:1fr}.actions .wide{grid-column:auto}}
+</style></head><body><div class="shell">
+<header class="top"><div class="brand"><div class="mark">Q</div><div>QUN <span style="color:var(--mint)">GPU ART</span><small>LOCAL CREATIVE ENGINE</small></div></div><nav class="links"><a class="btn secondary" href="./index.html">← QUN Studio</a><a class="btn secondary" href="./mastercut.html">🎞 Mastercut</a><a class="btn secondary" href="./director.html">🎬 Director</a></nav></header>
+<section class="hero"><div class="eyebrow">Render locally · Create freely</div><h1>Искусство, рождённое <span style="color:var(--mint)">графикой.</span></h1><p>Процедурные формы, свет, цвет и движение. Вычисления выполняются локально в браузере через WebGL — без AI API и загрузки файлов на сервер.</p></section>
+<main class="workspace">
+<aside class="panel"><h2>Параметры генерации</h2>
+<div class="group">
+<div class="field"><label for="style">Алгоритм</label><select id="style"><option value="0">Aurora — северное сияние</option><option value="1">Fractal — фрактальный космос</option><option value="2">Crystal — кристаллическая геометрия</option><option value="3">Flow — волновые поля</option></select></div>
+<div class="field"><label for="palette">Палитра</label><select id="palette"><option value="0">QUN — изумруд и золото</option><option value="1">Ocean — глубокий океан</option><option value="2">Solar — солнечный спектр</option><option value="3">Mono — серебро и лёд</option><option value="4">Neon — ночной неон</option></select></div>
+<div class="field"><label for="resolution">Размер экспорта</label><select id="resolution"><option value="1280x720">1280 × 720 · HD</option><option value="1920x1080">1920 × 1080 · Full HD</option><option value="2560x1440">2560 × 1440 · QHD</option></select><div class="hint">Начни с HD. Большие размеры требуют больше видеопамяти.</div></div>
+</div>
+<div class="group">
+<div class="field"><label for="zoom">Масштаб <output id="zoomOut">1.00×</output></label><input id="zoom" type="range" min=".55" max="2.2" step=".01" value="1"></div>
+<div class="field"><label for="symmetry">Симметрия <output id="symmetryOut">8</output></label><input id="symmetry" type="range" min="2" max="16" step="1" value="8"></div>
+<div class="field"><label for="detail">Детализация <output id="detailOut">36</output></label><input id="detail" type="range" min="12" max="72" step="1" value="36"></div>
+<div class="field"><label for="intensity">Свечение <output id="intensityOut">65%</output></label><input id="intensity" type="range" min="15" max="100" step="1" value="65"></div>
+</div>
+<div class="group">
+<div class="field"><label for="motion">Скорость движения <output id="motionOut">0.35×</output></label><input id="motion" type="range" min="0" max="1.5" step=".01" value=".35"></div>
+<div class="actions"><button class="btn secondary" id="random">✧ Случайный образ</button><button class="btn secondary" id="reset">↺ Сбросить</button><button class="btn wide" id="render">✦ Отрисовать кадр</button><button class="btn secondary" id="animate">▶ Движение</button><button class="btn secondary" id="save">↓ Скачать PNG</button><button class="btn wide secondary" id="record">● Записать 8 секунд WebM</button></div>
+<div id="message" class="message" role="status" aria-live="polite"></div>
+</div>
+<p class="fineprint">QUN GPU Art использует графический процессор браузера, когда аппаратное ускорение доступно. Это процедурный шейдер, а не генерация нейросетевой моделью.</p>
+</aside>
+<section class="preview"><div class="preview-head"><strong><span class="dot"></span>GPU Render Canvas</strong><span id="gpuStatus" class="status">Проверяем WebGL…</span></div><div class="canvas-wrap"><canvas id="glcanvas" width="1280" height="720" aria-label="Предпросмотр процедурного изображения"></canvas></div><div class="preview-foot"><span id="frameInfo">1280 × 720 · готов к рендеру</span><span>Экспорт сохраняется на это устройство</span></div></section>
+</main></div>
+<script>
+(() => {
+'use strict';
+const $=id=>document.getElementById(id),canvas=$('glcanvas'),message=$('message');
+const gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:false,stencil:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+if(!gl){$('gpuStatus').textContent='WebGL недоступен';message.textContent='Проверь аппаратное ускорение Chrome.';['render','save','animate','record'].forEach(id=>$(id).disabled=true);return;}
+const vertexSource='attribute vec2 aPosition;\\nvoid main(){gl_Position=vec4(aPosition,0.0,1.0);}';
+const fragmentSource=[
+'precision highp float;',
+'uniform vec2 uResolution; uniform float uTime; uniform float uZoom; uniform float uSymmetry; uniform float uDetail; uniform float uGlow; uniform int uStyle; uniform int uPalette;',
+'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
+'vec3 palette(float t){',
+'if(uPalette==0)return vec3(.5)+.5*cos(6.28318*(t+vec3(.02,.36,.67)))*vec3(.78,1.0,.83)+vec3(.02,.12,.03);',
+'if(uPalette==1)return .5+.5*cos(6.28318*(t+vec3(.48,.62,.78)));',
+'if(uPalette==2)return .5+.5*cos(6.28318*(t+vec3(.02,.18,.42)));',
+'if(uPalette==3){float v=.25+.72*t;return vec3(v*.84,v*.94,v);}',
+'return .5+.5*cos(6.28318*(t+vec3(.02,.42,.72)));}',
+'vec2 rot(vec2 p,float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c)*p;}',
+'void main(){',
+'vec2 uv=(gl_FragCoord.xy-.5*uResolution)/min(uResolution.x,uResolution.y);uv*=uZoom;',
+'float radius=length(uv),angle=atan(uv.y,uv.x),sector=6.2831853/uSymmetry;',
+'angle=abs(mod(angle+sector*.5,sector)-sector*.5);vec2 p=vec2(cos(angle),sin(angle))*radius;',
+'float t=uTime,field=0.0,trap=1.0,shade=0.0;',
+'if(uStyle==0){vec2 q=rot(p*2.2,t*.10);for(int i=0;i<7;i++){float fi=float(i);q+=.18*vec2(sin(q.y*2.5+t*.28+fi),cos(q.x*2.2-t*.21-fi*.8));field+=sin(q.x*2.8+q.y*1.7+fi*.7+t*.15)/(fi+1.0);}float rays=sin(atan(p.y,p.x)*uSymmetry*1.5+radius*13.0-field*2.0);shade=.5+.5*sin(field*1.7+radius*8.0+rays*.7);trap=abs(sin(field*2.0+radius*5.0));}',
+'else if(uStyle==1){vec2 c=rot(p*1.65,t*.035)+vec2(-.34,.04),z=vec2(0.0);float it=0.0,m=0.0;for(int i=0;i<72;i++){if(float(i)>=uDetail)break;z=vec2(z.x*z.x-z.y*z.y,2.0*z.x*z.y)+c;float rr=dot(z,z);m=min(m,rr);if(rr>64.0)break;it+=1.0;}shade=it/uDetail;trap=clamp(log(1.0+length(z))*.24,0.0,1.0);field=sin(length(z)*1.8+it*.18)+m;}',
+'else if(uStyle==2){vec2 q=rot(p*1.2,t*.07);float acc=0.0;for(int i=0;i<9;i++){q=abs(q);q=q/max(dot(q,q),.12)-vec2(.78,.58);q=rot(q,.43+sin(t*.12)*.03);acc+=exp(-abs(length(q)-1.1)*2.1)/(float(i)+1.0);}field=acc;shade=.5+.5*sin(acc*5.3+radius*7.0);trap=abs(sin(acc*2.8));}',
+'else{vec2 q=rot(p,t*.06);for(int i=0;i<8;i++){float fi=float(i),d=length(q+vec2(cos(t*.18+fi)*.28,sin(t*.14+fi*.8)*.3));field+=sin(d*15.0-fi*1.3)/(fi+1.0);}shade=.5+.5*sin(field*2.0+radius*5.0);trap=abs(sin(field*1.7));}',
+'float glow=pow(max(0.0,1.0-radius*.55),2.0)*uGlow,bands=.5+.5*cos((field+trap*1.8+shade)*6.28318);',
+'float colorT=fract(.10+shade*.34+trap*.23+field*.065+glow*.10);vec3 col=palette(colorT);float edge=smoothstep(1.5,.05,radius);',
+'col*=.28+.92*bands;col+=palette(colorT+.10)*glow*.48;col=mix(vec3(.012,.035,.055),col,edge);',
+'col+=(hash(gl_FragCoord.xy+floor(t*5.0))-.5)*.025;col=pow(max(col,0.0),vec3(.88));gl_FragColor=vec4(col,1.0);}'
+].join('\\n');
+function compile(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const log=gl.getShaderInfoLog(s);gl.deleteShader(s);throw new Error(log||'Ошибка шейдера');}return s;}
+let program;
+try{program=gl.createProgram();gl.attachShader(program,compile(gl.VERTEX_SHADER,vertexSource));gl.attachShader(program,compile(gl.FRAGMENT_SHADER,fragmentSource));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program)||'Ошибка WebGL');}
+catch(err){$('gpuStatus').textContent='Ошибка WebGL';message.textContent=err.message;return;}
+gl.useProgram(program);const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+const pos=gl.getAttribLocation(program,'aPosition');gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+const U={resolution:gl.getUniformLocation(program,'uResolution'),time:gl.getUniformLocation(program,'uTime'),zoom:gl.getUniformLocation(program,'uZoom'),sym:gl.getUniformLocation(program,'uSymmetry'),detail:gl.getUniformLocation(program,'uDetail'),glow:gl.getUniformLocation(program,'uGlow'),style:gl.getUniformLocation(program,'uStyle'),palette:gl.getUniformLocation(program,'uPalette')};
+const started=performance.now();let animating=false,raf=0,recording=null,recordTimer=0,lastTime=0;
+function labels(){$('zoomOut').textContent=Number($('zoom').value).toFixed(2)+'×';$('symmetryOut').textContent=$('symmetry').value;$('detailOut').textContent=$('detail').value;$('intensityOut').textContent=$('intensity').value+'%';$('motionOut').textContent=Number($('motion').value).toFixed(2)+'×';}
+function resize(){const [w,h]=$('resolution').value.split('x').map(Number);canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h);$('frameInfo').textContent=w+' × '+h+' · WebGL';}
+function draw(now){const motion=Number($('motion').value),time=animating?(now-started)/1000*motion:lastTime;gl.useProgram(program);gl.uniform2f(U.resolution,canvas.width,canvas.height);gl.uniform1f(U.time,time);gl.uniform1f(U.zoom,Number($('zoom').value));gl.uniform1f(U.sym,Number($('symmetry').value));gl.uniform1f(U.detail,Number($('detail').value));gl.uniform1f(U.glow,Number($('intensity').value)/100);gl.uniform1i(U.style,Number($('style').value));gl.uniform1i(U.palette,Number($('palette').value));gl.drawArrays(gl.TRIANGLES,0,6);$('gpuStatus').textContent='WebGL · '+gl.getParameter(gl.RENDERER);if(animating)raf=requestAnimationFrame(draw);}
+function still(){if(!animating)draw(performance.now());}
+function start(){if(animating)return;animating=true;$('animate').textContent='Ⅱ Пауза';raf=requestAnimationFrame(draw);message.textContent='Анимация выполняется локально на GPU.';}
+function stop(){animating=false;cancelAnimationFrame(raf);$('animate').textContent='▶ Движение';still();}
+function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);}
+function stamp(){return new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);}
+['style','palette','resolution','zoom','symmetry','detail','intensity','motion'].forEach(id=>$(id).addEventListener('input',()=>{labels();if(id==='resolution')resize();still();}));
+$('render').addEventListener('click',()=>{if(animating)stop();still();message.textContent='Кадр отрисован на WebGL.';});
+$('animate').addEventListener('click',()=>animating?stop():start());
+$('random').addEventListener('click',()=>{$('style').value=String(Math.floor(Math.random()*4));$('palette').value=String(Math.floor(Math.random()*5));$('symmetry').value=String(3+Math.floor(Math.random()*12));$('zoom').value=(.68+Math.random()*1.15).toFixed(2);$('detail').value=String(20+Math.floor(Math.random()*48));$('intensity').value=String(35+Math.floor(Math.random()*60));labels();still();message.textContent='Создан новый случайный образ.';});
+$('reset').addEventListener('click',()=>{$('style').value='0';$('palette').value='0';$('resolution').value='1280x720';$('zoom').value='1';$('symmetry').value='8';$('detail').value='36';$('intensity').value='65';$('motion').value='.35';labels();resize();if(animating)stop();still();message.textContent='Параметры сброшены.';});
+$('save').addEventListener('click',()=>{if(animating)stop();canvas.toBlob(blob=>{if(blob){download(blob,'QUN-GPU-Art-'+stamp()+'.png');message.textContent='PNG сохранён — его можно импортировать в QUN Studio.';}else message.textContent='Не удалось создать PNG.';},'image/png');});
+$('record').addEventListener('click',()=>{if(recording){recording.stop();return;}if(!canvas.captureStream||typeof MediaRecorder==='undefined'){message.textContent='Запись WebM не поддерживается этим браузером.';return;}const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(x=>MediaRecorder.isTypeSupported(x));if(!mime){message.textContent='В браузере не найден поддерживаемый формат WebM.';return;}const wasAnimating=animating;if(!animating)start();try{const stream=canvas.captureStream(30);recording=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2000000});const chunks=[];recording.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};recording.onstop=()=>{clearTimeout(recordTimer);stream.getTracks().forEach(t=>t.stop());const blob=new Blob(chunks,{type:mime});if(blob.size)download(blob,'QUN-GPU-Animation-'+stamp()+'.webm');recording=null;$('record').textContent='● Записать 8 секунд WebM';$('record').classList.remove('recording');if(!wasAnimating)stop();message.textContent=blob.size?'WebM сохранён — добавь его в QUN Mastercut.':'Запись не содержит кадров.';};recording.start(250);$('record').textContent='■ Остановить запись';$('record').classList.add('recording');message.textContent='Записываем 8 секунд анимации…';recordTimer=setTimeout(()=>{if(recording&&recording.state!=='inactive')recording.stop();},8000);}catch(err){recording=null;if(!wasAnimating)stop();message.textContent='Не удалось начать запись: '+err.message;}});
+labels();resize();still();$('gpuStatus').textContent='WebGL · '+gl.getParameter(gl.RENDERER);
+})();
+</script></body></html>
