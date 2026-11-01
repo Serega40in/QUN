@@ -18,7 +18,7 @@
 </section>
 <section class="panel" id="auth">
 <h2 style="margin-top:0">Войти в QUN</h2><p class="hint">Для приватного хранения роликов нужен аккаунт QUN.</p>
-<div class="authrow"><input id="email" type="email" autocomplete="email" placeholder="Электронная почта"><input id="password" type="password" autocomplete="current-password" placeholder="Пароль (от 6 символов)"></div>
+<div class="authrow"><input id="loginName" type="text" autocomplete="username" placeholder="Логин QUN ID"><input id="password" type="password" autocomplete="current-password" placeholder="Пароль (от 8 символов)"></div>
 <div class="actions"><button class="btn" id="login">Войти</button><button class="btn secondary" id="signup">Создать аккаунт</button></div><div class="status" id="auth-status" role="status"></div>
 </section>
 <section class="panel" id="generator" style="display:none">
@@ -43,6 +43,7 @@
 </section>
 <footer class="hint" style="text-align:center;padding:12px">QUN Studio · приватное хранилище · бесплатный облачный генератор</footer>
 </div>
+<script src="../assets/qun-auth.js"></script>
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
 const SUPABASE_URL='https://qdxjltqlnphvzafapncm.supabase.co';
@@ -51,8 +52,8 @@ const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);let session=null;let downloadObjectUrl=null;let busy=false;
 function setStatus(t){$('status').textContent=t}
 function showSession(s){session=s;$('auth').style.display=s?'none':'block';$('generator').style.display=s?'block':'none';if(!s){$('result-panel').style.display='none';setStatus('Войди в QUN, чтобы начать.')} }
-$('login').addEventListener('click',async()=>{const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('auth-status').textContent=error?error.message:'Входим…';if(data.session)showSession(data.session)});
-$('signup').addEventListener('click',async()=>{const {data,error}=await db.auth.signUp({email:$('email').value.trim(),password:$('password').value});$('auth-status').textContent=error?error.message:(data.session?'Аккаунт создан.':'Аккаунт создан. Если включено подтверждение почты, проверь почту и затем войди.') ;if(data.session)showSession(data.session)});
+$('login').addEventListener('click',async()=>{const b=$('login');b.disabled=true;$('auth-status').textContent='Подключаем QUN ID…';try{await QUNAuth.login(db,$('loginName').value,$('password').value);const {data}=await db.auth.getSession();showSession(data.session);$('auth-status').textContent='Вход выполнен через QUN ID.'}catch(error){$('auth-status').textContent=error.message||'Не удалось войти.'}finally{b.disabled=false}});
+$('signup').addEventListener('click',async()=>{const b=$('signup');b.disabled=true;$('auth-status').textContent='Создаём QUN ID…';try{const login=QUNAuth.cleanLogin($('loginName').value);await QUNAuth.register(db,{username:login,display_name:login,password:$('password').value});const {data}=await db.auth.getSession();showSession(data.session);$('auth-status').textContent='QUN ID создан. Вы вошли.'}catch(error){$('auth-status').textContent=error.message||'Не удалось создать QUN ID.'}finally{b.disabled=false}});
 $('signout').addEventListener('click',async()=>{await db.auth.signOut();showSession(null)});
 $('image').addEventListener('change',()=>{const f=$('image').files?.[0];if(!f){$('thumb').style.display='none';return}$('thumb').src=URL.createObjectURL(f);$('thumb').style.display='block'});
 $('generate').addEventListener('click',async()=>{
