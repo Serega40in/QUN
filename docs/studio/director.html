@@ -1,1 +1,59 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QUN Director</title><style>body{background:#071421;color:#f3f8fb;font:16px system-ui;margin:24px}section{background:#102438;padding:18px;border-radius:14px;margin:12px 0}textarea,input{display:block;width:95%;margin:8px 0;padding:12px;background:#071522;color:white;border:1px solid #29475b;border-radius:8px}.btn{padding:10px 14px;background:#174f4a;color:white;border:1px solid #397267;border-radius:8px;cursor:pointer}.btn:disabled{opacity:.6;cursor:wait}.status{color:#8af0ce;white-space:pre-wrap;overflow-wrap:anywhere}a{color:#8af0ce}.scene{border:1px solid #29475b;padding:10px;margin:8px 0}.prewrap{white-space:pre-wrap;overflow-wrap:anywhere}button{font:inherit}</style></head><body><header><b>QUN DIRECTOR</b> · <a href="./index.html">QUN Studio</a> · <a href="./render-node.html">GPU Render Node ↗</a> · <a href="./mastercut.html">Создать клип целиком ↗</a></header><section><h1>Одна идея. Целый клип.</h1><p>Сценарий на русском языке, три визуальные сцены, музыка и русские диалоги. Затем — очередь QUN Compute. Финальный монтаж будет следующим этапом.</p></section><section id="auth"><h2>Войти в QUN</h2><input id="email" type="email" placeholder="Электронная почта"><input id="password" type="password" placeholder="Пароль"><button class="btn" id="login">Войти</button> <button class="btn" id="signup">Создать аккаунт</button><p class="status" id="authstatus"></p></section><section id="app" hidden><label for="idea">Опиши идею</label><textarea id="idea" maxlength="4000" placeholder="Маленький изумрудный дух находит фрактальный город и встречает хранительницу звёзд. Волшебная музыка, добрый диалог."></textarea><button class="btn" id="plan">Разработать сценарий</button> <button class="btn" id="signout">Выйти</button><p class="status" id="status" aria-live="polite"></p></section><section id="result" hidden><div id="brief"></div><button class="btn" id="queue">Поставить 5 задач в QUN Compute</button> <button class="btn" id="refreshJobs">Обновить статусы задач</button> <button class="btn" id="assemble">Собрать MP4</button> <button class="btn" id="copy">Скопировать сценарий</button></section><script type="module" src="./director.js"></script><script type="module" src="./director-queue.js"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#071421">
+<title>QUN Director — Создать клип целиком</title>
+<style>
+:root{color-scheme:dark;--bg:#071421;--panel:#0e2234;--panel2:#132d42;--line:#254257;--text:#f3f8fb;--muted:#9ab2c4;--mint:#8af0ce;--gold:#f3d18a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 70% -20%,#1d5b68 0,transparent 44%),var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:var(--mint)}.shell{max-width:1050px;margin:auto;padding:20px 18px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:6px 0 18px}.brand{font-weight:850;letter-spacing:.1em}.brand span{color:var(--mint)}.nav{display:flex;gap:8px;flex-wrap:wrap}.link,.button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:1px solid #397267;background:linear-gradient(135deg,#174f4a,#14384a);color:#dffff6;border-radius:11px;padding:9px 13px;font-weight:700}.secondary{background:#102438;border-color:var(--line);color:var(--text)}.button:disabled{opacity:.45;cursor:not-allowed}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.05;letter-spacing:-.04em;margin:25px 0 10px}.lead,.hint{color:var(--muted)}.eyebrow{color:var(--mint);font-size:11px;letter-spacing:.17em;text-transform:uppercase;font-weight:800}
+.card{border:1px solid var(--line);background:#0b1c2bd9;border-radius:17px;padding:18px;margin:15px 0}.card h2{margin:0 0 7px;font-size:19px}.field{display:block;width:100%;background:#071522;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:12px;margin:7px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.label{display:block;font-size:13px;color:#d6e7f0;margin:8px 0 5px}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.hint{font-size:12px;margin:4px 0 12px}.status{white-space:pre-wrap;color:var(--mint);font-size:13px;min-height:22px;margin:10px 0;overflow-wrap:anywhere}.status[data-kind="error"]{color:#fda4af}.status[data-kind="success"]{color:var(--mint)}
+.auth{max-width:450px;margin:40px auto;padding:22px;border:1px solid var(--line);border-radius:17px;background:#0b1c2b}.asset-choice{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #28465a;border-radius:10px;background:#091a28;margin:7px 0;cursor:pointer}.asset-choice input{width:auto}.asset-choice span{display:block}.asset-choice b{display:block;font-size:13px}.asset-choice small{display:block;color:var(--muted);font-size:11px}
+.scene{border:1px solid #28465a;border-radius:12px;padding:11px;margin:9px 0;background:#091a28}.scene p{margin:5px 0;color:var(--muted);font-size:12px}.brief{margin-top:14px}.brief h2{font-size:22px}.notice{padding:12px 14px;border-radius:12px;background:#122d36;border:1px solid #285b56;color:#c7f7e7;margin:12px 0;font-size:13px}.result video{display:block;width:100%;max-height:460px;background:#000;border-radius:12px;margin:12px 0}.small{font-size:12px;color:var(--muted)}.hidden{display:none!important}.footer{font-size:11px;color:#708ea1;text-align:center;margin-top:22px}
+@media(max-width:700px){.shell{padding:13px 11px 40px}.grid{grid-template-columns:1fr}.card{padding:13px}.nav{width:100%}.link{flex:1}}
+</style></head>
+<body><div class="shell">
+<header><div class="brand">QUN <span>DIRECTOR</span></div><nav class="nav"><a class="link secondary" href="./index.html">QUN Studio</a><a class="link secondary" href="./mastercut.html">Mastercut</a><a class="link secondary" href="./render-node.html">GPU Render Node</a></nav></header>
+<section id="auth" class="auth" hidden>
+<div class="eyebrow">QUN creative core</div><h2>Войти в QUN</h2><p class="hint">Используй свой QUN ID. Доступ к проектам и материалам останется привязан к аккаунту.</p>
+<input id="loginIdentifier" class="field" autocomplete="username" placeholder="Логин QUN ID или email">
+<input id="password" type="password" class="field" autocomplete="current-password" placeholder="Пароль">
+<div class="row"><button class="button" id="login">Войти</button><button class="button secondary" id="signup">Создать QUN ID</button></div><div id="authstatus" class="status"></div>
+</section>
+<div id="app" hidden>
+<div class="eyebrow">One idea · One button · One film</div>
+<h1>Одна идея.<br><span style="color:var(--mint)">Целый клип.</span></h1>
+<p class="lead">GigaChat пишет сценарий, QUN Compute генерирует недостающие сцены на твоём собственном GPU-узле, затем FFmpeg собирает фильм с музыкой и сохраняет результат в твою QUN Library.</p>
+<div class="notice">Автоматический рендер запускается только на GPU Render Node, привязанном к твоему QUN ID. Если узел не в сети, генерация не отправляется на чужие устройства или платные сервисы.</div>
+
+<section class="card">
+<h2>1. Замысел</h2><p class="hint">Опиши идею или вставь название песни, настроение, историю. Режиссёр сохранит твою авторскую задумку.</p>
+<textarea id="idea" class="field" rows="4" maxlength="2500" placeholder="Например: «Земля вспомнит небо». Земля пробуждается, золотая искра раскрывает изумрудные корни, а человек обнаруживает связь между планетой и звёздами. Атмосфера — тихая надежда, единство и внутренний свет."></textarea>
+<div class="grid">
+<div><label class="label" for="sceneCount">Количество сцен</label><select id="sceneCount" class="field"><option value="4">4 сцены · короткий клип</option><option value="6" selected>6 сцен · стандарт</option><option value="8">8 сцен · расширенный</option><option value="10">10 сцен · длинный</option><option value="12">12 сцен · максимальный</option></select></div>
+<div><label class="label" for="musicSelect">Музыка из QUN Library</label><select id="musicSelect" class="field"><option value="">Без музыки</option></select></div>
+</div>
+<label class="label" for="audioFile">Или загрузить музыкальный файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/aac,audio/mp4,audio/webm" class="field">
+<p class="hint">При выборе музыки фильм будет продолжен до конца трека: короткая последовательность сцен будет повторяться целиком. Для более разнообразного видеоряда можно увеличить число сцен.</p>
+</section>
+
+<section class="card">
+<h2>2. Уже готовые видеофрагменты</h2><p class="hint">Отметь материалы из QUN Library, которые нужно сохранить в начале фильма. Режиссёр создаст только оставшиеся сцены.</p>
+<div id="videoLibrary"><p class="hint">Загружаем видео…</p></div><div id="existingCount" class="small">Выбрано существующих фрагментов: 0</div><div id="libraryStatus" class="status"></div>
+<button id="refreshLibrary" class="button secondary">↻ Обновить библиотеку</button>
+</section>
+
+<section class="card">
+<h2>3. Автоматическое производство</h2><p class="hint">Одна кнопка запускает сценарий, очередь недостающих сцен, контроль статусов и финальный монтаж.</p>
+<div class="row"><button class="button" id="createWhole">✦ Создать клип целиком</button><button class="button secondary" id="signout">Выйти</button></div>
+<div id="status" class="status" role="status" aria-live="polite"></div>
+<div id="briefPanel" class="brief hidden"><div id="brief"></div></div>
+<div id="result" class="result"></div>
+</section>
+<p class="footer">QUN Masterpiece · GigaChat + QUN Compute + ComfyUI + FFmpeg + QUN Storage</p>
+</div></div>
+<script src="../assets/qun-auth.js"></script>
+<script type="module" src="./director-automation.js"></script>
+</body></html>
