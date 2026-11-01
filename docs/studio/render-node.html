@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#071421">
+<title>QUN Render Node · Подключение GPU</title>
+<style>
+:root{color-scheme:dark;--bg:#071421;--panel:#0d2030;--line:#254257;--text:#f3f8fb;--muted:#9ab2c4;--mint:#8af0ce;--gold:#f3d18a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 65% -15%,#1d5b68 0,transparent 45%),var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:880px;margin:auto;padding:20px 16px 60px}header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:8px 0 18px}.brand{font-weight:850;letter-spacing:.1em}.brand span{color:var(--mint)}a{color:var(--mint)}.nav{display:flex;gap:8px;flex-wrap:wrap}.link,.btn{border:1px solid #397267;background:#143c40;color:#dffff6;text-decoration:none;border-radius:11px;padding:9px 13px;font-weight:700;cursor:pointer}.secondary{background:#102438;border-color:var(--line);color:var(--text)}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.05;letter-spacing:-.04em;margin:25px 0 10px}.lead,.hint{color:var(--muted)}.eyebrow{color:var(--mint);font-size:11px;letter-spacing:.17em;text-transform:uppercase;font-weight:800}.card{border:1px solid var(--line);background:#0b1c2bd9;border-radius:17px;padding:18px;margin:15px 0}.card h2{margin:0 0 8px;font-size:19px}.auth{max-width:460px;margin:40px auto;padding:22px;border:1px solid var(--line);border-radius:17px;background:#0b1c2b}.field{display:block;width:100%;margin:8px 0;background:#071522;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:12px;font:inherit}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.status{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--mint);font-size:13px;min-height:20px;margin-top:10px}.code{border:1px dashed #497c70;background:#091c27;padding:16px;border-radius:13px;font:700 clamp(18px,4vw,28px) ui-monospace,Consolas,monospace;letter-spacing:.08em;overflow-wrap:anywhere;user-select:all}.warning{background:#211f18;border:1px solid #665935;color:#eadba9;border-radius:12px;padding:12px;font-size:13px}.node{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 0;border-bottom:1px solid #20394b}.node:last-child{border:0}.badge{border-radius:99px;border:1px solid #345b58;padding:4px 9px;color:var(--mint);font-size:11px}.small{font-size:12px;color:var(--muted)}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#06131f;border:1px solid var(--line);border-radius:10px;padding:13px;font-size:12px;overflow:auto}.hidden{display:none!important}
+</style></head>
+<body><main>
+<header><div class="brand">QUN <span>RENDER NODE</span></div><nav class="nav"><a class="link secondary" href="./index.html">QUN Studio</a><a class="link secondary" href="./director.html">QUN Director</a></nav></header>
+<section id="auth" class="auth" hidden>
+<div class="eyebrow">QUN creative infrastructure</div><h2>Войти в QUN</h2><p class="hint">Используй тот же QUN ID, что и в Animation Studio.</p>
+<input id="loginIdentifier" class="field" autocomplete="username" placeholder="Логин QUN ID или email">
+<input id="password" class="field" type="password" autocomplete="current-password" placeholder="Пароль">
+<div class="row"><button class="btn" id="login">Войти</button><button class="btn secondary" id="signup">Создать QUN ID</button></div>
+<div class="status" id="authstatus"></div>
+</section>
+<div id="app" hidden>
+<div class="eyebrow">Owner-bound GPU executor</div><h1>Подключить <span style="color:var(--mint)">свой GPU-узел.</span></h1>
+<p class="lead">Этот узел будет выполнять задания только твоего QUN ID. Видеозадачи не попадут на случайные телефоны и обычные компьютеры сети.</p>
+<section class="card">
+<h2>1. Создать одноразовый код</h2><p class="hint">Код действует 15 минут, используется один раз и привязывает будущий Linux GPU-узел к текущему QUN ID.</p>
+<div class="row"><button class="btn" id="makeCode">Создать код подключения</button><span class="small" id="expires"></span></div>
+<div id="codeWrap" class="hidden" style="margin-top:13px"><div id="code" class="code"></div><div class="row" style="margin-top:10px"><button id="copyCode" class="btn secondary">Скопировать код</button><span class="small" id="countdown"></span></div></div>
+<div class="warning" style="margin-top:14px">Не публикуй код в GitHub, чатах или скриншотах. Вводи его только в локальной консоли своего сервера, когда будешь готов зарегистрировать GPU-узел.</div>
+<div id="codeStatus" class="status"></div>
+</section>
+<section class="card">
+<h2>2. Запустить регистрацию на Linux-сервере</h2><p class="hint">После клонирования QUN репозитория или загрузки файла регистрации выполни команды ниже. Понадобится Python 3 и публичный ключ Supabase (он не является секретом).</p>
+<pre id="commands">export QUN_SUPABASE_PUBLISHABLE_KEY="SUPABASE_PUBLISHABLE_KEY"
+python3 register_gpu_worker.py</pre>
+<p class="small">Файл регистрации спросит название узла и одноразовый код. Индивидуальный секрет сохранится локально в ~/.config/qun/render-node.json с правами 600. Не отправляй этот файл никому.</p>
+</section>
+<section class="card">
+<div class="row" style="justify-content:space-between"><div><h2>3. Твои узлы QUN</h2><p class="hint" style="margin:4px 0">Список показывает только узлы, зарегистрированные на твой QUN ID.</p></div><button class="btn secondary" id="refresh">Обновить</button></div>
+<div id="nodes"><p class="small">Пока нет подключённых узлов.</p></div><div id="nodesStatus" class="status"></div>
+</section>
+<section class="card">
+<h2>4. Следующий этап — ComfyUI</h2><p class="hint">На том же сервере устанавливается ComfyUI, локальный workflow и QUN Worker. ComfyUI слушает только localhost; снаружи доступен лишь исходящий безопасный канал QUN Worker.</p>
+<p class="small"><a href="./QUN-RENDER-SERVER.md">Открыть руководство по собственному QUN Render Server ↗</a></p>
+</section>
+<div class="row"><button class="btn secondary" id="signout">Выйти</button></div>
+</div>
+</main>
+<script src="../assets/qun-auth.js"></script>
+<script type="module">
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+const db=createClient('https://qdxjltqlnphvzafapncm.supabase.co','sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L');
+const $=id=>document.getElementById(id);
+let timer=null,expiresAt=0,sessionUser=null;
+function authView(session){sessionUser=session?.user||null;$('auth').hidden=!!session;$('app').hidden=!session;if(session)refreshNodes();}
+async function explainError(error){let message=error?.message||'Ошибка запроса.';try{const body=await error.context.json();if(body?.error)message=body.error}catch(_){}return message}
+async function makeCode(){const b=$('makeCode');b.disabled=true;$('codeStatus').textContent='Создаём одноразовый код…';$('codeWrap').classList.add('hidden');try{const {data,error}=await db.functions.invoke('qun-node-registry',{body:{action:'create_enrollment'}});if(error)throw new Error(await explainError(error));if(data?.error)throw new Error(data.error);if(!data?.enrollmentCode)throw new Error('Сервер не вернул код.');$('code').textContent=data.enrollmentCode;expiresAt=Date.parse(data.expiresAt);$('expires').textContent='Действует до '+new Date(expiresAt).toLocaleTimeString('ru-RU');$('codeWrap').classList.remove('hidden');$('codeStatus').textContent='Код создан. Он привязан к твоему QUN ID и будет использован один раз.';startCountdown()}catch(error){$('codeStatus').textContent='Не удалось создать код: '+error.message}finally{b.disabled=false}}
+function startCountdown(){if(timer)clearInterval(timer);const tick=()=>{const left=Math.max(0,Math.floor((expiresAt-Date.now())/1000));$('countdown').textContent=left?'Осталось '+Math.floor(left/60)+':'+String(left%60).padStart(2,'0'):'Код истёк. Создай новый.';if(!left&&timer){clearInterval(timer);timer=null;}};tick();timer=setInterval(tick,1000)}
+async function refreshNodes(){const box=$('nodes');box.innerHTML='<p class="small">Загружаем список…</p>';try{const {data,error}=await db.functions.invoke('qun-node-registry',{body:{action:'my_nodes'}});if(error)throw new Error(await explainError(error));if(data?.error)throw new Error(data.error);const nodes=data?.nodes||[];box.innerHTML=nodes.length?nodes.map(n=>'<div class="node"><div><b>'+String(n.name||'QUN Node').replace(/[&<>"]/g,'')+'</b><div class="small">'+String(n.platform||'')+' · '+String(n.nodeId||'')+'</div><div class="small">Последний сигнал: '+(n.lastSeenAt?new Date(n.lastSeenAt).toLocaleString('ru-RU'):'нет')+'</div></div><span class="badge">'+({online:'В сети',stale:'Нет свежего сигнала',offline:'Отключён'}[n.status]||n.status)+'</span></div>').join(''):'<p class="small">Пока нет подключённых GPU-узлов. Создай код выше и выполни регистрацию на Linux-сервере.</p>';$('nodesStatus').textContent='Узлов: '+nodes.length+' · онлайн: '+(data.online||0)}catch(error){box.innerHTML='';$('nodesStatus').textContent='Не удалось загрузить узлы: '+error.message}}
+$('makeCode').addEventListener('click',makeCode);$('refresh').addEventListener('click',refreshNodes);$('signout').addEventListener('click',async()=>{await db.auth.signOut();authView(null)});
+$('copyCode').addEventListener('click',async()=>{await navigator.clipboard.writeText($('code').textContent);$('copyCode').textContent='Скопировано ✓';setTimeout(()=>$('copyCode').textContent='Скопировать код',1300)});
+$('login').addEventListener('click',async()=>{const b=$('login');b.disabled=true;$('authstatus').textContent='Подключаем QUN ID…';try{await QUNAuth.login(db,$('loginIdentifier').value,$('password').value);$('authstatus').textContent='Вход выполнен.'}catch(e){$('authstatus').textContent=e.message||'Не удалось войти.'}finally{b.disabled=false}});
+$('signup').addEventListener('click',async()=>{const b=$('signup');b.disabled=true;$('authstatus').textContent='Создаём QUN ID…';try{const login=QUNAuth.cleanLogin($('loginIdentifier').value);await QUNAuth.register(db,{username:login,display_name:login,password:$('password').value});$('authstatus').textContent='QUN ID создан.'}catch(e){$('authstatus').textContent=e.message||'Не удалось создать QUN ID.'}finally{b.disabled=false}});
+const {data:{session}}=await db.auth.getSession();authView(session);db.auth.onAuthStateChange((_event,newSession)=>authView(newSession));
+</script>
+</body></html>
