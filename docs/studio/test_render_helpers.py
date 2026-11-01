@@ -4,6 +4,7 @@ from pathlib import Path
 
 from qun_storage import persist_outputs
 from qun_assembly import _download_signed, _local_output
+from qun_compress import cap_output_size
 
 
 class RenderSafetyTests(unittest.TestCase):
@@ -34,6 +35,12 @@ class RenderSafetyTests(unittest.TestCase):
                     root,
                     {".mp4"}
                 )
+
+    def test_small_mp4_does_not_require_recompression(self):
+        with tempfile.TemporaryDirectory() as temp:
+            media = Path(temp) / "small.mp4"
+            media.write_bytes(b"small")
+            self.assertEqual(cap_output_size(media, "ffmpeg", True), media)
 
     def test_rejects_untrusted_hosts_for_signed_assets(self):
         with tempfile.TemporaryDirectory() as temp:
