@@ -32,7 +32,7 @@ async function authorizeNode(body: Record<string, unknown>) {
 }
 
 async function authenticatedUser(req: Request) {
-  const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\\s+/i, "");
+  const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   if (!bearer) return null;
   const { data, error } = await db.auth.getUser(bearer);
   return error ? null : data.user || null;
