@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
+from qun_compress import cap_output_size
 
 ALLOWED_HOST = "qdxjltqlnphvzafapncm.supabase.co"
 BUCKET_PREFIX = "/storage/v1/object/sign/qun-studio-media/"
@@ -139,6 +140,7 @@ def assemble_film(job: dict, *, output_dir: Path, ffmpeg_path: str, publishable_
 
     if not output.is_file() or output.stat().st_size <= 0:
         raise RuntimeError("FFmpeg did not create a valid MP4.")
+    cap_output_size(output, ffmpeg_path, bool(audio_path))
     return {
         "engine": "ffmpeg",
         "assembled": True,
