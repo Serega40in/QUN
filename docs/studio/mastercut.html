@@ -88,12 +88,15 @@ let libraryAssets = [];
 let scenes = [];
 let audioTrack = null;
 let isBuilding = false;
+let autoImportStarted = false;
 
 function setAuth(session) {
   currentUser = session?.user || null;
   $('auth').hidden = !!session;
   $('app').hidden = !session;
-  if (session) loadLibrary();
+  if (session) loadLibrary().then(autoImportFromQuery).catch(error => {
+    $('status').textContent = 'Не удалось подготовить автоматический монтаж: ' + readableError(error);
+  });
 }
 function readableError(error) {
   return error?.message || String(error || 'Неизвестная ошибка.');
@@ -128,6 +131,61 @@ async function loadLibrary() {
     return {...asset, _url:url, _bucket:bucket || null, _path:path || null};
   }));
   renderLibrary();
+}
+async function autoImportFromQuery() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('auto') !== '1' || autoImportStarted) return;
+  autoImportStarted = true;
+  const ids = (params.get('ids') || '').split(',').filter(Boolean).slice(0,12);
+  if (!ids.length) throw new Error('QUN Director не передал готовые видеофрагменты.');
+  $('title').value = (params.get('title') || 'QUN Masterpiece').slice(0,100);
+  const missing = [];
+  for (const id of ids) {
+    const asset = libraryAssets.find(item => item.id === id && item.asset_type === 'video');
+    if (!asset || !asset._url) {
+      missing.push(id);
+      continue;
+    }
+    await addScene({
+      id:'auto:'+asset.id,
+      name:asset.title,
+      file:null,
+      url:asset._url,
+      bucket:asset._bucket,
+      path:asset._path,
+      duration:0
+    });
+  }
+  const audioId = params.get('audio');
+  if (audioId) {
+    const audio = libraryAssets.find(item => item.id === audioId && item.asset_type === 'audio');
+    if (audio && audio._url) {
+      audioTrack = {
+        id:'asset:'+audio.id,
+        name:audio.title,
+        file:null,
+        url:audio._url,
+        bucket:audio._bucket,
+        path:audio._path
+      };
+      $('audioChoice').textContent = 'Выбрана музыка из QUN Library: ' + audio.title;
+    } else {
+      missing.push('audio:'+audioId);
+    }
+  }
+  $('repeat').value = params.get('repeat') === 'yes' ? 'yes' : 'no';
+  const warning = params.get('notice') || '';
+  if (missing.length) {
+    $('status').textContent = 'Не удалось найти некоторые материалы в библиотеке: ' + missing.length + '. Обнови библиотеку и проверь готовые сцены.';
+    return;
+  }
+  if (!scenes.length) throw new Error('Не удалось добавить переданные сцены в монтаж.');
+  $('status').textContent = 'QUN Director передал ' + scenes.length + ' готовых сцен' + (audioTrack ? ' и музыкальную дорожку.' : '.') + (warning ? ' ' + warning : '');
+  if (params.get('autobuild') === '1') {
+    $('status').textContent += ' Запускаем автоматическую сборку…';
+    await new Promise(resolve => setTimeout(resolve, 350));
+    await buildFilm();
+  }
 }
 function renderLibrary() {
   const videos = libraryAssets.filter(x => x.asset_type === 'video' && x._url);
