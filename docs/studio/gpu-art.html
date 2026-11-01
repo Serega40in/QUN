@@ -39,7 +39,7 @@ button,select,input{font:inherit}button{cursor:pointer}.shell{max-width:1440px;m
 const $=id=>document.getElementById(id),canvas=$('glcanvas'),message=$('message');
 const gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:false,stencil:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});
 if(!gl){$('gpuStatus').textContent='WebGL недоступен';message.textContent='Проверь аппаратное ускорение Chrome.';['render','save','animate','record'].forEach(id=>$(id).disabled=true);return;}
-const vertexSource='attribute vec2 aPosition;\\nvoid main(){gl_Position=vec4(aPosition,0.0,1.0);}';
+const vertexSource='attribute vec2 aPosition;\nvoid main(){gl_Position=vec4(aPosition,0.0,1.0);}';
 const fragmentSource=[
 'precision highp float;',
 'uniform vec2 uResolution; uniform float uTime; uniform float uZoom; uniform float uSymmetry; uniform float uDetail; uniform float uGlow; uniform int uStyle; uniform int uPalette;',
@@ -61,10 +61,10 @@ const fragmentSource=[
 'else if(uStyle==2){vec2 q=rot(p*1.2,t*.07);float acc=0.0;for(int i=0;i<9;i++){q=abs(q);q=q/max(dot(q,q),.12)-vec2(.78,.58);q=rot(q,.43+sin(t*.12)*.03);acc+=exp(-abs(length(q)-1.1)*2.1)/(float(i)+1.0);}field=acc;shade=.5+.5*sin(acc*5.3+radius*7.0);trap=abs(sin(acc*2.8));}',
 'else{vec2 q=rot(p,t*.06);for(int i=0;i<8;i++){float fi=float(i),d=length(q+vec2(cos(t*.18+fi)*.28,sin(t*.14+fi*.8)*.3));field+=sin(d*15.0-fi*1.3)/(fi+1.0);}shade=.5+.5*sin(field*2.0+radius*5.0);trap=abs(sin(field*1.7));}',
 'float glow=pow(max(0.0,1.0-radius*.55),2.0)*uGlow,bands=.5+.5*cos((field+trap*1.8+shade)*6.28318);',
-'float colorT=fract(.10+shade*.34+trap*.23+field*.065+glow*.10);vec3 col=palette(colorT);float edge=smoothstep(1.5,.05,radius);',
+'float colorT=fract(.10+shade*.34+trap*.23+field*.065+glow*.10);vec3 col=palette(colorT);float edge=1.0-smoothstep(.05,1.5,radius);',
 'col*=.28+.92*bands;col+=palette(colorT+.10)*glow*.48;col=mix(vec3(.012,.035,.055),col,edge);',
 'col+=(hash(gl_FragCoord.xy+floor(t*5.0))-.5)*.025;col=pow(max(col,0.0),vec3(.88));gl_FragColor=vec4(col,1.0);}'
-].join('\\n');
+].join('\n');
 function compile(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const log=gl.getShaderInfoLog(s);gl.deleteShader(s);throw new Error(log||'Ошибка шейдера');}return s;}
 let program;
 try{program=gl.createProgram();gl.attachShader(program,compile(gl.VERTEX_SHADER,vertexSource));gl.attachShader(program,compile(gl.FRAGMENT_SHADER,fragmentSource));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program)||'Ошибка WebGL');}
