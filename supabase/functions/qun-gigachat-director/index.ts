@@ -177,7 +177,8 @@ Deno.serve(async (req: Request) => {
         "Authorization": "Basic " + credentials,
       },
       body: new URLSearchParams({ scope }),
-    }, { client: gigaChatHttpClient });
+      client: gigaChatHttpClient,
+    });
     if (!tokenResponse.ok) {
       const detail = (await tokenResponse.text()).slice(0, 300);
       return json({ error: "GigaChat OAuth вернул HTTP " + tokenResponse.status + ": " + detail }, 502, origin);
@@ -215,7 +216,8 @@ Deno.serve(async (req: Request) => {
           { role: "user", content: idea },
         ],
       }),
-    }, { client: gigaChatHttpClient });
+      client: gigaChatHttpClient,
+    });
     if (!chatResponse.ok) {
       const detail = (await chatResponse.text()).slice(0, 300);
       return json({ error: "GigaChat вернул HTTP " + chatResponse.status + ": " + detail }, 502, origin);
