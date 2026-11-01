@@ -40,7 +40,7 @@ label{font-size:13px;color:#d6e7f0;display:block;margin:9px 0 5px}.field{min-wid
 <section class="card">
 <h2>1. Выбери сцены</h2><p class="hint">Добавь видео из библиотеки или загрузи файлы с компьютера. Порядок можно изменить стрелками.</p>
 <div id="libraryVideos" class="library"><div class="empty">Загружаем библиотеку…</div></div>
-<label for="localVideos">Добавить видео с компьютера</label><input id="localVideos" type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v,.ogv,.avi" multiple>
+<label for="localVideos">Добавить видео с компьютера</label><input id="localVideos" type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v,.ogv,.avi" multiple><div class="hint" id="fileDebug">После выбора здесь появятся имя файла, MIME-тип и результат чтения видео.</div>
 <div style="height:12px"></div><div class="eyebrow">Последовательность фильма</div><div id="queue" class="queue"><div class="empty">Пока нет сцен. Выбери видео выше.</div></div>
 </section>
 
@@ -199,7 +199,9 @@ async function addScene(scene) {
     scenes.push(scene);
     renderQueue();
   } catch (error) {
-    $('status').textContent = 'Не удалось добавить «'+scene.name+'»: '+readableError(error);
+    const diagnostic = 'Не удалось декодировать «'+scene.name+'»: '+readableError(error);
+    $('status').textContent = diagnostic;
+    if ($('fileDebug')) $('fileDebug').textContent += ' · '+diagnostic;
   }
 }
 function renderQueue() {
@@ -214,11 +216,17 @@ function renderQueue() {
 }
 $('localVideos').addEventListener('change', async e => {
   const files = Array.from(e.target.files || []);
+  $('fileDebug').textContent = files.length
+    ? 'Выбор сработал: '+files.length+' файл(ов). '+files.map(f=>f.name+' · '+(f.type||'MIME не указан')+' · '+(f.size/1024/1024).toFixed(2)+' МБ').join(' | ')
+    : 'Событие выбора сработало, но браузер не передал файл.';
+  if (!files.length) return;
   for (const file of files) {
     const ext = (file.name.split('.').pop() || '').toLowerCase();
     const knownVideoExtension = ['mp4','webm','mov','m4v','ogv','avi'].includes(ext);
     if (!file.type.startsWith('video/') && !knownVideoExtension) {
-      $('status').textContent = 'Пропущен файл «'+file.name+'»: выбери MP4, WebM, MOV, M4V, OGV или AVI.';
+      const errorText = 'Пропущен файл «'+file.name+'»: выбери MP4, WebM, MOV, M4V, OGV или AVI.';
+      $('status').textContent = errorText;
+      $('fileDebug').textContent += ' · '+errorText;
       continue;
     }
     $('status').textContent = 'Проверяем '+(ext.toUpperCase() || 'видео')+': '+file.name;
