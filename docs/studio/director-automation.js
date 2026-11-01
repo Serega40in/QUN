@@ -102,11 +102,17 @@ function renderVideoLibrary() {
   });
 }
 async function getOnlineGpuNode() {
-  const { data, error } = await db.functions.invoke("qun-node-registry", {
-    body: { action: "my_nodes" }
-  });
-  if (error) throw new Error(await explainError(error));
-  if (data?.error) throw new Error(data.error);
+  let response;
+  try {
+    response = await db.functions.invoke("qun-node-registry", {
+      body: { action: "my_nodes" }
+    });
+  } catch (error) {
+    throw new Error("Не удалось связаться с QUN Node Registry. Проверь соединение с Supabase. Подробности: " + (error?.message || String(error)));
+  }
+  const { data, error } = response;
+  if (error) throw new Error("QUN Node Registry: " + await explainError(error));
+  if (data?.error) throw new Error("QUN Node Registry: " + data.error);
   const online = (data?.nodes || []).filter(n =>
     n.platform === "linux-gpu" && n.status === "online"
   );
@@ -517,11 +523,17 @@ async function runMasterpiece() {
     ].join("\n\n");
 
     status("GigaChat разрабатывает сценарий из " + sceneCount + " сцен…");
-    const { data: planData, error: planError } = await db.functions.invoke("qun-gigachat-director", {
-      body: { task: "film_plan", idea: fullIdea, scene_count: sceneCount }
-    });
-    if (planError) throw new Error(await explainError(planError));
-    if (planData?.error) throw new Error(planData.error);
+    let planResponse;
+    try {
+      planResponse = await db.functions.invoke("qun-gigachat-director", {
+        body: { task: "film_plan", idea: fullIdea, scene_count: sceneCount }
+      });
+    } catch (error) {
+      throw new Error("Не удалось связаться с QUN Director / GigaChat. Подробности: " + (error?.message || String(error)));
+    }
+    const { data: planData, error: planError } = planResponse;
+    if (planError) throw new Error("QUN Director / GigaChat: " + await explainError(planError));
+    if (planData?.error) throw new Error("QUN Director / GigaChat: " + planData.error);
     const film = parsePlan(planData?.result, sceneCount);
     renderPlan(film, chosen.length, missingCount);
 
