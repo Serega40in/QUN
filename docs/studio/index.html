@@ -50,7 +50,7 @@ async function runOrphanCleanup(){
 }
 function updateAuth(session){currentUserId=session?.user?.id||null;$('auth').hidden=!!session;$('app').hidden=!session;$('signout').hidden=!session;if(session){loadAssets();loadJobs();runOrphanCleanup().catch(()=>{});if(!jobsTimer)jobsTimer=setInterval(loadJobs,10000)}else{selectedForDelete.clear();if(jobsTimer){clearInterval(jobsTimer);jobsTimer=null}}}
 async function loadJobs(){const {data,error}=await db.functions.invoke('qun-compute',{body:{action:'my_jobs'}});if(error){$('create-status').textContent='Очередь недоступна: '+error.message;return}const jobs=data?.jobs||[];$('job-list').innerHTML=jobs.slice(0,5).map(j=>'<div class="job-row"><div><b>'+escapeHTML(j.title)+'</b><small>'+escapeHTML(j.job_type)+' · '+new Date(j.created_at).toLocaleString('ru-RU')+' · попытка '+Number(j.attempt_count||0)+'/'+Number(j.max_attempts||3)+'</small>'+(j.error_message?'<small class="job-error">'+escapeHTML(j.error_message)+'</small>':'')+'</div><span class="job-state">'+escapeHTML(({queued:'В очереди',running:'Выполняется',succeeded:'Готово',failed:'Ошибка',cancelled:'Отменено'})[j.status]||j.status)+'</span></div>').join('')}
-async function loadAssets(){setNotice('Загружаем материалы из базы QUN…');const {data,error}=await db.from('qun_studio_assets').select('id,title,asset_type,provider,provider_task_id,asset_url,preview_url,prompt,status,tags,metadata,created_at').order('created_at',{ascending:false});if(error){setNotice('Не удалось загрузить каталог: '+error.message);return}assets=await Promise.all((data||[]).map(async a=>{const bucket=a.metadata?.storage_bucket;const path=a.metadata?.storage_path;if(bucket&&path){const {data:signed,error:signError}=await db.storage.from(bucket).createSignedUrl(path,3600);const {data:download}=await db.storage.from(bucket).createSignedUrl(path,3600,{download:(a.title||'QUN-video').replace(/[^a-zA-Z0-9А-Яа-я _-]/g,'').slice(0,90)+'.'+((a.metadata?.content_type||'video/mp4').includes('webm')?'webm':'mp4')});return {...a,_signed_url:signError?null:signed?.signedUrl||null,_download_url:download?.signedUrl||null}}return a}));render()}
+async function loadAssets(){setNotice('Загружаем материалы из базы QUN…');const {data,error}=await db.from('qun_studio_assets').select('id,title,asset_type,provider,provider_task_id,asset_url,preview_url,prompt,status,tags,metadata,created_by,created_at').eq('created_by',currentUserId).order('created_at',{ascending:false});if(error){setNotice('Не удалось загрузить каталог: '+error.message);return}assets=await Promise.all((data||[]).map(async a=>{const bucket=a.metadata?.storage_bucket;const path=a.metadata?.storage_path;if(bucket&&path){const {data:signed,error:signError}=await db.storage.from(bucket).createSignedUrl(path,3600);const {data:download}=await db.storage.from(bucket).createSignedUrl(path,3600,{download:(a.title||'QUN-video').replace(/[^a-zA-Z0-9А-Яа-я _-]/g,'').slice(0,90)+'.'+((a.metadata?.content_type||'video/mp4').includes('webm')?'webm':'mp4')});return {...a,_signed_url:signError?null:signed?.signedUrl||null,_download_url:download?.signedUrl||null}}return a}));render()}
 function updateDeleteButton(){
   const button=$('delete-selected');
   button.disabled=selectedForDelete.size===0;
@@ -106,11 +106,12 @@ async function scanExactDuplicates(){
       groups.get(key).push(asset);
     }
     const candidates=[...groups.values()].filter(group=>group.length>1);
+    const totalCandidates=candidates.reduce((sum,group)=>sum+group.length,0);
     let duplicateCount=0,checked=0;
     for(const group of candidates){
       const hashed=[];
       for(const asset of group){
-        $('cleanup-status').textContent='Проверяем файлы на точное совпадение: '+(++checked)+'/'+group.reduce((n,x)=>n+1,0)+' кандидатов…';
+        $('cleanup-status').textContent='Проверяем файлы на точное совпадение: '+(++checked)+'/'+totalCandidates+' кандидатов…';
         const response=await fetch(asset._signed_url);
         if(!response.ok)throw new Error('Не удалось прочитать файл '+asset.title);
         const bytes=await response.arrayBuffer();
