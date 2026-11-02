@@ -110,6 +110,17 @@ function formatTime(seconds) {
   const total = Math.round(seconds);
   return Math.floor(total / 60) + ':' + String(total % 60).padStart(2,'0');
 }
+async function saveProjectResourceMeter(meter) {
+  const projectId = new URLSearchParams(location.search).get('project');
+  if (!projectId || !currentUser) return false;
+  const {data:project,error:readError} = await db.from('qun_studio_projects')
+    .select('id,metadata').eq('id',projectId).eq('created_by',currentUser.id).maybeSingle();
+  if (readError || !project) return false;
+  const {error:updateError} = await db.from('qun_studio_projects')
+    .update({metadata:{...(project.metadata || {}),resource_meter:meter}})
+    .eq('id',projectId).eq('created_by',currentUser.id);
+  return !updateError;
+}
 async function loadLibrary() {
   $('libraryVideos').innerHTML = '<div class="empty">Загружаем видео…</div>';
   $('libraryAudio').innerHTML = '<div class="empty">Загружаем аудио…</div>';
@@ -495,7 +506,19 @@ async function buildFilm() {
     const localVideo='<video controls playsinline preload="metadata" src="'+escapeHTML(localUrl)+'"></video>';
     const localDownload='<a class="btn" href="'+escapeHTML(localUrl)+'" download="'+escapeHTML(filename)+'">Скачать готовый фильм ↓</a>';
     $('result').innerHTML=localVideo+localDownload;
+    const queryParams=new URLSearchParams(location.search);
+    const aiSceneCount=Math.max(0,Number(queryParams.get('ai_scenes')||0));
+    const aiGenerationMs=Math.max(0,Number(queryParams.get('ai_generation_ms')||0));
+    const resourceMeter={
+      version:1,measured_at:new Date().toISOString(),provider:'browser-mediarecorder',
+      scene_count:scenes.length,ai_scene_count:aiSceneCount,ai_generation_elapsed_ms:aiGenerationMs,
+      requested_music_duration_seconds:selectedAudioDuration,final_duration_seconds:targetDuration,
+      output_size_bytes:blob.size,output_mime:mime,storage_status:'pending'
+    };
+    try { await saveProjectResourceMeter(resourceMeter); } catch (_) {}
     if (blob.size>MAX_EXPORT_UPLOAD_BYTES) {
+      resourceMeter.storage_status='local-only-size-limit';
+      try { await saveProjectResourceMeter(resourceMeter); } catch (_) {}
       $('status').textContent='Фильм собран и доступен для скачивания. Файл '+(blob.size/1024/1024).toFixed(1)+' MiB превышает безопасный лимит загрузки QUN Storage (45 MiB). Выбери более короткую музыку или уменьши число/длительность сцен.';
       return;
     }
@@ -503,12 +526,14 @@ async function buildFilm() {
     const path=currentUser.id+'/'+crypto.randomUUID()+'.'+ext;
     const {error:uploadError}=await db.storage.from(BUCKET).upload(path,blob,{contentType:mime,upsert:false,cacheControl:'3600'});
     if (uploadError) {
+      resourceMeter.storage_status='rejected';
+      resourceMeter.storage_error=uploadError.message.slice(0,500);
+      try { await saveProjectResourceMeter(resourceMeter); } catch (_) {}
       $('status').textContent='Фильм собран и сохранён для скачивания на этой странице, но QUN Storage отклонил загрузку: '+uploadError.message;
       return;
     }
-    const queryParams=new URLSearchParams(location.search);
-    const aiSceneCount=Math.max(0,Number(queryParams.get('ai_scenes')||0));
-    const aiGenerationMs=Math.max(0,Number(queryParams.get('ai_generation_ms')||0));
+    resourceMeter.storage_status='uploaded';
+    try { await saveProjectResourceMeter(resourceMeter); } catch (_) {}
     const description='Автоматическая сборка из '+scenes.length+' видеофрагментов. Музыка: '+(audioTrack?audioTrack.name:'не добавлена')+'.';
     const {data:asset,error:assetError}=await db.from('qun_studio_assets').insert({
       title:title.slice(0,160),asset_type:'video',provider:'qun-mastercut-browser',asset_url:null,preview_url:null,
@@ -517,7 +542,7 @@ async function buildFilm() {
         storage_bucket:BUCKET,storage_path:path,content_type:mime,size_bytes:blob.size,duration_seconds:targetDuration,
         scene_count:scenes.length,ai_scene_count:aiSceneCount,ai_generation_elapsed_ms:aiGenerationMs,
         requested_music_duration_seconds:selectedAudioDuration,source:'Browser MediaRecorder',
-        audio_track:audioTrack?audioTrack.name:null,aspect:$('aspect').value,resource_meter_version:1
+        resource_meter:resourceMeter,audio_track:audioTrack?audioTrack.name:null,aspect:$('aspect').value,resource_meter_version:1
       }
     }).select('id,title,created_at').single();
     if (assetError) {
