@@ -12,6 +12,9 @@ from pathlib import Path
 
 SUPABASE_URL = os.environ.get("QUN_SUPABASE_URL", "https://qdxjltqlnphvzafapncm.supabase.co").rstrip("/")
 SUPABASE_KEY = os.environ.get("QUN_SUPABASE_PUBLISHABLE_KEY", "")
+NODE_PLATFORM = os.environ.get("QUN_NODE_PLATFORM", "linux-gpu").strip().lower()
+if NODE_PLATFORM not in {"linux-gpu", "windows-cpu"}:
+    raise RuntimeError("QUN_NODE_PLATFORM must be linux-gpu or windows-cpu.")
 REGISTRY_FILE = Path(os.environ.get(
     "QUN_NODE_REGISTRY_FILE",
     str(Path.home() / ".config" / "qun" / "render-node.json")
@@ -25,7 +28,7 @@ def request_registration(name: str, enrollment_code: str) -> dict:
         "action": "register",
         "enrollmentCode": enrollment_code.strip(),
         "name": name.strip(),
-        "platform": "linux-gpu",
+        "platform": NODE_PLATFORM,
     }).encode("utf-8")
     req = urllib.request.Request(
         SUPABASE_URL + "/functions/v1/qun-node-registry",
@@ -53,7 +56,7 @@ def save_credentials(data: dict, path: Path) -> None:
         "nodeId": data["nodeId"],
         "nodeToken": data["nodeToken"],
         "registeredAt": data.get("registeredAt"),
-        "platform": "linux-gpu",
+        "platform": NODE_PLATFORM,
     }, indent=2) + "\n", encoding="utf-8")
     try:
         os.chmod(temporary, stat.S_IRUSR | stat.S_IWUSR)
@@ -65,7 +68,8 @@ def save_credentials(data: dict, path: Path) -> None:
 
 
 def main() -> int:
-    name = input("Имя GPU-узла QUN [QUN GPU Render]: ").strip() or "QUN GPU Render"
+    default_name = "QUN Windows CPU" if NODE_PLATFORM == "windows-cpu" else "QUN GPU Render"
+    name = input("Имя узла QUN [" + default_name + "]: ").strip() or default_name
     code = getpass.getpass("Одноразовый код подключения из QUN Studio: ").strip()
     if len(code) < 20:
         print("Код слишком короткий или пустой.", file=sys.stderr)
@@ -76,7 +80,7 @@ def main() -> int:
     except Exception as exc:
         print(str(exc), file=sys.stderr)
         return 1
-    print("GPU-узел зарегистрирован: " + data["nodeId"])
+    print("Узел QUN зарегистрирован (" + NODE_PLATFORM + "): " + data["nodeId"])
     print("Секрет сохранён в защищённом локальном файле: " + str(REGISTRY_FILE))
     print("Не публикуйте этот файл и не копируйте nodeToken в чат, GitHub или веб-страницу.")
     return 0
