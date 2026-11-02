@@ -549,6 +549,11 @@ async function runMasterpiece() {
       precached_prompt_tokens: Number(planData.usage.precached_prompt_tokens || 0),
       total_tokens: Number(planData.usage.total_tokens || 0)
     } : null;
+    if (gigachatUsage) {
+      $("resourceEstimate").textContent = $("resourceEstimate").textContent +
+        " Факт GigaChat: " + gigachatUsage.total_tokens + " тарифицируемых токенов (" +
+        gigachatUsage.prompt_tokens + " входных, " + gigachatUsage.completion_tokens + " выходных).";
+    }
     renderPlan(film, chosen.length, missingCount);
 
     status("Создаём проект и ставим " + missingCount + " недостающих сцен в очередь…");
