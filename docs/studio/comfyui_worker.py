@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """QUN Studio safe ComfyUI executor. Only runs a local, explicitly configured workflow."""
 from __future__ import annotations
-import json, os, sys, time, threading, uuid
+import json, os, sys, time, threading, uuid, shutil
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -15,7 +15,7 @@ def load_node_credentials():
     node_id = os.environ.get("QUN_NODE_ID", "").strip()
     node_token = os.environ.get("QUN_NODE_TOKEN", "").strip()
     if node_id and node_token:
-        return node_id, node_token
+        return node_id, node_token, os.environ.get("QUN_NODE_PLATFORM", "linux-gpu").strip().lower()
     registry_path = Path(os.environ.get(
         "QUN_NODE_REGISTRY_FILE",
         str(Path.home() / ".config" / "qun" / "render-node.json")
@@ -26,10 +26,14 @@ def load_node_credentials():
         return node_id, node_token
     except Exception as exc:
         raise RuntimeError("Could not read QUN_NODE_REGISTRY_FILE: " + str(exc)) from exc
-    return node_id or str(stored.get("nodeId", "")).strip(), node_token or str(stored.get("nodeToken", "")).strip()
+    return (
+        node_id or str(stored.get("nodeId", "")).strip(),
+        node_token or str(stored.get("nodeToken", "")).strip(),
+        os.environ.get("QUN_NODE_PLATFORM", stored.get("platform", "linux-gpu")).strip().lower(),
+    )
 
 
-NODE_ID, NODE_TOKEN = load_node_credentials()
+NODE_ID, NODE_TOKEN, NODE_PLATFORM = load_node_credentials()
 COMFY_URL = os.environ.get("QUN_COMFYUI_URL", "http://127.0.0.1:8188").rstrip("/")
 WORKFLOW_FILE = Path(os.environ.get("QUN_COMFYUI_WORKFLOW", "workflow-api.json"))
 POLL_SECONDS = max(2, int(os.environ.get("QUN_POLL_SECONDS", "5")))
@@ -181,15 +185,23 @@ def process(job):
     try:
         kind = job.get("job_type", "")
         if kind == "health_check":
-            result = {"engine":"qun-compute-node","health_check":True,
-                      "node_id":NODE_ID,"comfyui_reachable":False}
-            try:
-                comfy("GET","/system_stats",timeout=5)
-                result["comfyui_reachable"] = True
-            except Exception as exc:
-                result["comfyui_error"] = str(exc)[:300]
-            if not result["comfyui_reachable"]:
-                raise RuntimeError("Node is online, but ComfyUI is not reachable: " + result.get("comfyui_error",""))
+            if NODE_PLATFORM == "windows-cpu":
+                ffmpeg = os.environ.get("QUN_FFMPEG_PATH", "ffmpeg")
+                available = bool(shutil.which(ffmpeg) or Path(ffmpeg).is_file())
+                result = {"engine":"qun-compute-node","health_check":True,
+                          "node_id":NODE_ID,"platform":NODE_PLATFORM,"ffmpeg_available":available}
+                if not available:
+                    raise RuntimeError("Windows CPU node is online, but FFmpeg is not installed or QUN_FFMPEG_PATH is incorrect.")
+            else:
+                result = {"engine":"qun-compute-node","health_check":True,
+                          "node_id":NODE_ID,"comfyui_reachable":False}
+                try:
+                    comfy("GET","/system_stats",timeout=5)
+                    result["comfyui_reachable"] = True
+                except Exception as exc:
+                    result["comfyui_error"] = str(exc)[:300]
+                if not result["comfyui_reachable"]:
+                    raise RuntimeError("Node is online, but ComfyUI is not reachable: " + result.get("comfyui_error",""))
         elif kind == "comfyui_workflow" and (job.get("requirements") or {}).get("operation") == "assemble_video":
             result = assemble_video(job)
         elif kind in ("image_generation","video_generation","audio_generation","comfyui_workflow"):
@@ -226,7 +238,10 @@ def main():
     if len(NODE_TOKEN) != 64 or any(c not in "0123456789abcdef" for c in NODE_TOKEN):
         print("QUN_NODE_TOKEN must be the 64-character lowercase hex token stored by QUN Node.", file=sys.stderr)
         return 2
-    print("QUN Studio ComfyUI worker starting. Safe mode: owner-scoped media jobs and configured workflows only.", flush=True)
+    if NODE_PLATFORM not in ("linux-gpu", "windows-cpu"):
+        print("Unsupported QUN_NODE_PLATFORM: " + NODE_PLATFORM, file=sys.stderr)
+        return 2
+    print("QUN Studio worker starting on " + NODE_PLATFORM + ". Safe mode: owner-scoped configured jobs only.", flush=True)
     last_node_heartbeat = 0.0
     while True:
         try:
