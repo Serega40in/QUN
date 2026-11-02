@@ -119,6 +119,12 @@ async function getOnlineGpuNode() {
   );
   return online[0] || null;
 }
+async function getOnlineWindowsCpuNode() {
+  const { data, error } = await db.functions.invoke("qun-node-registry", { body: { action: "my_nodes" } });
+  if (error) throw new Error("Не удалось проверить Windows CPU-узлы QUN: " + await explainError(error));
+  if (data?.error) throw new Error("QUN Node Registry: " + data.error);
+  return (data?.nodes || []).find(n => n.platform === "windows-cpu" && n.status === "online") || null;
+}
 function parsePlan(raw, expectedCount) {
   const text = String(raw || "").trim();
   const first = text.indexOf("{");
@@ -517,6 +523,41 @@ async function pollAssembly(jobId, title) {
     await new Promise(resolve => setTimeout(resolve, 8000));
   }
 }
+async function assembleWithWindowsCpu(projectId, film, chosen, generated, audio) {
+  const videoOutputs = [];
+  for (const asset of [...chosen, ...generated]) videoOutputs.push(await refreshSignedAsset(asset));
+  if (!videoOutputs.length) throw new Error("Для CPU-монтажа нужна хотя бы одна готовая видеосцена.");
+  const requirements = {
+    operation: "assemble_video",
+    video_outputs: videoOutputs,
+    repeat_video_to_audio: Boolean(audio)
+  };
+  if (audio) {
+    requirements.audio_output = audio;
+    const musicDuration = $("musicDuration")?.value || "10";
+    if (musicDuration !== "full") requirements.music_duration_seconds = Number(musicDuration);
+  }
+  status("QUN Windows CPU Node · передаём сцены в свою очередь FFmpeg…", "success");
+  const { data, error } = await db.functions.invoke("qun-compute", {
+    body: {
+      action: "create_job",
+      projectId,
+      title: (film.title + " — QUN CPU монтаж").slice(0, 150),
+      prompt: "Собрать выбранные сцены локальным FFmpeg на личном Windows CPU-узле и сохранить MP4 в приватную QUN Library.",
+      jobType: "comfyui_workflow",
+      requirements
+    }
+  });
+  if (error) throw new Error(await explainError(error));
+  if (data?.error || !data?.job?.job_id) throw new Error(data?.error || "Не удалось создать задачу QUN CPU-монтажа.");
+  const output = await pollAssembly(data.job.job_id, film.title);
+  $("result").innerHTML =
+    '<video controls playsinline preload="metadata" src="' + esc(output.signed_url) + '"></video>' +
+    '<div class="row"><a class="button" href="' + esc(output.signed_url) + '" target="_blank" rel="noopener">Скачать MP4 ↓</a>' +
+    '<a class="button secondary" href="./index.html">Открыть QUN Library ↗</a></div>';
+  status("Готово! «" + film.title + "» собран на собственном Windows CPU-узле и сохранён в QUN Library · " +
+    videoOutputs.length + " сцен" + (audio ? " · музыка до " + (requirements.music_duration_seconds || "конца трека") + " сек." : " · без музыки") + ".", "success");
+}
 async function runMasterpiece() {
   if (busy) return;
   const idea = $("idea").value.trim();
@@ -573,9 +614,14 @@ async function runMasterpiece() {
     const projectId = await createProject(film, gigachatUsage);
     if (!node) {
       const generated = await runZeroGpuFallback(projectId, film, chosen);
+      const cpuNode = await getOnlineWindowsCpuNode();
+      if (cpuNode) {
+        await assembleWithWindowsCpu(projectId, film, chosen, generated, audio);
+        return;
+      }
       const warning = generated.length + chosen.length < film.scenes.length
-        ? "Часть сцен не удалось получить из бесплатной ZeroGPU-очереди. Фильм собран из готовых сцен."
-        : "";
+        ? "Часть сцен не удалось получить из внешней бесплатной ZeroGPU-очереди. Фильм собран из готовых сцен."
+        : "Для сборки без браузера подключи личный Windows CPU Node; сейчас используется монтаж в браузере.";
       openMastercutForAssembly(projectId, film, chosen, generated, audio, warning);
       return;
     }
