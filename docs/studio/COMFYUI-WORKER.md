@@ -92,7 +92,7 @@ The final MP4 is saved in the ComfyUI output directory and returned as a ComfyUI
 
 A Windows PC without a suitable AI GPU can still run the final FFmpeg assembly for scenes that already exist in QUN Storage. This node does not generate Wan/ComfyUI AI scenes and does not need ComfyUI or model downloads. It only claims owner-scoped `comfyui_workflow` jobs whose `requirements.operation` is `assemble_video`.
 
-Requirements: Python 3, FFmpeg and ffprobe available in PATH, and a Windows PC that can stay online while jobs run.
+Requirements: Python 3, Git, FFmpeg and ffprobe available in PATH, and a Windows PC that can stay online while jobs run. Check them in PowerShell with `python --version`, `git --version`, `ffmpeg -version` and `ffprobe -version`. If Git or FFmpeg is missing, install with WinGet: `winget install -e --id Git.Git` and `winget install -e --id Gyan.FFmpeg`. Then open a new PowerShell window.
 
 ```powershell
 git clone --depth 1 https://github.com/Serega40in/QUN.git "$HOME\QUN"
