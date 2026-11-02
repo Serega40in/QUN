@@ -50,7 +50,34 @@ async function runOrphanCleanup(){
   }
 }
 function updateAuth(session){currentUserId=session?.user?.id||null;$('auth').hidden=!!session;$('app').hidden=!session;$('signout').hidden=!session;if(session){loadAssets();loadJobs();runOrphanCleanup().catch(()=>{});if(!jobsTimer)jobsTimer=setInterval(loadJobs,10000)}else{selectedForDelete.clear();if(jobsTimer){clearInterval(jobsTimer);jobsTimer=null}}}
-async function loadJobs(){const {data,error}=await db.functions.invoke('qun-compute',{body:{action:'my_jobs'}});if(error){$('create-status').textContent='Очередь недоступна: '+error.message;return}const jobs=data?.jobs||[];$('job-list').innerHTML=jobs.slice(0,5).map(j=>'<div class="job-row"><div><b>'+escapeHTML(j.title)+'</b><small>'+escapeHTML(j.job_type)+' · '+new Date(j.created_at).toLocaleString('ru-RU')+' · попытка '+Number(j.attempt_count||0)+'/'+Number(j.max_attempts||3)+'</small>'+(j.error_message?'<small class="job-error">'+escapeHTML(j.error_message)+'</small>':'')+'</div><span class="job-state">'+escapeHTML(({queued:'В очереди',running:'Выполняется',succeeded:'Готово',failed:'Ошибка',cancelled:'Отменено'})[j.status]||j.status)+'</span></div>').join('')}
+async function cancelQueuedJob(jobId){
+  const {data,error}=await db.functions.invoke('qun-compute',{body:{action:'cancel_job',jobId}});
+  if(error||data?.error){
+    $('create-status').textContent='Не удалось отменить задание: '+(data?.error||error?.message||'ошибка API');
+    return;
+  }
+  $('create-status').textContent='Задание снято с очереди. История сохранена.';
+  await loadJobs();
+}
+async function loadJobs(){
+  const {data,error}=await db.functions.invoke('qun-compute',{body:{action:'my_jobs'}});
+  if(error){$('create-status').textContent='Очередь недоступна: '+error.message;return}
+  const all=data?.jobs||[];
+  const jobs=all.filter(j=>['queued','running','failed'].includes(j.status)).slice(0,8);
+  if(!jobs.length){$('job-list').innerHTML='<div class="job-row"><div><b>Активных заданий нет</b><small>Новые задачи появятся здесь после проверки доступного исполнителя.</small></div><span class="job-state">Спокойно</span></div>';return}
+  const now=Date.now();
+  $('job-list').innerHTML=jobs.map(j=>{
+    const ageMinutes=Math.max(0,Math.floor((now-Date.parse(j.created_at))/60000));
+    const stale=j.status==='queued'&&ageMinutes>=15;
+    const state=j.status==='queued'?(stale?'Нет исполнителя · '+ageMinutes+' мин.':'В очереди'):j.status==='running'?'Выполняется':j.status==='failed'?'Ошибка':'';
+    return '<div class="job-row"><div><b>'+escapeHTML(j.title)+'</b><small>'+escapeHTML(j.job_type)+' · '+new Date(j.created_at).toLocaleString('ru-RU')+' · попытка '+Number(j.attempt_count||0)+'/'+Number(j.max_attempts||3)+'</small>'+(j.error_message?'<small class="job-error">'+escapeHTML(j.error_message)+'</small>':'')+'</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="job-state">'+escapeHTML(state)+'</span>'+(j.status==='queued'?'<button class="btn secondary" data-cancel-job="'+escapeHTML(j.job_id)+'" type="button">Отменить</button>':'')+'</div></div>';
+  }).join('');
+  document.querySelectorAll('[data-cancel-job]').forEach(button=>button.addEventListener('click',async()=>{
+    if(!confirm('Снять это задание с очереди? История останется в QUN.'))return;
+    button.disabled=true;
+    await cancelQueuedJob(button.dataset.cancelJob);
+  }));
+}
 async function loadAssets(){setNotice('Загружаем материалы из базы QUN…');const {data,error}=await db.from('qun_studio_assets').select('id,title,asset_type,provider,provider_task_id,asset_url,preview_url,prompt,status,tags,metadata,created_by,created_at').eq('created_by',currentUserId).order('created_at',{ascending:false});if(error){setNotice('Не удалось загрузить каталог: '+error.message);return}assets=await Promise.all((data||[]).map(async a=>{const bucket=a.metadata?.storage_bucket;const path=a.metadata?.storage_path;if(bucket&&path){const {data:signed,error:signError}=await db.storage.from(bucket).createSignedUrl(path,3600);const {data:download}=await db.storage.from(bucket).createSignedUrl(path,3600,{download:(a.title||'QUN-video').replace(/[^a-zA-Z0-9А-Яа-я _-]/g,'').slice(0,90)+'.'+((a.metadata?.content_type||'video/mp4').includes('webm')?'webm':'mp4')});return {...a,_signed_url:signError?null:signed?.signedUrl||null,_download_url:download?.signedUrl||null}}return a}));render()}
 function updateDeleteButton(){
   const button=$('delete-selected');
@@ -135,7 +162,26 @@ async function scanExactDuplicates(){
     $('cleanup-status').textContent='Сканирование не завершено: '+(error.message||String(error));
   }finally{button.disabled=false;}
 }
-$('create-form').addEventListener('submit',async e=>{e.preventDefault();const prompt=$('create-prompt').value.trim();if(!prompt)return;const button=$('create-submit');button.disabled=true;$('create-status').textContent='Отправляем задание в очередь…';try{const type=$('create-type').value;const {data,error}=await db.functions.invoke('qun-compute',{body:{action:'create_job',title:prompt.slice(0,100),prompt,jobType:type,requirements:{engine:type==='health_check'?'qun-node':'comfyui',requested_output:type==='health_check'?'health_check':type==='image_generation'?'image':type==='video_generation'?'video':'audio'}}});if(error)throw error;if(data?.error)throw new Error(data.error);$('create-status').textContent=type==='health_check'?'Тест создан. Подключённый QUN Node должен выполнить проверку очереди.':'Задание создано и поставлено в очередь. Медиа-рендер начнётся после подключения совместимого генератора.';$('create-prompt').value='';await loadJobs()}catch(err){$('create-status').textContent='Не удалось создать задание: '+(err.message||'ошибка API')}finally{button.disabled=false}});
+$('create-form').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const prompt=$('create-prompt').value.trim();if(!prompt)return;
+  const button=$('create-submit');button.disabled=true;$('create-status').textContent='Проверяем доступные QUN Node…';
+  try{
+    const type=$('create-type').value;
+    if(type!=='health_check'){
+      const {data:nodes,error:nodeError}=await db.functions.invoke('qun-node-registry',{body:{action:'my_nodes'}});
+      if(nodeError||nodes?.error)throw new Error('Не удалось проверить исполнителей QUN: '+(nodes?.error||nodeError?.message||'ошибка API'));
+      const gpuOnline=(nodes?.nodes||[]).some(n=>n.platform==='linux-gpu'&&n.status==='online');
+      if(!gpuOnline)throw new Error('Сейчас нет подключённого GPU-узла QUN. Задание не добавлено в очередь. Открой «Подключить GPU-узел» и запусти собственный Render Node. Для коротких проб можно использовать QUN Director с доступным внешним ZeroGPU.');
+    }
+    $('create-status').textContent='Создаём задание…';
+    const {data,error}=await db.functions.invoke('qun-compute',{body:{action:'create_job',title:prompt.slice(0,100),prompt,jobType:type,requirements:{engine:type==='health_check'?'qun-node':'comfyui',requested_output:type==='health_check'?'health_check':type==='image_generation'?'image':type==='video_generation'?'video':'audio'}}});
+    if(error)throw error;if(data?.error)throw new Error(data.error);
+    $('create-status').textContent=type==='health_check'?'Тест создан.':'Задание создано и поставлено в очередь.';
+    $('create-prompt').value='';await loadJobs();
+  }catch(err){$('create-status').textContent='Не удалось создать задание: '+(err.message||'ошибка API')}
+  finally{button.disabled=false}
+});
 $('login').addEventListener('click',async()=>{const b=$('login');b.disabled=true;$('authstatus').textContent='Подключаем QUN ID…';try{await QUNAuth.login(db,$('loginIdentifier').value,$('password').value);$('authstatus').textContent='Вход выполнен.'}catch(error){$('authstatus').textContent=error.message||'Не удалось войти.'}finally{b.disabled=false}});
 $('signup').addEventListener('click',async()=>{const b=$('signup');b.disabled=true;$('authstatus').textContent='Создаём QUN ID…';try{const login=QUNAuth.cleanLogin($('loginIdentifier').value);await QUNAuth.register(db,{username:login,display_name:login,password:$('password').value});$('authstatus').textContent='QUN ID создан. Вы вошли.'}catch(error){$('authstatus').textContent=error.message||'Не удалось создать QUN ID.'}finally{b.disabled=false}});
 $('signout').addEventListener('click',async()=>{await db.auth.signOut();updateAuth(null)});
