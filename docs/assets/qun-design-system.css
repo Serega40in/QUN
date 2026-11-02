@@ -2,12 +2,12 @@
    Light theme for discovery and information pages. Dense workspaces and games
    can opt out when a darker canvas improves practical readability. */
 :root{
-  --qun-bg:#EDF2EF;
-  --qun-surface:#F9FBFA;
-  --qun-surface-soft:#E3EBE6;
+  --qun-bg:#E8EEEA;
+  --qun-surface:#F4F7F5;
+  --qun-surface-soft:#DDE7E1;
   --qun-ink:#173447;
   --qun-muted:#50656C;
-  --qun-line:#CAD7D1;
+  --qun-line:#C3D0C9;
   --qun-emerald:#0B765D;
   --qun-emerald-dark:#075B49;
   --qun-emerald-soft:#DCECE4;
@@ -50,7 +50,7 @@ html[data-qun-theme="light"]{
 html[data-qun-theme="light"] body{background:var(--qun-bg)!important;color:var(--qun-ink)!important}
 html[data-qun-theme="light"] .top,
 html[data-qun-theme="light"] .topbar,
-html[data-qun-theme="light"] .header{background:rgba(255,255,255,.94)!important;border-color:var(--qun-line)!important;color:var(--qun-ink)!important}
+html[data-qun-theme="light"] .header{background:rgba(244,247,245,.97)!important;border-color:var(--qun-line)!important;color:var(--qun-ink)!important}
 html[data-qun-theme="light"] .card,
 html[data-qun-theme="light"] .panel,
 html[data-qun-theme="light"] .prompt,
@@ -70,7 +70,7 @@ html[data-qun-theme="light"] .btn.green,
 html[data-qun-theme="light"] .button.primary,
 html[data-qun-theme="light"] .button.green{background:var(--qun-emerald)!important;border-color:var(--qun-emerald)!important;color:#fff!important}
 html[data-qun-theme="light"] .mark,
-html[data-qun-theme="light"] .gem{background:#fff!important;border-color:var(--qun-emerald)!important;color:var(--qun-emerald)!important}
+html[data-qun-theme="light"] .gem{background:#F4F7F5!important;border-color:var(--qun-emerald)!important;color:var(--qun-emerald)!important}
 html[data-qun-theme="light"] .tag,
 html[data-qun-theme="light"] .pill,
 html[data-qun-theme="light"] .chip.active,
