@@ -124,14 +124,25 @@ def assemble_film(job: dict, *, output_dir: Path, ffmpeg_path: str, publishable_
 
         if audio_path:
             repeat = bool(requirements.get("repeat_video_to_audio", True))
+            music_duration = requirements.get("music_duration_seconds")
+            if music_duration is not None:
+                try:
+                    music_duration = float(music_duration)
+                except (TypeError, ValueError):
+                    raise RuntimeError("Music duration must be a number of seconds.")
+                if music_duration < 1 or music_duration > 600:
+                    raise RuntimeError("Music duration must be between 1 and 600 seconds.")
             mux = [ffmpeg_path, "-hide_banner", "-loglevel", "error", "-y"]
             if repeat:
                 mux += ["-stream_loop", "-1"]
             mux += ["-i", str(montage), "-i", str(audio_path),
                     "-map", "0:v:0", "-map", "1:a:0",
                     "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
-                    "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
-                    "-shortest", "-movflags", "+faststart", str(output)]
+                    "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k",
+                    "-shortest"]
+            if music_duration is not None:
+                mux += ["-t", f"{music_duration:.3f}"]
+            mux += ["-movflags", "+faststart", str(output)]
             result = subprocess.run(mux, capture_output=True, text=True, timeout=3600)
             if result.returncode:
                 raise RuntimeError("FFmpeg soundtrack mux failed: " + result.stderr[-1800:])
