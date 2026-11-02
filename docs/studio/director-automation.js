@@ -642,6 +642,7 @@ $("sceneCount").addEventListener("change", () => {
 $("musicDuration").addEventListener("change", updateResourceEstimate);
 $("musicSelect").addEventListener("change", updateResourceEstimate);
 $("audioFile").addEventListener("change", updateResourceEstimate);
+updateResourceEstimate();
 $("login").addEventListener("click", async () => {
   const button = $("login");
   button.disabled = true;
