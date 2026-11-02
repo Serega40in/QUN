@@ -464,7 +464,7 @@ async function runZeroGpuFallback(projectId, film, chosen) {
   }
   return generated;
 }
-function openMastercutForAssembly(film, chosen, generated, audio, warning = "") {
+function openMastercutForAssembly(projectId, film, chosen, generated, audio, warning = "") {
   const ids = [...chosen.map(x => x.id), ...generated.map(x => x.id)].filter(Boolean);
   if (!ids.length) throw new Error("Нет готовых видеосцен для монтажа.");
   const params = new URLSearchParams({
@@ -473,6 +473,7 @@ function openMastercutForAssembly(film, chosen, generated, audio, warning = "") 
     title: film.title,
     repeat: audio ? "yes" : "no",
     autobuild: "1",
+    project: projectId,
     music_duration: $("musicDuration")?.value || "10",
     ai_scenes: String(generated.length),
     ai_generation_ms: String(generated.reduce((sum, asset) => sum + Number(asset._qunUsage?.elapsed_ms || 0), 0))
@@ -550,7 +551,7 @@ async function runMasterpiece() {
       const warning = generated.length + chosen.length < film.scenes.length
         ? "Часть сцен не удалось получить из бесплатной ZeroGPU-очереди. Фильм собран из готовых сцен."
         : "";
-      openMastercutForAssembly(film, chosen, generated, audio, warning);
+      openMastercutForAssembly(projectId, film, chosen, generated, audio, warning);
       return;
     }
 
