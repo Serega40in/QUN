@@ -79,5 +79,6 @@ html[data-qun-theme="light"] .small,
 html[data-qun-theme="light"] .muted,
 html[data-qun-theme="light"] .meta,
 html[data-qun-theme="light"] .note{color:var(--qun-muted)!important}
+html[data-qun-theme="light"] .notice{background:#FBF7EB!important;border-color:#E8DDBF!important;color:#705B34!important}
 html[data-qun-theme="light"] footer{border-color:var(--qun-line)!important;color:var(--qun-muted)!important}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
