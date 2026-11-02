@@ -116,6 +116,7 @@ async function saveProjectResourceMeter(meter) {
   const {data:project,error:readError} = await db.from('qun_studio_projects')
     .select('id,metadata').eq('id',projectId).eq('created_by',currentUser.id).maybeSingle();
   if (readError || !project) return false;
+  if (project.metadata?.gigachat_usage) meter.gigachat_usage = project.metadata.gigachat_usage;
   const {error:updateError} = await db.from('qun_studio_projects')
     .update({metadata:{...(project.metadata || {}),resource_meter:meter}})
     .eq('id',projectId).eq('created_by',currentUser.id);
