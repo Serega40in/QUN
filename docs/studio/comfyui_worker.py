@@ -23,7 +23,7 @@ def load_node_credentials():
     try:
         stored = json.loads(registry_path.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        return node_id, node_token
+        return node_id, node_token, os.environ.get("QUN_NODE_PLATFORM", "linux-gpu").strip().lower()
     except Exception as exc:
         raise RuntimeError("Could not read QUN_NODE_REGISTRY_FILE: " + str(exc)) from exc
     return (
