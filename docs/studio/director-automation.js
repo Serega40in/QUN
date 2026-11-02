@@ -98,6 +98,7 @@ function renderVideoLibrary() {
       if (!input.checked) selectedVideoIds = selectedVideoIds.filter(x => x !== id);
       const count = Math.min(selectedVideoIds.length, Number($("sceneCount").value));
       $("existingCount").textContent = "Выбрано существующих фрагментов: " + count;
+      updateResourceEstimate();
     });
   });
 }
@@ -450,7 +451,9 @@ async function runZeroGpuFallback(projectId, film, chosen) {
     const scene = film.scenes[index];
     status("Wan 2.2 ZeroGPU · создаём сцену " + (index + 1) + "/" + film.scenes.length + " · 5 секунд · бесплатный анонимный режим…");
     try {
+      const generationStartedAt = performance.now();
       const asset = await generateWanScene(projectId, film, scene, index);
+      asset._qunUsage = { provider: "huggingface-wan2.2", requested_seconds: 5, elapsed_ms: Math.max(0, Math.round(performance.now() - generationStartedAt)), steps: 4 };
       generated.push(asset);
       status("Готова сцена " + (index + 1) + " · " + generated.length + " новых видео сохранено в QUN Library.");
     } catch (error) {
@@ -469,7 +472,10 @@ function openMastercutForAssembly(film, chosen, generated, audio, warning = "") 
     ids: ids.join(","),
     title: film.title,
     repeat: audio ? "yes" : "no",
-    autobuild: "1"
+    autobuild: "1",
+    music_duration: $("musicDuration")?.value || "10",
+    ai_scenes: String(generated.length),
+    ai_generation_ms: String(generated.reduce((sum, asset) => sum + Number(asset._qunUsage?.elapsed_ms || 0), 0))
   });
   if (audio?.asset_id) params.set("audio", audio.asset_id);
   if (warning) params.set("notice", warning.slice(0, 240));
@@ -612,13 +618,30 @@ async function runMasterpiece() {
     $("createWhole").textContent = "✦ Создать клип целиком";
   }
 }
+function updateResourceEstimate() {
+  const requested = Number($("sceneCount").value || 2);
+  const available = selectedVideoIds.length;
+  const needed = Math.max(0, requested - available);
+  const music = $("musicSelect").value || $("audioFile").files?.[0]?.name;
+  const musicDuration = $("musicDuration").value;
+  const musicLabel = musicDuration === "full" ? "весь выбранный трек" : musicDuration + " сек.";
+  $("resourceEstimate").textContent =
+    "QUN Resource Meter · предварительно: " + needed + " новых AI-сцен" +
+    (needed <= 2 ? " × 5 сек. = до " + (needed * 5) + " сек. видеогенерации в ZeroGPU" : " · для этого объёма нужен собственный GPU Render Node") +
+    "; готовые сцены: " + available + "; музыка: " + (music ? musicLabel + " из готового файла" : "не выбрана") +
+    ". Сценарий — 1 запрос GigaChat; монтаж — в браузере. Пока это измеритель операций, не списание токенов.";
+}
 $("createWhole").addEventListener("click", runMasterpiece);
 $("refreshLibrary").addEventListener("click", loadLibrary);
 $("sceneCount").addEventListener("change", () => {
   selectedVideoIds = selectedVideoIds.slice(0, Number($("sceneCount").value));
   loadLibrary();
   $("existingCount").textContent = "Выбрано существующих фрагментов: " + selectedVideoIds.length;
+  updateResourceEstimate();
 });
+$("musicDuration").addEventListener("change", updateResourceEstimate);
+$("musicSelect").addEventListener("change", updateResourceEstimate);
+$("audioFile").addEventListener("change", updateResourceEstimate);
 $("login").addEventListener("click", async () => {
   const button = $("login");
   button.disabled = true;
