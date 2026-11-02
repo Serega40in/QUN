@@ -1,8 +1,7 @@
-/* QUN Design System — light foundation, v0.1
-   Shared tokens and reusable basics. Product workspaces may use a darker canvas
-   where it improves readability for dense operational work. */
+/* QUN Design System — light foundation, v0.2.
+   Light theme for discovery and information pages. Dense workspaces and games
+   can opt out when a darker canvas improves practical readability. */
 :root{
-  color-scheme:light;
   --qun-bg:#F6F9F7;
   --qun-surface:#FFFFFF;
   --qun-surface-soft:#EEF5F1;
@@ -36,4 +35,49 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .qun-button--primary{background:var(--qun-emerald);border-color:var(--qun-emerald);color:#fff}
 .qun-button--primary:hover{background:var(--qun-emerald-dark);border-color:var(--qun-emerald-dark)}
 .qun-card{border:1px solid var(--qun-line);border-radius:var(--qun-radius);background:var(--qun-surface);box-shadow:var(--qun-shadow)}
+
+/* Opt-in theme adapter for existing QUN information pages. */
+html[data-qun-theme="light"]{
+  color-scheme:light;
+  --bg:var(--qun-bg);--paper:var(--qun-bg);--p:var(--qun-surface);--p2:var(--qun-surface-soft);
+  --panel:var(--qun-surface);--panel2:var(--qun-surface-soft);--white:var(--qun-surface);
+  --ink:var(--qun-ink);--text:var(--qun-ink);--t:var(--qun-ink);--i:var(--qun-ink);
+  --muted:var(--qun-muted);--m:var(--qun-muted);--mut:var(--qun-muted);
+  --line:var(--qun-line);--l:var(--qun-line);
+  --emerald:var(--qun-emerald);--green:var(--qun-emerald);--g:var(--qun-emerald);
+  --mint:var(--qun-emerald);--blue:#317DA0;--gold:var(--qun-gold);--navy:var(--qun-ink);--n:var(--qun-ink);
+}
+html[data-qun-theme="light"] body{background:var(--qun-bg)!important;color:var(--qun-ink)!important}
+html[data-qun-theme="light"] .top,
+html[data-qun-theme="light"] .topbar,
+html[data-qun-theme="light"] .header{background:rgba(255,255,255,.94)!important;border-color:var(--qun-line)!important;color:var(--qun-ink)!important}
+html[data-qun-theme="light"] .card,
+html[data-qun-theme="light"] .panel,
+html[data-qun-theme="light"] .prompt,
+html[data-qun-theme="light"] .step,
+html[data-qun-theme="light"] .modalbox,
+html[data-qun-theme="light"] .article,
+html[data-qun-theme="light"] .editor,
+html[data-qun-theme="light"] .searchbox,
+html[data-qun-theme="light"] .search{background:var(--qun-surface)!important;border-color:var(--qun-line)!important;color:var(--qun-ink)!important;box-shadow:var(--qun-shadow)}
+html[data-qun-theme="light"] input,
+html[data-qun-theme="light"] textarea,
+html[data-qun-theme="light"] select{background:var(--qun-surface)!important;border-color:var(--qun-line)!important;color:var(--qun-ink)!important}
+html[data-qun-theme="light"] .btn,
+html[data-qun-theme="light"] .button{background:var(--qun-surface)!important;border-color:var(--qun-line)!important;color:var(--qun-ink)!important}
+html[data-qun-theme="light"] .btn.primary,
+html[data-qun-theme="light"] .button.primary{background:var(--qun-emerald)!important;border-color:var(--qun-emerald)!important;color:#fff!important}
+html[data-qun-theme="light"] .mark,
+html[data-qun-theme="light"] .gem{background:#fff!important;border-color:var(--qun-emerald)!important;color:var(--qun-emerald)!important}
+html[data-qun-theme="light"] .tag,
+html[data-qun-theme="light"] .pill,
+html[data-qun-theme="light"] .chip.active,
+html[data-qun-theme="light"] .tab.active{background:var(--qun-emerald-soft)!important;color:var(--qun-emerald-dark)!important;border-color:#C8E5D7!important}
+html[data-qun-theme="light"] .prompt pre{color:#38515A!important}
+html[data-qun-theme="light"] .hint,
+html[data-qun-theme="light"] .small,
+html[data-qun-theme="light"] .muted,
+html[data-qun-theme="light"] .meta,
+html[data-qun-theme="light"] .note{color:var(--qun-muted)!important}
+html[data-qun-theme="light"] footer{border-color:var(--qun-line)!important;color:var(--qun-muted)!important}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
