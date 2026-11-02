@@ -8,7 +8,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 BUCKET = "qun-studio-media"
-MAX_FILE_BYTES = 100 * 1024 * 1024
+MAX_FILE_BYTES = 45 * 1024 * 1024
 
 MIME_BY_SUFFIX = {
     ".mp4": "video/mp4",
@@ -63,7 +63,7 @@ def persist_outputs(job: dict, result: dict, *, api, node_id: str, node_token: s
         local_path = _safe_file(output_dir.resolve(), item)
         size = local_path.stat().st_size
         if size <= 0 or size > MAX_FILE_BYTES:
-            raise RuntimeError("Output is empty or exceeds QUN Storage's 100 MB limit.")
+            raise RuntimeError("Output is empty or exceeds QUN Storage's safe 45 MiB limit.")
         content_type = MIME_BY_SUFFIX[local_path.suffix.lower()]
 
         signed = api("/output/upload-url", {
