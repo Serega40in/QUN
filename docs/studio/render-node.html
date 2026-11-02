@@ -29,6 +29,21 @@ h1{font-size:clamp(30px,5vw,46px);line-height:1.05;letter-spacing:-.04em;margin:
 <div id="codeStatus" class="status"></div>
 </section>
 <section class="card">
+<h2>Windows CPU — свой бесплатный узел для монтажа</h2>
+<p class="hint">Для личного компьютера Windows без мощной видеокарты. Он не генерирует AI-видео, зато сам склеивает готовые сцены, обрезает музыку, пережимает результат и сохраняет фильм в твою QUN Library. ComfyUI и скачивание AI-моделей не нужны.</p>
+<div class="warning">Нужны Python 3, FFmpeg и ffprobe в PATH. На твоём текущем компьютере этот режим реалистичнее, чем запуск тяжёлой видеомодели на Intel HD 505.</div>
+<pre>git clone --depth 1 https://github.com/Serega40in/QUN.git "$HOME\QUN"
+cd "$HOME\QUN\docs\studio"
+$env:QUN_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L"
+$env:QUN_NODE_PLATFORM = "windows-cpu"
+python .\register_gpu_worker.py
+$env:QUN_FFMPEG_PATH = "ffmpeg"
+$env:QUN_FFPROBE_PATH = "ffprobe"
+$env:QUN_COMFYUI_OUTPUT_DIR = "$HOME\QUN-Render-Output"
+python .\comfyui_worker.py</pre>
+<p class="small">Сначала нажми «Создать код подключения» выше. Код вводится локально при регистрации. Секрет узла останется в защищённом файле на компьютере; не отправляй его в чат или GitHub. После запуска узел появится в списке. В QUN Director он будет использоваться только для финального монтажа собственных сцен.</p>
+</section>
+<section class="card">
 <h2>2. Запустить регистрацию на Linux-сервере</h2><p class="hint">После клонирования QUN репозитория или загрузки файла регистрации выполни команды ниже. Понадобится Python 3 и публичный ключ Supabase (он не является секретом).</p>
 <pre id="commands">git clone --depth 1 https://github.com/Serega40in/QUN.git ~/qun-repo
 cd ~/qun-repo/docs/studio
