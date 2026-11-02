@@ -4,7 +4,7 @@ import os
 import shutil
 import subprocess
 
-LIMIT = 98 * 1024 * 1024
+LIMIT = 42 * 1024 * 1024
 
 
 def cap_output_size(output_path: Path, ffmpeg_path: str, has_audio: bool) -> Path:
@@ -13,7 +13,7 @@ def cap_output_size(output_path: Path, ffmpeg_path: str, has_audio: bool) -> Pat
         return output_path
     ffprobe = shutil.which(os.environ.get("QUN_FFPROBE_PATH", "ffprobe"))
     if not ffprobe:
-        raise RuntimeError("Final MP4 exceeds 98 MiB and ffprobe is unavailable for size-safe compression.")
+        raise RuntimeError("Final MP4 exceeds 42 MiB and ffprobe is unavailable for size-safe compression.")
     probe = subprocess.run(
         [ffprobe, "-v", "error", "-show_entries", "format=duration",
          "-of", "default=noprint_wrappers=1:nokey=1", str(output_path)],
