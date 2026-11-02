@@ -152,7 +152,7 @@ function renderPlan(film, existingCount, missingCount) {
     '<p class="hint">Существующих фрагментов: ' + existingCount + ' · новых сцен в очереди: ' + missingCount + '</p>';
   $("briefPanel").hidden = false;
 }
-async function createProject(film) {
+async function createProject(film, gigachatUsage = null) {
   const { data: project, error } = await db.from("qun_studio_projects").insert({
     slug: "qun-masterpiece-" + crypto.randomUUID(),
     title: film.title.slice(0, 160),
@@ -163,6 +163,7 @@ async function createProject(film) {
       source: "QUN Masterpiece One-Click",
       language: "ru",
       scene_count: film.scenes.length,
+      gigachat_usage: gigachatUsage,
       gpu_owner_scoped: true,
       audio_repeat_to_track: true
     }
@@ -542,10 +543,16 @@ async function runMasterpiece() {
     if (planError) throw new Error("QUN Director / GigaChat: " + await explainError(planError));
     if (planData?.error) throw new Error("QUN Director / GigaChat: " + planData.error);
     const film = parsePlan(planData?.result, sceneCount);
+    const gigachatUsage = planData?.usage && typeof planData.usage === "object" ? {
+      prompt_tokens: Number(planData.usage.prompt_tokens || 0),
+      completion_tokens: Number(planData.usage.completion_tokens || 0),
+      precached_prompt_tokens: Number(planData.usage.precached_prompt_tokens || 0),
+      total_tokens: Number(planData.usage.total_tokens || 0)
+    } : null;
     renderPlan(film, chosen.length, missingCount);
 
     status("Создаём проект и ставим " + missingCount + " недостающих сцен в очередь…");
-    const projectId = await createProject(film);
+    const projectId = await createProject(film, gigachatUsage);
     if (!node) {
       const generated = await runZeroGpuFallback(projectId, film, chosen);
       const warning = generated.length + chosen.length < film.scenes.length
