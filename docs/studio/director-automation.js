@@ -260,8 +260,20 @@ async function getAudioTrack() {
   const localFile = $("audioFile").files?.[0];
   if (localFile) {
     if (!mimeAllowed(localFile.type)) throw new Error("Формат аудио не поддерживается. Используй MP3, WAV, FLAC, OGG, AAC или M4A.");
-    if (localFile.size > 100 * 1024 * 1024) throw new Error("Музыкальный файл превышает лимит 100 МБ.");
-    status("Загружаем музыкальный файл в твою приватную QUN Library…");
+    if (localFile.size > 45 * 1024 * 1024) throw new Error("Музыкальный файл превышает безопасный лимит QUN Storage 45 MiB.");
+    status("Проверяем, не загружалась ли эта композиция раньше…");
+    const bytes = await localFile.arrayBuffer();
+    const sha256 = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))).map(v => v.toString(16).padStart(2, "0")).join("");
+    const { data: duplicate, error: duplicateError } = await db.from("qun_studio_assets")
+      .select("id,title,metadata,asset_type")
+      .eq("created_by", currentUser.id).eq("asset_type", "audio")
+      .contains("metadata", { sha256 }).limit(1).maybeSingle();
+    if (duplicateError) throw new Error("Не удалось проверить повторы музыки: " + duplicateError.message);
+    if (duplicate) {
+      status("Такая композиция уже есть в QUN Library. Используем существующую копию — повторной загрузки не будет.");
+      return refreshSignedAsset(duplicate);
+    }
+    status("Сохраняем новую композицию в QUN Library…");
     const ext = localFile.name.includes(".") ? localFile.name.split(".").pop().toLowerCase() : "mp3";
     const path = currentUser.id + "/" + crypto.randomUUID() + "." + ext;
     const { error: uploadError } = await db.storage.from(BUCKET).upload(path, localFile, {
@@ -283,6 +295,7 @@ async function getAudioTrack() {
         storage_path: path,
         content_type: localFile.type,
         size_bytes: localFile.size,
+        sha256,
         source: "QUN Director local upload"
       }
     }).select("id,title,metadata,asset_type").single();
