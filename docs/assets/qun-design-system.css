@@ -82,3 +82,65 @@ html[data-qun-theme="light"] .note{color:var(--qun-muted)!important}
 html[data-qun-theme="light"] .notice{background:#FBF7EB!important;border-color:#E8DDBF!important;color:#705B34!important}
 html[data-qun-theme="light"] footer{border-color:var(--qun-line)!important;color:var(--qun-muted)!important}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* Brighter work theme for AI, media and infrastructure workspaces. */
+:root{
+  --qun-work-bg:#102B3D;
+  --qun-work-panel:#17394B;
+  --qun-work-panel-soft:#1D4658;
+  --qun-work-ink:#F1F8F6;
+  --qun-work-muted:#B0C4C8;
+  --qun-work-line:#355A68;
+  --qun-work-emerald:#72E2BB;
+  --qun-work-blue:#91C8EC;
+  --qun-work-gold:#D9BD7C;
+}
+html[data-qun-theme="work"]{
+  color-scheme:dark;
+  --bg:var(--qun-work-bg);--panel:var(--qun-work-panel);--panel2:var(--qun-work-panel-soft);
+  --line:var(--qun-work-line);--text:var(--qun-work-ink);--ink:var(--qun-work-ink);--t:var(--qun-work-ink);
+  --muted:var(--qun-work-muted);--m:var(--qun-work-muted);
+  --mint:var(--qun-work-emerald);--green:var(--qun-work-emerald);--g:var(--qun-work-emerald);
+  --emerald:var(--qun-work-emerald);--blue:var(--qun-work-blue);--gold:var(--qun-work-gold);
+}
+html[data-qun-theme="work"] body{
+  background:radial-gradient(ellipse at 78% 0%,#24566A 0,transparent 40%),var(--qun-work-bg)!important;
+  color:var(--qun-work-ink)!important;
+}
+html[data-qun-theme="work"] .top,
+html[data-qun-theme="work"] .topbar,
+html[data-qun-theme="work"] .header,
+html[data-qun-theme="work"] .nav{
+  background:rgba(16,43,61,.94)!important;border-color:var(--qun-work-line)!important;color:var(--qun-work-ink)!important
+}
+html[data-qun-theme="work"] .card,
+html[data-qun-theme="work"] .panel,
+html[data-qun-theme="work"] .modalbox,
+html[data-qun-theme="work"] .editor,
+html[data-qun-theme="work"] .searchbox,
+html[data-qun-theme="work"] .search,
+html[data-qun-theme="work"] .composer,
+html[data-qun-theme="work"] .step{
+  background:var(--qun-work-panel)!important;border-color:var(--qun-work-line)!important;color:var(--qun-work-ink)!important
+}
+html[data-qun-theme="work"] input,
+html[data-qun-theme="work"] textarea,
+html[data-qun-theme="work"] select{
+  background:var(--qun-work-bg)!important;border-color:var(--qun-work-line)!important;color:var(--qun-work-ink)!important
+}
+html[data-qun-theme="work"] .btn,
+html[data-qun-theme="work"] .button{
+  background:var(--qun-work-panel-soft)!important;border-color:var(--qun-work-line)!important;color:var(--qun-work-ink)!important
+}
+html[data-qun-theme="work"] .btn.primary,
+html[data-qun-theme="work"] .button.primary{
+  background:var(--qun-work-emerald)!important;border-color:var(--qun-work-emerald)!important;color:#092C2B!important
+}
+html[data-qun-theme="work"] .hint,
+html[data-qun-theme="work"] .small,
+html[data-qun-theme="work"] .muted,
+html[data-qun-theme="work"] .meta,
+html[data-qun-theme="work"] .note{color:var(--qun-work-muted)!important}
+html[data-qun-theme="work"] a{color:var(--qun-work-emerald)}
+html[data-qun-theme="work"] footer{border-color:var(--qun-work-line)!important;color:var(--qun-work-muted)!important}
