@@ -48,7 +48,9 @@ label{font-size:13px;color:#d6e7f0;display:block;margin:9px 0 5px}.field{min-wid
 <h2>2. Музыка</h2><p class="hint">Выбери аудио из QUN Library или загрузи трек. Локальный аудиофайл используется только для этой сборки и не отправляется отдельно в библиотеку.</p>
 <div id="libraryAudio" class="library"><div class="empty">Ищем музыку в библиотеке…</div></div>
 <label for="localAudio">Загрузить музыку с компьютера</label><input id="localAudio" type="file" accept="audio/*">
-<div class="hint" id="audioChoice">Музыка не выбрана.</div>
+<label for="musicDuration">Сколько музыки использовать в фильме</label>
+<select id="musicDuration"><option value="10" selected>10 секунд · быстрый тест</option><option value="30">30 секунд</option><option value="60">1 минута</option><option value="full">Весь трек</option></select>
+<div class="hint" id="audioChoice">Музыка не выбрана. Сейчас Mastercut использует выбранный готовый аудиофайл и обрезает его до указанной длительности — отдельной AI-генерации музыки в этом процессе пока нет.</div>
 </section>
 
 <section class="card">
@@ -89,6 +91,8 @@ let scenes = [];
 let audioTrack = null;
 let isBuilding = false;
 let autoImportStarted = false;
+const MAX_EXPORT_UPLOAD_BYTES = 45 * 1024 * 1024;
+const TARGET_EXPORT_BYTES = 42 * 1024 * 1024;
 
 function setAuth(session) {
   currentUser = session?.user || null;
@@ -174,6 +178,8 @@ async function autoImportFromQuery() {
     }
   }
   $('repeat').value = params.get('repeat') === 'yes' ? 'yes' : 'no';
+  const requestedMusicDuration = params.get('music_duration');
+  if (['10','30','60','full'].includes(requestedMusicDuration)) $('musicDuration').value = requestedMusicDuration;
   const warning = params.get('notice') || '';
   if (missing.length) {
     $('status').textContent = 'Не удалось найти некоторые материалы в библиотеке: ' + missing.length + '. Обнови библиотеку и проверь готовые сцены.';
@@ -417,7 +423,9 @@ async function buildFilm() {
     }
     const totalScenes=loadedScenes.reduce((sum,x)=>sum+x.duration,0);
     const repeat=audioElement && $('repeat').value==='yes';
-    const targetDuration=audioElement ? (repeat?audioDuration:Math.min(audioDuration,totalScenes)) : totalScenes;
+    const musicChoice=$('musicDuration').value;
+    const selectedAudioDuration=audioElement ? (musicChoice==='full'?audioDuration:Math.min(audioDuration,Number(musicChoice)||audioDuration)) : 0;
+    const targetDuration=audioElement ? (repeat?selectedAudioDuration:Math.min(selectedAudioDuration,totalScenes)) : totalScenes;
     if (!targetDuration || targetDuration>600) throw new Error('Длительность сборки должна быть от 1 секунды до 10 минут.');
     if (audioElement && repeat && totalScenes<audioDuration) {
       $('status').textContent='Видеоряд будет повторяться до конца музыки. Для более разнообразного фильма добавь дополнительные сцены.';
@@ -443,7 +451,10 @@ async function buildFilm() {
     const stream=new MediaStream(tracks);
     const candidates=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
     const mimeType=candidates.find(type=>MediaRecorder.isTypeSupported(type));
-    recorder=mimeType?new MediaRecorder(stream,{mimeType,videoBitsPerSecond:Math.max(700000,Math.min(3000000,Math.floor((80*1024*1024*8/targetDuration)-160000))),audioBitsPerSecond:128000}):new MediaRecorder(stream);
+    const audioBitrate=audioElement?96000:0;
+    const totalBudgetBps=Math.floor((TARGET_EXPORT_BYTES*8/targetDuration)*0.88);
+    const videoBitrate=Math.max(180000,Math.min(2400000,totalBudgetBps-audioBitrate));
+    recorder=mimeType?new MediaRecorder(stream,{mimeType,videoBitsPerSecond:videoBitrate,audioBitsPerSecond:audioBitrate}):new MediaRecorder(stream);
     const chunks=[];
     recorder.ondataavailable=event=>{if(event.data&&event.data.size)chunks.push(event.data);};
     const recorderError=new Promise((resolve,reject)=>{recorder.onerror=event=>reject(event.error||new Error('Ошибка записи браузера.'));});
@@ -478,28 +489,45 @@ async function buildFilm() {
     const ext=mime.includes('mp4')?'mp4':'webm';
     const blob=new Blob(chunks,{type:mime});
     if (!blob.size) throw new Error('Браузер не сформировал видеофайл.');
-    if (blob.size>95*1024*1024) {
-      const localUrl=URL.createObjectURL(blob);
-      $('result').innerHTML='<div class="notice">Фильм собран, но файл превышает лимит приватного QUN Storage (95 МБ). Его можно сохранить на компьютер.</div><a class="btn" href="'+localUrl+'" download="QUN-Mastercut.'+ext+'">Скачать готовый фильм</a>';
-      $('status').textContent='Сборка завершена локально. В библиотеку не загружено из-за размера файла '+(blob.size/1024/1024).toFixed(1)+' МБ.';
+    const title=$('title').value.trim()||'QUN Masterpiece';
+    const filename=(title.replace(/[\\/:*?"<>|]/g,'').trim()||'QUN-Mastercut').slice(0,80)+'.'+ext;
+    const localUrl=URL.createObjectURL(blob);
+    const localVideo='<video controls playsinline preload="metadata" src="'+escapeHTML(localUrl)+'"></video>';
+    const localDownload='<a class="btn" href="'+escapeHTML(localUrl)+'" download="'+escapeHTML(filename)+'">Скачать готовый фильм ↓</a>';
+    $('result').innerHTML=localVideo+localDownload;
+    if (blob.size>MAX_EXPORT_UPLOAD_BYTES) {
+      $('status').textContent='Фильм собран и доступен для скачивания. Файл '+(blob.size/1024/1024).toFixed(1)+' MiB превышает безопасный лимит загрузки QUN Storage (45 MiB). Выбери более короткую музыку или уменьши число/длительность сцен.';
       return;
     }
-    $('status').textContent='Фильм собран. Сохраняем в приватную QUN Library…';
-    const title=$('title').value.trim()||'QUN Masterpiece';
+    $('status').textContent='Фильм собран ('+(blob.size/1024/1024).toFixed(1)+' MiB). Сохраняем в приватную QUN Library…';
     const path=currentUser.id+'/'+crypto.randomUUID()+'.'+ext;
     const {error:uploadError}=await db.storage.from(BUCKET).upload(path,blob,{contentType:mime,upsert:false,cacheControl:'3600'});
-    if (uploadError) throw new Error('Фильм готов, но загрузить его в QUN Storage не удалось: '+uploadError.message);
+    if (uploadError) {
+      $('status').textContent='Фильм собран и сохранён для скачивания на этой странице, но QUN Storage отклонил загрузку: '+uploadError.message;
+      return;
+    }
+    const queryParams=new URLSearchParams(location.search);
+    const aiSceneCount=Math.max(0,Number(queryParams.get('ai_scenes')||0));
+    const aiGenerationMs=Math.max(0,Number(queryParams.get('ai_generation_ms')||0));
     const description='Автоматическая сборка из '+scenes.length+' видеофрагментов. Музыка: '+(audioTrack?audioTrack.name:'не добавлена')+'.';
     const {data:asset,error:assetError}=await db.from('qun_studio_assets').insert({
       title:title.slice(0,160),asset_type:'video',provider:'qun-mastercut-browser',asset_url:null,preview_url:null,
       prompt:description,status:'ready',tags:['QUN','Masterpiece','Mastercut','Film'],created_by:currentUser.id,
-      metadata:{storage_bucket:BUCKET,storage_path:path,content_type:mime,size_bytes:blob.size,duration_seconds:targetDuration,scene_count:scenes.length,source:'Browser MediaRecorder',audio_track:audioTrack?audioTrack.name:null,aspect:$('aspect').value}
+      metadata:{
+        storage_bucket:BUCKET,storage_path:path,content_type:mime,size_bytes:blob.size,duration_seconds:targetDuration,
+        scene_count:scenes.length,ai_scene_count:aiSceneCount,ai_generation_elapsed_ms:aiGenerationMs,
+        requested_music_duration_seconds:selectedAudioDuration,source:'Browser MediaRecorder',
+        audio_track:audioTrack?audioTrack.name:null,aspect:$('aspect').value,resource_meter_version:1
+      }
     }).select('id,title,created_at').single();
-    if (assetError) throw new Error('Видео загружено в QUN Storage, но запись в каталоге не создана: '+assetError.message);
-    const {data:signed,error:signedError}=await db.storage.from(BUCKET).createSignedUrl(path,7*24*60*60,{download:title.replace(/[^a-zA-Z0-9А-Яа-я _-]/g,'').slice(0,80)+'.'+ext});
+    if (assetError) {
+      $('status').textContent='Фильм загружен в Storage, но запись каталога не создана: '+assetError.message+'. Локальная копия доступна для скачивания.';
+      return;
+    }
+    const {data:signed,error:signedError}=await db.storage.from(BUCKET).createSignedUrl(path,7*24*60*60,{download:filename});
     const finalUrl=signed?.signedUrl||null;
-    $('result').innerHTML=(finalUrl?'<video controls playsinline preload="metadata" src="'+escapeHTML(finalUrl)+'"></video><a class="btn" href="'+escapeHTML(finalUrl)+'" target="_blank" rel="noopener">Скачать фильм ↓</a> ':'')+'<a class="link secondary" href="./index.html">Открыть QUN Library ↗</a>';
-    $('status').textContent='Готово! «'+title+'» сохранён в QUN Library · '+formatTime(targetDuration)+' · '+(blob.size/1024/1024).toFixed(1)+' МБ · '+ext.toUpperCase()+(signedError?' (созданную ссылку можно получить из библиотеки)':'');
+    $('result').innerHTML=localVideo+localDownload+(finalUrl?'<a class="link secondary" href="'+escapeHTML(finalUrl)+'" target="_blank" rel="noopener">Открыть копию в QUN Library ↗</a>':'')+'<a class="link secondary" href="./index.html">Открыть QUN Library ↗</a>';
+    $('status').textContent='Готово! «'+title+'» сохранён в QUN Library · '+formatTime(targetDuration)+' · '+(blob.size/1024/1024).toFixed(1)+' MiB · '+ext.toUpperCase()+(signedError?' (локальная копия также доступна)':'');
   } catch(error) {
     $('status').textContent='Не удалось завершить сборку: '+readableError(error);
   } finally {
