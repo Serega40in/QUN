@@ -279,6 +279,25 @@ async function getAudioTrack() {
       status("Такая композиция уже есть в QUN Library. Используем существующую копию — повторной загрузки не будет.");
       return refreshSignedAsset(duplicate);
     }
+    const legacyCandidates = audioAssets
+      .filter(asset => !asset.metadata?.sha256 && Number(asset.metadata?.size_bytes || 0) === localFile.size &&
+        asset.metadata?.storage_bucket === BUCKET && asset.metadata?.storage_path)
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+      .slice(0, 10);
+    for (const candidate of legacyCandidates) {
+      const existingSigned = await refreshSignedAsset(candidate);
+      const existingResponse = await fetch(existingSigned.signed_url);
+      if (!existingResponse.ok) continue;
+      const existingBytes = await existingResponse.arrayBuffer();
+      const existingHash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", existingBytes)))
+        .map(v => v.toString(16).padStart(2, "0")).join("");
+      if (existingHash !== sha256) continue;
+      const updatedMetadata = { ...(candidate.metadata || {}), sha256: existingHash };
+      await db.from("qun_studio_assets").update({ metadata: updatedMetadata })
+        .eq("id", candidate.id).eq("created_by", currentUser.id);
+      status("Совпадение найдено среди старых загрузок. Используем существующую композицию; второй файл не создаём.");
+      return existingSigned;
+    }
     status("Сохраняем новую композицию в QUN Library…");
     const ext = localFile.name.includes(".") ? localFile.name.split(".").pop().toLowerCase() : "mp3";
     const path = currentUser.id + "/" + crypto.randomUUID() + "." + ext;
