@@ -31,7 +31,11 @@ h1{font-size:clamp(30px,5vw,46px);line-height:1.05;letter-spacing:-.04em;margin:
 <section class="card">
 <h2>Windows CPU — свой бесплатный узел для монтажа</h2>
 <p class="hint">Для личного компьютера Windows без мощной видеокарты. Он не генерирует AI-видео, зато сам склеивает готовые сцены, обрезает музыку, пережимает результат и сохраняет фильм в твою QUN Library. ComfyUI и скачивание AI-моделей не нужны.</p>
-<div class="warning">Нужны Python 3, FFmpeg и ffprobe в PATH. На твоём текущем компьютере этот режим реалистичнее, чем запуск тяжёлой видеомодели на Intel HD 505.</div>
+<div class="warning">Нужны Python 3, Git, FFmpeg и ffprobe. На твоём компьютере этот режим реалистичнее, чем запуск тяжёлой видеомодели на Intel HD 505.</div>
+<p class="small">Проверь команды в PowerShell: <code>python --version</code>, <code>git --version</code>, <code>ffmpeg -version</code>, <code>ffprobe -version</code>. При отсутствии Git или FFmpeg их можно установить через WinGet:</p>
+<pre>winget install -e --id Git.Git
+winget install -e --id Gyan.FFmpeg</pre>
+<p class="small">После установки открой новое окно PowerShell и повтори проверку версий. WinGet-пакеты Git for Windows и FFmpeg доступны для Windows 10+. <a href="https://git-scm.com/install/windows" target="_blank" rel="noopener">Git for Windows</a> · <a href="https://www.gyan.dev/ffmpeg/builds/" target="_blank" rel="noopener">FFmpeg builds</a>.</p>
 <pre>git clone --depth 1 https://github.com/Serega40in/QUN.git "$HOME\QUN"
 cd "$HOME\QUN\docs\studio"
 $env:QUN_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L"
