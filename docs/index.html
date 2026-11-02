@@ -3,93 +3,150 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#071511">
-<meta name="description" content="QUN — живое пространство общения, знаний, творчества и технологий. Найди свой путь и создай что-то настоящее.">
-<title>QUN — пространство возможностей</title>
+<meta name="theme-color" content="#F6F9F7">
+<meta name="description" content="QUN — сервисы для общения, творчества, знаний и совместной работы. Всё необходимое — в одном месте.">
+<meta property="og:title" content="QUN — творчество, общение, технологии">
+<meta property="og:description" content="Сервисы QUN для общения, создания и совместной работы.">
+<title>QUN — творчество, общение, технологии</title>
+<link rel="stylesheet" href="./assets/qun-design-system.css">
 <style>
-:root{color-scheme:dark;--night:#071511;--deep:#0a201a;--glass:#102b24b8;--line:#d9ffe31c;--text:#eff9f1;--muted:#a4bbb0;--mint:#a5f2cc;--emerald:#38c99a;--gold:#d7bd7b;--ease:cubic-bezier(.2,.75,.25,1)}
-*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;min-height:100vh;background:var(--night);color:var(--text);font:16px/1.6 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:hidden}body:before{content:"";position:fixed;inset:0;z-index:-3;background:radial-gradient(ellipse at 18% 9%,#174b3b77,transparent 36%),radial-gradient(ellipse at 86% 38%,#173d3770,transparent 34%),linear-gradient(145deg,#071511,#091b1a 55%,#07130f)}body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.14;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.17'/%3E%3C/svg%3E")}
-a{color:inherit;text-decoration:none}button,input{font:inherit}.shell{width:min(1160px,calc(100% - 44px));margin:auto}.topbar{position:sticky;top:0;z-index:10;backdrop-filter:blur(20px);background:#071511bd;border-bottom:1px solid #d9ffe310}.nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:76px}.brand{display:flex;align-items:center;gap:12px;font-weight:850;letter-spacing:.23em;font-size:15px}.brandmark{width:34px;height:34px;display:grid;place-items:center;border:1px solid #8be5b985;border-radius:50% 50% 44% 56%;color:var(--mint);font-size:17px;box-shadow:inset 0 0 20px #3cbd8a22,0 0 28px #42b98913;transform:rotate(-8deg)}.navlinks{display:flex;gap:22px;align-items:center;color:var(--muted);font-size:13px}.navlinks a:hover{color:var(--mint)}.quiet{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:99px;background:#ffffff05;color:var(--muted);padding:8px 12px;cursor:pointer;font-size:12px;transition:all .25s}.quiet:hover,.quiet[aria-pressed=true]{color:var(--mint);border-color:#a5f2cc70}.pulse{width:6px;height:6px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px var(--mint)}
-.hero{position:relative;min-height:610px;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;padding:76px 0 88px;isolation:isolate}.hero-copy{position:relative;z-index:2}.eyebrow{display:flex;align-items:center;gap:11px;color:var(--mint);font-size:10px;letter-spacing:.24em;text-transform:uppercase;font-weight:750}.eyebrow:before{content:"";width:26px;height:1px;background:var(--gold)}h1{font-size:clamp(66px,10vw,136px);line-height:.84;letter-spacing:-.09em;font-weight:620;margin:30px 0 27px}h1 span{display:block;color:var(--mint);font-weight:400;font-family:Georgia,"Times New Roman",serif;font-style:italic;letter-spacing:-.085em;margin-top:12px}.lead{max-width:510px;font-size:clamp(17px,2vw,21px);line-height:1.7;color:#d0e1d7;margin:0}.actions{display:flex;gap:11px;flex-wrap:wrap;margin-top:32px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:48px;padding:0 20px;border-radius:99px;border:1px solid #a5f2cc70;background:linear-gradient(120deg,#a5f2cc,#70d7a8);color:#092016;font-size:13px;font-weight:750;transition:transform .25s var(--ease),box-shadow .25s}.btn:hover{transform:translateY(-2px);box-shadow:0 12px 35px #42c18a28}.btn.secondary{background:#ffffff06;color:var(--text);border-color:var(--line)}.btn.secondary:hover{border-color:#a5f2cc65}.microcopy{margin-top:18px;color:#78958a;font-size:11px;letter-spacing:.04em}
-.orbit-wrap{position:relative;display:grid;place-items:center;min-height:410px;overflow:visible}.orbit{position:absolute;width:min(36vw,420px);aspect-ratio:1;border:1px solid #a5f2cc20;border-radius:50%;animation:turn 54s linear infinite}.orbit:before,.orbit:after{content:"";position:absolute;border:1px solid #a5f2cc14;border-radius:50%;inset:11%}.orbit:after{inset:23%;border-color:#d7bd7b23}.orbit.two{width:min(28vw,320px);transform:rotateX(66deg) rotate(-20deg);animation-duration:38s;animation-direction:reverse}.orbit.three{width:min(23vw,260px);transform:rotateY(68deg) rotate(30deg);animation-duration:45s}.orb-core{position:relative;width:clamp(150px,20vw,236px);aspect-ratio:1;border-radius:48% 52% 59% 41% / 44% 41% 59% 56%;background:radial-gradient(circle at 33% 25%,#d6ffe7 0,#8ee9bd 8%,#3dbb8e 25%,#16634e 51%,#0b3027 72%,#071511 100%);box-shadow:inset -20px -24px 55px #03110d99,inset 12px 12px 32px #e3ffed4a,0 0 70px #32b98135,0 0 150px #1d765b25;animation:breathe 8s ease-in-out infinite;transform:rotate(-15deg)}.orb-core:before{content:"";position:absolute;inset:12%;border-radius:inherit;border:1px solid #effff05c;box-shadow:inset 0 0 30px #c7ffdd20;filter:blur(.2px)}.orb-core:after{content:"";position:absolute;width:34%;height:20%;top:19%;left:20%;border-radius:50%;background:#effff066;filter:blur(15px);transform:rotate(-38deg)}.orbit-caption{position:absolute;bottom:5%;right:0;color:#a0b9aa;font-size:10px;letter-spacing:.18em;text-transform:uppercase}.float-dot{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--gold);box-shadow:0 0 18px #d7bd7b90}.dot-a{top:17%;right:24%}.dot-b{bottom:19%;left:15%;width:4px;height:4px;background:var(--mint)}.dot-c{top:26%;left:20%;width:3px;height:3px}
-.section{padding:42px 0 70px}.section-head{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:24px}.section-head h2{font-size:clamp(27px,4vw,42px);line-height:1.1;letter-spacing:-.055em;font-weight:520;margin:9px 0 0}.section-head p{max-width:340px;color:var(--muted);font-size:12px;margin:0}.services{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.service{position:relative;display:flex;flex-direction:column;min-height:210px;padding:20px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#143126ad,#0a1b17ad);overflow:hidden;transition:transform .3s var(--ease),border-color .3s,background .3s}.service:before{content:"";position:absolute;width:140px;height:140px;right:-85px;top:-85px;border-radius:50%;background:#a5f2cc0c;transition:transform .5s}.service:hover{transform:translateY(-4px);border-color:#a5f2cc58;background:linear-gradient(145deg,#183c2fad,#0b1e18ed)}.service:hover:before{transform:scale(1.8)}.service-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.service-icon{width:40px;height:40px;display:grid;place-items:center;border:1px solid #a5f2cc27;border-radius:14px;color:var(--mint);font-size:18px;background:#a5f2cc08}.service-arrow{color:#719688;font-size:17px;transition:transform .25s}.service:hover .service-arrow{transform:translate(3px,-3px);color:var(--mint)}.service h3{font-size:15px;font-weight:650;margin:20px 0 5px;letter-spacing:-.015em}.service p{font-size:12px;line-height:1.65;color:var(--muted);margin:0 0 16px;flex:1}.service small{color:#9dddc0;font-size:10px;letter-spacing:.04em}.service[hidden]{display:none}.empty{display:none;color:var(--muted);padding:30px;text-align:center;border:1px dashed var(--line);border-radius:18px}.empty.visible{display:block}
-.search-panel{display:flex;align-items:center;gap:12px;padding:8px 10px 8px 17px;border:1px solid #a5f2cc2a;border-radius:17px;background:#0b211bbd;box-shadow:0 18px 70px #00000012}.search-icon{color:var(--mint);font-size:17px}.search-panel input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);padding:10px 0;font-size:14px}.search-panel input::placeholder{color:#78958a}.search-panel kbd{font:10px ui-monospace,monospace;color:#77968a;border:1px solid var(--line);border-radius:5px;padding:4px 6px}
-.interlude{position:relative;margin:0 0 72px;padding:34px clamp(22px,5vw,56px);border:1px solid #d7bd7b27;border-radius:24px;background:radial-gradient(ellipse at 92% 0%,#7a6a3420,transparent 42%),linear-gradient(120deg,#112b22,#0a1b17);overflow:hidden}.interlude:after{content:"";position:absolute;right:-65px;bottom:-125px;width:260px;height:260px;border:1px solid #d7bd7b2b;border-radius:50%;box-shadow:0 0 0 22px #d7bd7b08,0 0 0 48px #d7bd7b05}.interlude .eyebrow{color:var(--gold)}.interlude blockquote{position:relative;z-index:1;font:italic clamp(23px,4vw,39px)/1.35 Georgia,"Times New Roman",serif;letter-spacing:-.025em;max-width:750px;margin:17px 0 0;color:#e7f2e8}.interlude blockquote span{color:var(--mint)}
-.footer{border-top:1px solid var(--line);padding:25px 0 35px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:#779184;font-size:11px}.footer-links{display:flex;gap:16px;flex-wrap:wrap}.footer a:hover{color:var(--mint)}.status-note{font-size:11px;color:#829e90;max-width:650px;margin:18px 0 0}
-body.quiet-mode .service p,body.quiet-mode .lead,body.quiet-mode .section-head p{color:#b5c5b8}body.quiet-mode .topbar{background:#071511e8}
-@keyframes turn{to{transform:rotate(360deg)}}@keyframes breathe{0%,100%{border-radius:48% 52% 59% 41% / 44% 41% 59% 56%;transform:rotate(-15deg) scale(1)}50%{border-radius:55% 45% 43% 57% / 53% 58% 42% 47%;transform:rotate(-7deg) scale(1.035)}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
-@media(max-width:900px){.hero{grid-template-columns:1fr .75fr;min-height:550px}.services{grid-template-columns:repeat(2,minmax(0,1fr))}.orbit-wrap{min-height:340px}.orbit{width:min(38vw,340px)}.orbit.two{width:min(30vw,270px)}.orbit.three{width:min(24vw,220px)}}@media(max-width:650px){.shell{width:calc(100% - 32px)}.nav{min-height:66px}.navlinks{gap:12px}.navlinks a:nth-child(2){display:none}.quiet{padding:7px 9px}.hero{display:flex;flex-direction:column;align-items:stretch;padding:62px 0 40px;min-height:unset}.hero-copy{order:1}.orbit-wrap{order:0;min-height:270px;margin:-20px 0 5px}.orbit{width:250px}.orbit.two{width:205px}.orbit.three{width:170px}.orb-core{width:142px}.orbit-caption{right:5%;bottom:1%}h1{font-size:clamp(64px,18vw,98px);margin:23px 0}.lead{font-size:17px}.section{padding:30px 0 52px}.section-head{align-items:start;flex-direction:column;gap:8px}.services{gap:9px}.service{padding:15px;min-height:190px;border-radius:17px}.service h3{font-size:14px;margin-top:15px}.service p{font-size:11px}.interlude{margin-bottom:48px}.search-panel kbd{display:none}}@media(max-width:390px){.services{grid-template-columns:1fr}.service{min-height:150px}.service h3{margin-top:12px}.navlinks{font-size:12px}.brand{letter-spacing:.16em}}
+:root{--bg:var(--qun-bg);--surface:var(--qun-surface);--ink:var(--qun-ink);--muted:var(--qun-muted);--line:var(--qun-line);--green:var(--qun-emerald);--gold:var(--qun-gold);--container:1180px}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}button,input{font:inherit}.wrap{width:min(var(--container),calc(100% - 44px));margin-inline:auto}
+.header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.nav{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:850;letter-spacing:.18em;font-size:16px}
+.brand-mark{width:32px;height:32px;display:grid;place-items:center;border:1.5px solid var(--green);border-radius:10px;color:var(--green);font-size:17px;font-weight:800}
+.nav-links{display:flex;align-items:center;gap:27px;color:#64797d;font-size:13px}.nav-links a:hover{color:var(--green)}
+.nav-cta{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-size:13px;font-weight:700;transition:.2s}
+.nav-cta:hover{border-color:#9acbb8;color:var(--green)}
+.hero{display:grid;grid-template-columns:1.02fr .98fr;align-items:center;gap:20px;min-height:570px;padding:52px 0 64px}
+.hero-copy{position:relative;z-index:2}.eyebrow{display:flex;align-items:center;gap:10px;color:var(--green);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.eyebrow:before{content:"";width:22px;height:1px;background:var(--gold)}
+h1{margin:26px 0 23px;font-size:clamp(58px,7.3vw,94px);line-height:.99;letter-spacing:-.075em;font-weight:680}
+h1 span{display:block;color:var(--green)}
+.lead{max-width:530px;margin:0;color:#63787d;font-size:clamp(17px,1.7vw,20px);line-height:1.65}
+.actions{display:flex;flex-wrap:wrap;gap:11px;margin-top:30px}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 20px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-size:14px;font-weight:700;transition:transform .2s,border-color .2s,background .2s,box-shadow .2s}
+.button:hover{transform:translateY(-2px);border-color:#9acbb8;box-shadow:0 9px 24px rgba(24,91,65,.08)}
+.button.primary{background:var(--green);border-color:var(--green);color:#fff}.button.primary:hover{background:var(--qun-emerald-dark);border-color:var(--qun-emerald-dark)}
+.hero-art{position:relative;display:grid;place-items:center;min-height:450px;isolation:isolate}
+.hero-art:before{content:"";position:absolute;z-index:-1;width:75%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(207,239,224,.52),rgba(207,239,224,0) 68%);filter:blur(10px)}
+.hero-art img{position:relative;z-index:2;width:min(100%,620px);height:auto;object-fit:contain;filter:drop-shadow(0 24px 34px rgba(20,66,60,.12))}
+.art-fallback{position:absolute;z-index:1;width:min(100%,510px);height:auto;overflow:visible}
+.art-fallback path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.section{padding:26px 0 78px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:28px}
+.section-head h2{margin:8px 0 0;font-size:clamp(29px,4vw,42px);line-height:1.08;letter-spacing:-.055em;font-weight:680}
+.section-head p{margin:0;color:var(--muted);font-size:14px}
+.search-row{display:flex;align-items:center;gap:12px;max-width:460px;margin:0 0 34px;padding:0 16px;border:1px solid var(--line);border-radius:14px;background:#fff;transition:border-color .2s,box-shadow .2s}
+.search-row:focus-within{border-color:#9acbb8;box-shadow:0 0 0 3px rgba(22,134,107,.1)}
+.search-icon{font-size:18px;color:var(--green)}.search-row input{width:100%;min-width:0;height:48px;border:0;outline:0;background:transparent;color:var(--ink);font-size:14px}
+.search-row input::placeholder{color:#99a9a7}
+.group{margin:0 0 37px}.group-title{display:flex;align-items:center;gap:12px;margin:0 0 15px;font-size:18px;font-weight:750;letter-spacing:-.025em}
+.group-title:after{content:"";height:1px;flex:1;background:var(--line)}
+.service-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.service-card{position:relative;display:flex;flex-direction:column;min-height:145px;padding:19px 20px 17px;border:1px solid var(--line);border-radius:16px;background:#fff;transition:transform .2s,border-color .2s,box-shadow .2s}
+.service-card:hover{transform:translateY(-2px);border-color:#a8cfbf;box-shadow:0 12px 26px rgba(24,91,65,.07)}
+.service-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.service-card h3{margin:12px 0 4px;font-size:16px;line-height:1.25;font-weight:750;letter-spacing:-.02em}
+.service-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+.service-arrow{color:#7a9690;font-size:18px;transition:transform .2s,color .2s}.service-card:hover .service-arrow{transform:translate(2px,-2px);color:var(--green)}
+.status{display:inline-flex;align-items:center;min-height:21px;padding:2px 8px;border-radius:99px;background:var(--qun-emerald-soft);color:var(--qun-emerald-dark);font-size:10px;font-weight:700;letter-spacing:.02em}
+.service-card[hidden],.group[hidden]{display:none}.empty{display:none;padding:25px 0;color:var(--muted);font-size:14px}.empty.visible{display:block}
+.note{margin:7px 0 0;color:#879895;font-size:12px}
+.footer{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:24px 0 34px;border-top:1px solid var(--line);color:#859694;font-size:12px}
+.footer-links{display:flex;flex-wrap:wrap;gap:18px}.footer a:hover{color:var(--green)}
+@media(max-width:900px){.hero{grid-template-columns:1fr .85fr;min-height:510px;gap:0}h1{font-size:clamp(56px,8vw,76px)}.hero-art{min-height:360px}.service-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.wrap{width:calc(100% - 32px)}.nav{min-height:64px}.nav-links{gap:15px;font-size:12px}.nav-links a:nth-child(3){display:none}.nav-cta{min-height:36px;padding:0 12px;font-size:12px}
+.hero{display:flex;flex-direction:column-reverse;align-items:stretch;gap:0;padding:16px 0 44px;min-height:0}.hero-art{min-height:270px;margin:-4px 0 0}.hero-art img{width:min(100%,390px);max-height:310px}.art-fallback{width:min(100%,350px)}
+h1{font-size:clamp(51px,14vw,72px);margin:18px 0}.lead{font-size:16px}.actions{margin-top:22px}.button{min-height:45px;padding:0 16px}
+.section{padding:16px 0 54px}.section-head{display:block;margin-bottom:19px}.section-head p{margin-top:7px}
+.search-row{max-width:none;margin-bottom:27px}.service-grid{gap:9px}.service-card{min-height:142px;padding:15px}.service-card h3{font-size:14px}.service-card p{font-size:12px}.footer{padding-bottom:28px}}
+@media(max-width:390px){.service-grid{grid-template-columns:1fr}.service-card{min-height:unset}.nav-links a:nth-child(2){display:none}}
 </style>
 </head>
 <body>
-<header class="topbar"><div class="shell nav">
-<a class="brand" href="./" aria-label="QUN — главная"><span class="brandmark">Q</span><span>Q U N</span></a>
-<nav class="navlinks" aria-label="Основная навигация"><a href="#services">Пространства</a><a href="./journals/">Журналы</a><a href="./knowledge/">Знания ↗</a></nav>
-<button class="quiet" id="quiet-toggle" type="button" aria-pressed="false" aria-label="Переключить спокойный режим"><span class="pulse"></span><span id="quiet-label">Побыть в тишине</span></button>
+<header class="header"><div class="wrap nav">
+  <a class="brand" href="./" aria-label="QUN — главная"><span class="brand-mark">Q</span><span>QUN</span></a>
+  <nav class="nav-links" aria-label="Основная навигация"><a href="#services">Сервисы</a><a href="./ecosystem/">Экосистема</a><a href="./journals/">Журналы</a></nav>
+  <a class="nav-cta" href="./messenger/">Мессенджер <span aria-hidden="true">↗</span></a>
 </div></header>
-<main class="shell">
+<main class="wrap">
 <section class="hero" aria-labelledby="hero-title">
-<div class="hero-copy"><div class="eyebrow">Живое пространство QUN</div><h1 id="hero-title">Всё уже<br><span>начинается.</span></h1>
-<p class="lead">Не нужно становиться кем-то другим, чтобы создавать. Найди пространство для мысли, встречи, открытия или того, чему пока нет названия.</p>
-<div class="actions"><a class="btn" href="#services">Войти в QUN <span aria-hidden="true">↘</span></a><a class="btn secondary" href="./ecosystem/">Почувствовать замысел <span aria-hidden="true">↗</span></a></div>
-<p class="microcopy">Открытая экосистема. Свободный выбор. Созидание без лишнего шума.</p></div>
-<div class="orbit-wrap" aria-hidden="true"><div class="orbit"></div><div class="orbit two"></div><div class="orbit three"></div><div class="orb-core"></div><i class="float-dot dot-a"></i><i class="float-dot dot-b"></i><i class="float-dot dot-c"></i><div class="orbit-caption">связь · движение · жизнь</div></div>
+  <div class="hero-copy">
+    <div class="eyebrow">Цифровая экосистема QUN</div>
+    <h1 id="hero-title">Творчество.<br>Общение.<br><span>Технологии.</span></h1>
+    <p class="lead">Сервисы для общения, создания, знаний и совместной работы — в одном месте.</p>
+    <div class="actions"><a class="button primary" href="#services">Выбрать сервис <span aria-hidden="true">↘</span></a><a class="button" href="./ecosystem/">Об экосистеме <span aria-hidden="true">↗</span></a></div>
+  </div>
+  <div class="hero-art" aria-label="Скульптура из прозрачного стекла в цветах QUN">
+    <svg class="art-fallback" viewBox="0 0 560 500" aria-hidden="true">
+      <defs>
+        <linearGradient id="emerald" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#B7F3D5"/><stop offset=".35" stop-color="#16866B"/><stop offset=".75" stop-color="#0C594F"/><stop offset="1" stop-color="#A5E8D0"/></linearGradient>
+        <linearGradient id="sapphire" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#B9E8F9"/><stop offset=".4" stop-color="#2878A6"/><stop offset="1" stop-color="#173D70"/></linearGradient>
+        <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F3D99A"/><stop offset=".5" stop-color="#B98E45"/><stop offset="1" stop-color="#F2D8A0"/></linearGradient>
+        <filter id="soft"><feGaussianBlur stdDeviation="15"/></filter>
+      </defs>
+      <ellipse cx="280" cy="260" rx="205" ry="185" fill="#C8E9D8" opacity=".42" filter="url(#soft)"/>
+      <path d="M106 253C62 135 168 61 286 91c121 31 185 145 133 242-50 94-196 133-292 69-67-45-85-106-21-149" stroke="url(#emerald)" stroke-width="48"/>
+      <path d="M271 76c117-30 205 48 194 159-11 109-119 190-222 160-103-30-151-128-91-222 30-47 82-81 119-97" stroke="url(#sapphire)" stroke-width="42"/>
+      <path d="M87 266c39-98 162-132 274-69 82 46 108 141 45 202-66 63-182 58-267-12" stroke="url(#gold)" stroke-width="12" opacity=".82"/>
+      <path d="M117 242c-18-57 20-120 83-146M338 94c74 8 121 65 127 128M423 340c-35 63-113 97-180 89" stroke="#fff" stroke-width="5" opacity=".65"/>
+    </svg>
+    <img src="./assets/qun-hero-art.png" alt="" loading="eager" decoding="async" onerror="this.style.display='none'">
+  </div>
 </section>
 <section class="section" id="services" aria-labelledby="services-title">
-<div class="section-head"><div><div class="eyebrow">Выбери свой путь</div><h2 id="services-title">Пространства QUN</h2></div><p>Каждый путь ведёт к своему опыту. Введи слово, чтобы найти нужное.</p></div>
-<label class="search-panel" for="service-search"><span class="search-icon" aria-hidden="true">⌕</span><input id="service-search" type="search" autocomplete="off" placeholder="Найти пространство: творчество, общение, вычисления…" aria-label="Найти сервис QUN"><kbd>/</kbd></label>
-<div class="services" id="service-grid" style="margin-top:15px">
-<a class="service" href="./messenger/" data-search="мессенджер messenger сообщения общение диалоги люди чат"><div class="service-top"><span class="service-icon">↗</span><span class="service-arrow">↗</span></div><h3>QUN Messenger</h3><p>Диалоги, профили и возможность быть на связи.</p><small>Общаться</small></a>
-<a class="service" href="./qun-ai/" data-search="искусственный интеллект ai помощник идеи знания вопросы"><div class="service-top"><span class="service-icon">✳</span><span class="service-arrow">↗</span></div><h3>QUN AI</h3><p>Исследовать идеи, задавать вопросы, находить связи.</p><small>Исследовать</small></a>
-<a class="service" href="./studio/" data-search="анимация animation studio видео музыка изображения искусство творчество генерация директор"><div class="service-top"><span class="service-icon">✦</span><span class="service-arrow">↗</span></div><h3>Animation Studio</h3><p>Превращать замыслы в образы, истории, звук и движение.</p><small>Создавать</small></a>
-<a class="service" href="./compute/" data-search="compute вычисления браузер сеть ресурсы вклад вкладка узел living compute"><div class="service-top"><span class="service-icon">⌘</span><span class="service-arrow">↗</span></div><h3>Living Compute</h3><p>Добровольно делиться ресурсами для общих задач.</p><small>Участвовать</small></a>
-<a class="service" href="./node/" data-search="node узел storage хранилище guardian инфраструктура сеть устройство"><div class="service-top"><span class="service-icon">◉</span><span class="service-arrow">↗</span></div><h3>QUN Node</h3><p>Локальные узлы, хранилище и распределённая инфраструктура.</p><small>Подключаться</small></a>
-<a class="service" href="./market/" data-search="market рынок маркетплейс товары услуги покупки продавцы"><div class="service-top"><span class="service-icon">◇</span><span class="service-arrow">↗</span></div><h3>QUN Market</h3><p>Находить товары, услуги и предложения сообщества.</p><small>Открывать</small></a>
-<a class="service" href="./qun-wallet/" data-search="wallet кошелек кошелёк финансы тестовый ledger coin"><div class="service-top"><span class="service-icon">◈</span><span class="service-arrow">↗</span></div><h3>QUN Wallet</h3><p>Тестовый кошелёк и эксперименты с цифровыми активами.</p><small>Изучать</small></a>
-<a class="service" href="./qun-social/" data-search="social сообщество лента публикации люди посты"><div class="service-top"><span class="service-icon">◎</span><span class="service-arrow">↗</span></div><h3>QUN Social</h3><p>Публикации, встречи и жизнь сообщества.</p><small>Делиться</small></a>
-<a class="service" href="./publisher/" data-search="publisher издательство публикации авторы журнал статьи текст"><div class="service-top"><span class="service-icon">✎</span><span class="service-arrow">↗</span></div><h3>QUN Publisher</h3><p>Публиковать мысли, работы и истории.</p><small>Выражать</small></a>
-<a class="service" href="./search/" data-search="search поиск сервисы документы открытые материалы найти"><div class="service-top"><span class="service-icon">⌕</span><span class="service-arrow">↗</span></div><h3>QUN Search</h3><p>Находить сервисы и открытые материалы экосистемы.</p><small>Находить</small></a>
-<a class="service" href="./ecosystem/" data-search="id identity идентичность профиль экосистема единый вход"><div class="service-top"><span class="service-icon">ID</span><span class="service-arrow">↗</span></div><h3>QUN ID</h3><p>Направление единой идентичности и профиля.</p><small>Соединять</small></a>
-<a class="service" href="./miniapp/" data-search="mini app игра игровые миры эволюция остров интерактив"><div class="service-top"><span class="service-icon">✧</span><span class="service-arrow">↗</span></div><h3>QUN Mini App</h3><p>Игровые эксперименты и интерактивные миры.</p><small>Играть</small></a>
-<a class="service" href="./guardian/" data-search="guardian безопасность наблюдение мониторинг инфраструктура"><div class="service-top"><span class="service-icon">⌖</span><span class="service-arrow">↗</span></div><h3>QUN Guardian</h3><p>Наблюдение за состоянием инфраструктуры.</p><small>Заботиться</small></a>
-<a class="service" href="./knowledge/" data-search="knowledge hub знания документация инструкции разработка память"><div class="service-top"><span class="service-icon">▤</span><span class="service-arrow">↗</span></div><h3>Knowledge Hub</h3><p>Документация, контекст и знания проектов.</p><small>Понимать</small></a>
-<a class="service" href="./journals/" data-search="журнал journals публикации редакция чтение вдохновение"><div class="service-top"><span class="service-icon">❧</span><span class="service-arrow">↗</span></div><h3>Журналы QUN</h3><p>Читать, наблюдать, вдохновляться и сохранять идеи.</p><small>Читать</small></a>
-<a class="service" href="./ecosystem/" data-search="экосистема ecosystem архитектура принципы дорожная карта будущее"><div class="service-top"><span class="service-icon">⟡</span><span class="service-arrow">↗</span></div><h3>Экосистема</h3><p>Увидеть общую картину и направление развития QUN.</p><small>Понимать целое</small></a>
-</div><div class="empty" id="empty-state" role="status">Ничего не найдено. Попробуй другое слово или открой <a href="./search/" style="color:var(--mint)">QUN Search ↗</a>.</div>
-<p class="status-note">Страница объединяет существующие адреса проектов. Ссылка на сервис не гарантирует, что все его функции уже доступны: экспериментальные и тестовые возможности могут оставаться в разработке.</p>
+  <div class="section-head"><div><div class="eyebrow">Главное — рядом</div><h2 id="services-title">Сервисы QUN</h2></div><p>Выберите нужный инструмент.</p></div>
+  <label class="search-row" for="service-search"><span class="search-icon" aria-hidden="true">⌕</span><input id="service-search" type="search" autocomplete="off" placeholder="Найти сервис…" aria-label="Найти сервис QUN"></label>
+  <section class="group" aria-labelledby="group-community"><h3 class="group-title" id="group-community">Общение и знания</h3><div class="service-grid">
+    <a class="service-card" href="./messenger/" data-search="мессенджер messenger чат диалоги сообщения общение"><span class="service-top"><span class="status">Общение</span><span class="service-arrow">↗</span></span><h3>QUN Messenger</h3><p>Личные и групповые диалоги.</p></a>
+    <a class="service-card" href="./qun-social/" data-search="социальная сеть social публикации лента сообщество"><span class="service-top"><span class="status">Сообщество</span><span class="service-arrow">↗</span></span><h3>QUN Social</h3><p>Публикации и обсуждения.</p></a>
+    <a class="service-card" href="./publisher/" data-search="news publisher новости статьи публикации"><span class="service-top"><span class="status">Публикации</span><span class="service-arrow">↗</span></span><h3>QUN News</h3><p>Статьи и материалы сообщества.</p></a>
+    <a class="service-card" href="./journals/" data-search="журналы journals редакция чтение подборки"><span class="service-top"><span class="status">Чтение</span><span class="service-arrow">↗</span></span><h3>Журналы QUN</h3><p>Редакционные подборки и идеи.</p></a>
+    <a class="service-card" href="./knowledge/" data-search="knowledge hub документация знания инструкции база"><span class="service-top"><span class="status">Документация</span><span class="service-arrow">↗</span></span><h3>Knowledge Hub</h3><p>Общая база знаний и материалов.</p></a>
+    <a class="service-card" href="./search/" data-search="search поиск сервисы материалы найти"><span class="service-top"><span class="status">Поиск</span><span class="service-arrow">↗</span></span><h3>QUN Search</h3><p>Поиск по сервисам и материалам.</p></a>
+  </div></section>
+  <section class="group" aria-labelledby="group-create"><h3 class="group-title" id="group-create">Создание и технологии</h3><div class="service-grid">
+    <a class="service-card" href="./qun-ai/" data-search="ai искусственный интеллект помощник идеи вопросы"><span class="service-top"><span class="status">ИИ</span><span class="service-arrow">↗</span></span><h3>QUN AI</h3><p>Идеи, вопросы и помощь с задачами.</p></a>
+    <a class="service-card" href="./studio/" data-search="animation studio видео музыка изображения арт генерация творчество"><span class="service-top"><span class="status">Творчество</span><span class="service-arrow">↗</span></span><h3>Animation Studio</h3><p>Изображения, видео, музыка и истории.</p></a>
+    <a class="service-card" href="./compute/" data-search="living compute вычисления браузер ресурсы устройств"><span class="service-top"><span class="status">Эксперимент</span><span class="service-arrow">↗</span></span><h3>QUN Living Compute</h3><p>Добровольный вклад ресурсов устройств.</p></a>
+    <a class="service-card" href="./node/" data-search="node узел storage хранилище сеть устройства"><span class="service-top"><span class="status">Развитие</span><span class="service-arrow">↗</span></span><h3>QUN Node</h3><p>Устройства, хранилище и сеть.</p></a>
+    <a class="service-card" href="./guardian/" data-search="guardian безопасность контроль мониторинг состояние"><span class="service-top"><span class="status">Контроль</span><span class="service-arrow">↗</span></span><h3>QUN Guardian</h3><p>Состояние сервисов и инфраструктуры.</p></a>
+  </div></section>
+  <section class="group" aria-labelledby="group-tools"><h3 class="group-title" id="group-tools">Инструменты и экосистема</h3><div class="service-grid">
+    <a class="service-card" href="./market/" data-search="market магазин товары услуги покупки продавцы"><span class="service-top"><span class="status">Маркет</span><span class="service-arrow">↗</span></span><h3>QUN Market</h3><p>Товары, услуги и предложения.</p></a>
+    <a class="service-card" href="./qun-wallet/" data-search="wallet кошелек кошелёк coin цифровые активы"><span class="service-top"><span class="status">Тестовая сеть</span><span class="service-arrow">↗</span></span><h3>QUN Wallet</h3><p>Тестовый кошелёк и цифровые активы.</p></a>
+    <a class="service-card" href="./miniapp/" data-search="mini app игра игровые миры эволюция"><span class="service-top"><span class="status">Прототип</span><span class="service-arrow">↗</span></span><h3>QUN Mini App</h3><p>Игровые эксперименты и интерактивные миры.</p></a>
+    <a class="service-card" href="./vpn/" data-search="vpn подключение сеть happ"><span class="service-top"><span class="status">Инструмент</span><span class="service-arrow">↗</span></span><h3>QUN VPN</h3><p>Раздел управления подключением.</p></a>
+    <a class="service-card" href="./ecosystem/" data-search="ecosystem экосистема структура направления принципы"><span class="service-top"><span class="status">Обзор</span><span class="service-arrow">↗</span></span><h3>Экосистема QUN</h3><p>Все направления и общая структура.</p></a>
+    <a class="service-card" href="./developers/" data-search="developer hub разработчики github код вклад участие"><span class="service-top"><span class="status">Разработка</span><span class="service-arrow">↗</span></span><h3>Developer Hub</h3><p>Материалы для участников разработки.</p></a>
+  </div></section>
+  <p class="empty" id="empty-state" role="status">Ничего не найдено. Попробуйте другое название.</p>
+  <p class="note">Часть сервисов развивается и может работать в тестовом режиме. Их статус указан рядом с названием.</p>
 </section>
-<section class="interlude"><div class="eyebrow">Маленькое напоминание</div><blockquote>Тебе не нужно становиться кем-то, чтобы начать. <span>Достаточно быть здесь — и сделать следующий живой шаг.</span></blockquote></section>
 </main>
-<footer class="shell footer"><span>© QUN · Технологии, люди, созидание</span><div class="footer-links"><a href="./search/">Поиск</a><a href="./messenger/">Мессенджер</a><a href="./journals/">Журналы</a><a href="https://github.com/Serega40in/QUN">Исходный код ↗</a></div></footer>
+<footer class="wrap footer"><span>© QUN · Творчество. Общение. Технологии.</span><nav class="footer-links" aria-label="Дополнительные ссылки"><a href="./privacy.html">Конфиденциальность</a><a href="./developers/">Разработчикам</a><a href="https://github.com/Serega40in/QUN">Исходный код ↗</a></nav></footer>
 <script>
 (function(){
   const input=document.getElementById('service-search');
-  const cards=Array.from(document.querySelectorAll('.service'));
+  const cards=Array.from(document.querySelectorAll('.service-card'));
+  const groups=Array.from(document.querySelectorAll('.group'));
   const empty=document.getElementById('empty-state');
   function filter(){
-    const q=input.value.trim().toLocaleLowerCase('ru');
-    let count=0;
+    const q=input.value.trim().toLocaleLowerCase('ru');let total=0;
     cards.forEach(card=>{
-      const hay=(card.innerText+' '+(card.dataset.search||'')).toLocaleLowerCase('ru');
-      const match=!q||hay.includes(q);
-      card.hidden=!match;
-      if(match)count++;
+      const text=(card.innerText+' '+(card.dataset.search||'')).toLocaleLowerCase('ru');
+      const match=!q||text.includes(q);card.hidden=!match;if(match)total++;
     });
-    empty.classList.toggle('visible',count===0);
+    groups.forEach(group=>group.hidden=!group.querySelector('.service-card:not([hidden])'));
+    empty.classList.toggle('visible',total===0);
   }
   input.addEventListener('input',filter);
   document.addEventListener('keydown',e=>{
     if(e.key==='/'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)&&!e.ctrlKey&&!e.metaKey){e.preventDefault();input.focus()}
     if(e.key==='Escape'&&document.activeElement===input){input.value='';filter();input.blur()}
-  });
-  const toggle=document.getElementById('quiet-toggle');
-  const label=document.getElementById('quiet-label');
-  toggle.addEventListener('click',()=>{
-    const enabled=toggle.getAttribute('aria-pressed')!=='true';
-    toggle.setAttribute('aria-pressed',String(enabled));
-    document.body.classList.toggle('quiet-mode',enabled);
-    label.textContent=enabled?'Вернуться':'Побыть в тишине';
-    if(enabled){document.querySelector('.hero-copy').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'})}
   });
 })();
 </script>
