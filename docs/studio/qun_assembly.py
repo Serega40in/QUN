@@ -13,7 +13,7 @@ from qun_compress import cap_output_size
 
 ALLOWED_HOST = "qdxjltqlnphvzafapncm.supabase.co"
 BUCKET_PREFIX = "/storage/v1/object/sign/qun-studio-media/"
-MAX_ASSET_BYTES = 100 * 1024 * 1024
+MAX_ASSET_BYTES = 45 * 1024 * 1024
 VIDEO_EXTS = {".mp4", ".mov", ".mkv", ".webm", ".avi"}
 AUDIO_EXTS = {".mp3", ".wav", ".flac", ".m4a", ".aac", ".ogg", ".opus", ".webm"}
 
@@ -41,7 +41,7 @@ def _download_signed(item: dict, folder: Path, name: str, publishable_key: str) 
                     break
                 total += len(chunk)
                 if total > MAX_ASSET_BYTES:
-                    raise RuntimeError("A QUN source asset exceeds the 100 MB file limit.")
+                    raise RuntimeError("A QUN source asset exceeds the 45 MiB safe file limit.")
                 output.write(chunk)
     except HTTPError as exc:
         raise RuntimeError("Could not download a signed QUN Storage asset: HTTP " + str(exc.code)) from exc
