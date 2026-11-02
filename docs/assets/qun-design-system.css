@@ -2,19 +2,19 @@
    Light theme for discovery and information pages. Dense workspaces and games
    can opt out when a darker canvas improves practical readability. */
 :root{
-  --qun-bg:#F6F9F7;
-  --qun-surface:#FFFFFF;
-  --qun-surface-soft:#EEF5F1;
+  --qun-bg:#EDF2EF;
+  --qun-surface:#F9FBFA;
+  --qun-surface-soft:#E3EBE6;
   --qun-ink:#173447;
-  --qun-muted:#6E8186;
-  --qun-line:#DDE8E2;
-  --qun-emerald:#16866B;
-  --qun-emerald-dark:#0F6D58;
-  --qun-emerald-soft:#E3F3EC;
-  --qun-gold:#C3A15B;
+  --qun-muted:#50656C;
+  --qun-line:#CAD7D1;
+  --qun-emerald:#0B765D;
+  --qun-emerald-dark:#075B49;
+  --qun-emerald-soft:#DCECE4;
+  --qun-gold:#A98748;
   --qun-radius:18px;
-  --qun-shadow:0 12px 36px rgba(18,55,43,.07);
-  --qun-focus:0 0 0 3px rgba(22,134,107,.18);
+  --qun-shadow:0 12px 32px rgba(18,55,43,.10);
+  --qun-focus:0 0 0 3px rgba(11,118,93,.24);
 }
 html{scroll-behavior:smooth}
 body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -66,7 +66,9 @@ html[data-qun-theme="light"] select{background:var(--qun-surface)!important;bord
 html[data-qun-theme="light"] .btn,
 html[data-qun-theme="light"] .button{background:var(--qun-surface)!important;border-color:var(--qun-line)!important;color:var(--qun-ink)!important}
 html[data-qun-theme="light"] .btn.primary,
-html[data-qun-theme="light"] .button.primary{background:var(--qun-emerald)!important;border-color:var(--qun-emerald)!important;color:#fff!important}
+html[data-qun-theme="light"] .btn.green,
+html[data-qun-theme="light"] .button.primary,
+html[data-qun-theme="light"] .button.green{background:var(--qun-emerald)!important;border-color:var(--qun-emerald)!important;color:#fff!important}
 html[data-qun-theme="light"] .mark,
 html[data-qun-theme="light"] .gem{background:#fff!important;border-color:var(--qun-emerald)!important;color:var(--qun-emerald)!important}
 html[data-qun-theme="light"] .tag,
