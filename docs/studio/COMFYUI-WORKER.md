@@ -85,3 +85,27 @@ Install FFmpeg on the same machine as the worker and verify `ffmpeg -version` wo
 After at least two video scene jobs succeed, use **Собрать MP4** in QUN Director. The page queues a `comfyui_workflow` job with `requirements.operation = "assemble_video"` and the output metadata from completed jobs. The worker accepts filenames only, rejects path traversal, and resolves files strictly inside `QUN_COMFYUI_OUTPUT_DIR`. A completed music job is muxed into the MP4; otherwise the clip is assembled without music. Scene clips need compatible codecs for FFmpeg stream-copy concatenation.
 
 The final MP4 is saved in the ComfyUI output directory and returned as a ComfyUI `/view` URL. It is not yet uploaded to private QUN Storage; a local ComfyUI URL is only accessible from a browser that can reach that server.
+
+
+
+## Windows CPU-only node (assembly without ComfyUI)
+
+A Windows PC without a suitable AI GPU can still run the final FFmpeg assembly for scenes that already exist in QUN Storage. This node does not generate Wan/ComfyUI AI scenes and does not need ComfyUI or model downloads. It only claims owner-scoped `comfyui_workflow` jobs whose `requirements.operation` is `assemble_video`.
+
+Requirements: Python 3, FFmpeg and ffprobe available in PATH, and a Windows PC that can stay online while jobs run.
+
+```powershell
+git clone --depth 1 https://github.com/Serega40in/QUN.git "$HOME\QUN"
+cd "$HOME\QUN\docs\studio"
+$env:QUN_SUPABASE_PUBLISHABLE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY"
+$env:QUN_NODE_PLATFORM = "windows-cpu"
+python .\register_gpu_worker.py
+$env:QUN_FFMPEG_PATH = "ffmpeg"
+$env:QUN_FFPROBE_PATH = "ffprobe"
+$env:QUN_COMFYUI_OUTPUT_DIR = "$HOME\QUN-Render-Output"
+python .\comfyui_worker.py
+```
+
+The enrollment code is issued by the signed-in QUN account on the Render Node page. The registration script saves the node secret locally in the user's QUN configuration directory. Do not copy that secret into chat, GitHub or a web page.
+
+When the worker is online, QUN Director can submit final assembly jobs to it. The worker downloads only the selected signed QUN Storage assets, joins scenes with FFmpeg, trims the soundtrack to the selected 10/30/60-second setting or uses the full track, compresses the result to the safe QUN Storage size budget, then uploads it to the owner's private Library. CPU-only mode is for editing/assembly; AI video generation still needs an AI-capable GPU node or an available external generator.
