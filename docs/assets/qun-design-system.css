@@ -1,0 +1,39 @@
+/* QUN Design System — light foundation, v0.1
+   Shared visual tokens for the QUN ecosystem. Product-specific workspaces may
+   keep a darker canvas where it materially improves dense operational work. */
+:root{
+  color-scheme:light;
+  --qun-bg:#F6F9F7;
+  --qun-surface:#FFFFFF;
+  --qun-surface-soft:#EEF5F1;
+  --qun-ink:#173447;
+  --qun-muted:#6E8186;
+  --qun-line:#DDE8E2;
+  --qun-emerald:#16866B;
+  --qun-emerald-dark:#0F6D58;
+  --qun-emerald-soft:#E3F3EC;
+  --qun-gold:#C3A15B;
+  --qun-radius:18px;
+  --qun-shadow:0 12px 36px rgba(18,55,43,.07);
+  --qun-focus:0 0 0 3px rgba(22,134,107,.18);
+}
+html{scroll-behavior:smooth}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--qun-emerald-dark)}
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{
+  outline:none;box-shadow:var(--qun-focus)
+}
+.qun-container{width:min(1180px,calc(100% - 40px));margin-inline:auto}
+.qun-eyebrow{color:var(--qun-emerald);font-size:11px;font-weight:750;letter-spacing:.13em;text-transform:uppercase}
+.qun-button{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  min-height:46px;padding:0 18px;border:1px solid var(--qun-line);
+  border-radius:999px;background:var(--qun-surface);color:var(--qun-ink);
+  font:650 14px/1 inherit;text-decoration:none;cursor:pointer;
+  transition:transform .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease
+}
+.qun-button:hover{transform:translateY(-1px);border-color:#9CCDBA;box-shadow:var(--qun-shadow)}
+.qun-button--primary{background:var(--qun-emerald);border-color:var(--qun-emerald);color:#fff}
+.qun-button--primary:hover{background:var(--qun-emerald-dark);border-color:var(--qun-emerald-dark)}
+.qun-card{border:1px solid var(--qun-line);border-radius:var(--qun-radius);background:var(--qun-surface);box-shadow:var(--qun-shadow)}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
