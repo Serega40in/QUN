@@ -35,8 +35,12 @@ h1{font-size:clamp(30px,5vw,46px);line-height:1.05;letter-spacing:-.04em;margin:
 <div><label class="label" for="sceneCount">Количество сцен</label><select id="sceneCount" class="field"><option value="2" selected>2 сцены · быстрый AI-клип</option><option value="4">4 сцены · свой GPU-узел</option><option value="6">6 сцен · свой GPU-узел</option><option value="8">8 сцен · свой GPU-узел</option><option value="10">10 сцен · свой GPU-узел</option><option value="12">12 сцен · свой GPU-узел</option></select></div>
 <div><label class="label" for="musicSelect">Музыка из QUN Library</label><select id="musicSelect" class="field"><option value="">Без музыки</option></select></div>
 </div>
-<label class="label" for="audioFile">Или загрузить музыкальный файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/aac,audio/mp4,audio/webm" class="field">
-<p class="hint">Быстрый режим без собственного GPU: до 2 коротких AI-сцен через Wan 2.2 ZeroGPU, с автоматическими стартовыми кадрами QUN. Затем Mastercut сам соберёт фильм и продлит видеоряд до конца музыки. Бесплатная внешняя очередь может быть занята или временно недоступна; платные HF-токены не используются. Для 4–12 новых сцен подключи собственный GPU Render Node.</p>
+<label class="label" for="audioFile">Или загрузить готовый музыкальный файл</label><input id="audioFile" type="file" accept="audio/mpeg,audio/wav,audio/x-wav,audio/flac,audio/ogg,audio/aac,audio/mp4,audio/webm" class="field">
+<label class="label" for="musicDuration">Длительность музыки в готовом клипе</label>
+<select id="musicDuration" class="field"><option value="10" selected>10 секунд · тест</option><option value="30">30 секунд</option><option value="60">1 минута</option><option value="full">Весь трек</option></select>
+<p class="hint">Пока Director использует готовую музыку из библиотеки или загруженный файл: выбранная длительность ограничивает фрагмент в фильме, но не запускает отдельную генерацию саундтрека. Для коротких проверок начни с 10 секунд.</p>
+<div class="notice" id="resourceEstimate">QUN Resource Meter · предварительный расчёт появится после выбора числа сцен. Будем записывать фактические параметры генерации и размер готового фильма; курс будущих QUN-токенов пока не назначаем без измерений.</div>
+<p class="hint">Быстрый режим без собственного GPU: до 2 коротких AI-сцен через Wan 2.2 ZeroGPU, с автоматическими стартовыми кадрами QUN. Затем Mastercut соберёт фильм в браузере. Бесплатная внешняя очередь может быть занята или временно недоступна; платные HF-токены не используются. Для 4–12 новых сцен подключи собственный GPU Render Node.</p>
 </section>
 
 <section class="card">
