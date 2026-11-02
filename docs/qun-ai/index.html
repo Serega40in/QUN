@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-qun-theme="work">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#071f35"><meta name="description" content="QUN AI — пространство ясных мыслей, творчества и возможностей.">
@@ -15,7 +15,8 @@
   .sidebar-scrim.visible{display:block;position:fixed;inset:0;z-index:4;background:#020b11b8;backdrop-filter:blur(2px);border:0;padding:0;margin:0;cursor:default}
   .sidebar{z-index:5}
 }
-</style></head>
+</style><link rel="stylesheet" href="../assets/qun-design-system.css">
+</head>
 <body>
 <div class="app">
 <button class="sidebar-scrim" id="sidebarScrim" type="button" aria-label="Закрыть меню"></button><aside class="sidebar" id="sidebar"><div class="brand"><div class="symbol">К</div><div><strong>QUN AI</strong><small>ИНТЕЛЛЕКТ В ГАРМОНИИ</small></div></div><button class="newchat" id="newChat"><span class="plus">＋</span> Новый диалог</button><div class="side-label">ВАШИ ДИАЛОГИ</div><div class="history" id="history"><button class="historyitem active">Первый разговор</button></div><div class="sidebar-bottom"><div class="account"><div class="avatar">К</div><div class="account-text"><b id="accountName">Гость QUN</b><span id="accountState">Локальный режим</span></div><button class="linkbtn" id="accountBtn">Войти</button></div></div></aside>
