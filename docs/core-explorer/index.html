@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071426">
+<meta name="description" content="QUN Core Explorer — интерактивный браузерный стенд для изучения блоков и транзакций QUN.">
+<title>QUN Core — Explorer</title>
+<style>
+:root{color-scheme:dark;--bg:#071426;--panel:#0c2037;--panel2:#102941;--line:#ffffff18;--mint:#a8f0d6;--green:#32d4a6;--gold:#e4c77c;--muted:#91a9bd;--text:#f3f8fc;--red:#ff8c8c}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 85% 0%,#126b5a44,transparent 32%),var(--bg);color:var(--text);font:15px/1.55 Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif}button,input{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:auto;padding:0 22px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 0;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:12px}.mark{display:grid;place-items:center;width:42px;height:42px;border:1px solid #32d4a688;border-radius:14px;color:var(--green);font-weight:900;letter-spacing:.08em}.brand strong{display:block;letter-spacing:.22em;font-size:18px}.brand small{color:var(--muted)}.topright{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.pill{border:1px solid var(--line);border-radius:999px;padding:7px 11px;color:var(--muted);font-size:12px}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:7px}.hero{padding:36px 0 24px}.eyebrow{color:var(--gold);text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:750}.hero h1{font-size:clamp(32px,5vw,54px);letter-spacing:-.045em;line-height:1.08;margin:10px 0}.hero p{max-width:700px;color:#b9cad8;margin:0}.notice{margin:22px 0;padding:13px 16px;border:1px solid #e4c77c55;background:#e4c77c0c;border-radius:14px;color:#e9dba9;font-size:13px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.stat,.panel{background:linear-gradient(145deg,#102840,#0b1d32);border:1px solid var(--line);border-radius:18px}.stat{padding:18px}.stat span{display:block;color:var(--muted);font-size:12px}.stat strong{display:block;font-size:27px;letter-spacing:-.04em;margin-top:4px}.stat em{font-style:normal;color:var(--green);font-size:11px}.tabs{display:flex;gap:6px;overflow:auto;border-bottom:1px solid var(--line);margin-top:28px}.tab{white-space:nowrap;background:transparent;color:var(--muted);border:0;border-bottom:2px solid transparent;padding:13px 17px}.tab.active{color:var(--mint);border-color:var(--green)}.view{padding:20px 0 60px}.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(280px,1fr);gap:14px}.panel{padding:20px;min-width:0}.panel h2{font-size:17px;margin:0 0 4px}.sub{color:var(--muted);font-size:12px;margin:0 0 18px}.list{display:grid;gap:8px}.item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 14px;background:#ffffff05;border:1px solid var(--line);border-radius:12px}.item strong{display:block;font-size:13px;overflow-wrap:anywhere}.item small{display:block;color:var(--muted);font-size:11px;overflow-wrap:anywhere}.num{color:var(--mint);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}.btn{border:1px solid #32d4a688;background:#32d4a616;color:var(--mint);border-radius:11px;padding:10px 14px;font-weight:650}.btn:hover{background:#32d4a62b}.btn.primary{background:var(--green);color:#062019;border-color:var(--green)}.btn.ghost{border-color:var(--line);background:transparent;color:var(--text)}.btn.danger{border-color:#ff8c8c55;color:var(--red);background:#ff8c8c0c}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.field{display:grid;gap:6px;margin:12px 0}.field label{color:var(--muted);font-size:12px}.field input{width:100%;border:1px solid #ffffff22;border-radius:10px;background:#061426;color:var(--text);padding:12px;outline:none}.field input:focus{border-color:var(--green)}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.empty{color:var(--muted);padding:18px;text-align:center;border:1px dashed var(--line);border-radius:12px}.tag{font-size:10px;text-transform:uppercase;letter-spacing:.08em;border-radius:6px;padding:4px 7px;background:#32d4a61a;color:var(--green)}.footer{padding:20px 0 35px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#e8fff5;color:#062019;padding:12px 17px;border-radius:12px;box-shadow:0 8px 30px #0005;z-index:5;max-width:90vw}.hidden{display:none!important}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.balance{font-size:36px;font-weight:800;letter-spacing:-.04em}.balance small{font-size:14px;color:var(--muted);font-weight:500}.split{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}.top{align-items:flex-start}.topright{justify-content:flex-end}.hero{padding-top:26px}.shell{padding:0 14px}.panel{padding:16px}.stat{padding:14px}.stat strong{font-size:23px}}@media(max-width:420px){.brand small{font-size:10px}.brand strong{font-size:15px}.pill{font-size:10px}.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="top">
+ <div class="brand"><div class="mark">Q</div><div><strong>QUN CORE</strong><small>Explorer · Developer Preview</small></div></div>
+ <div class="topright"><span class="pill"><i class="dot"></i><span id="modeLabel">DEMO MODE</span></span><a class="pill" href="https://github.com/Serega40in/QUN" target="_blank" rel="noreferrer">GitHub ↗</a></div>
+</header>
+<section class="hero">
+ <div class="eyebrow">Native blockchain · Early preview</div>
+ <h1>Исследуй сеть.<br><span style="color:var(--green)">Понимай каждый блок.</span></h1>
+ <p>Первый интерактивный стенд QUN Core: смотри блоки, изучай транзакции, отправляй демо-переводы и собирай блоки. Сейчас операции выполняются только в памяти этой страницы — реальная сеть и реальные монеты не подключены.</p>
+ <div class="notice"><strong>Важно:</strong> это работающий браузерный симулятор, а не публичная блокчейн-сеть. Обновление страницы сбрасывает демо-состояние. Не вводи секреты и реальные ключи.</div>
+</section>
+<section class="stats">
+ <div class="stat"><span>Высота цепочки</span><strong id="height">12</strong><em>● демо-цепочка</em></div>
+ <div class="stat"><span>Транзакций</span><strong id="txCount">8</strong><em>● подтверждённые в демо</em></div>
+ <div class="stat"><span>Ожидают блока</span><strong id="pendingCount">0</strong><em>● очередь демо</em></div>
+ <div class="stat"><span>Валидность цепочки</span><strong id="validity">OK</strong><em>● внутренняя проверка</em></div>
+</section>
+<nav class="tabs" aria-label="Разделы">
+ <button class="tab active" data-tab="overview">Обзор сети</button><button class="tab" data-tab="blocks">Блоки</button><button class="tab" data-tab="transactions">Транзакции</button><button class="tab" data-tab="wallet">Демо-кошелёк</button>
+</nav>
+<main class="view">
+<section id="overview" class="tabview">
+ <div class="grid">
+  <div class="panel"><div class="split"><div><h2>Последние блоки</h2><p class="sub">Выбери блок, чтобы посмотреть содержимое</p></div><span class="tag">Chain</span></div><div id="recentBlocks" class="list"></div><div class="actions"><button class="btn ghost" data-goto="blocks">Все блоки →</button><button class="btn primary" id="mineTop">Создать демо-блок</button></div></div>
+  <div class="panel"><h2>Состояние стенда</h2><p class="sub">Текущий режим работы</p><div class="item"><div><strong>Источник данных</strong><small>Локальное состояние страницы</small></div><span class="tag">DEMO</span></div><div class="item"><div><strong>Подключение к узлу</strong><small>JSON-RPC API ещё не реализован</small></div><span style="color:var(--gold)">Ожидает</span></div><div class="item"><div><strong>Подписи транзакций</strong><small>Будут включены в протокол</small></div><span style="color:var(--muted)">План</span></div><p class="sub" style="margin-top:16px">Следующий инженерный этап: Rust devnet-узел, HTTP JSON-RPC, постоянное состояние и подключение этого интерфейса к реальным данным.</p></div>
+ </div>
+</section>
+<section id="blocks" class="tabview hidden"><div class="panel"><div class="split"><div><h2>Блоки цепочки</h2><p class="sub">Демо-блоки с вычисляемыми SHA-256 идентификаторами</p></div><button class="btn primary" id="mineAll">Создать следующий блок</button></div><div id="allBlocks" class="list"></div></div></section>
+<section id="transactions" class="tabview hidden"><div class="panel"><h2>История транзакций</h2><p class="sub">Переводы из демо-кошелька и встроенных тестовых аккаунтов</p><div id="allTx" class="list"></div></div></section>
+<section id="wallet" class="tabview hidden">
+ <div class="grid">
+  <div class="panel"><div class="split"><div><h2>Твой демо-кошелёк</h2><p class="sub">Только для экспериментов в браузере</p></div><span class="tag">NOT REAL FUNDS</span></div><div class="balance"><span id="walletBalance">1,250.00</span> <small>QUN demo</small></div><div class="field"><label>Демо-адрес</label><input id="walletAddress" class="mono" readonly value="qun_demo_serge_01"></div><div class="actions"><button class="btn ghost" id="copyAddress">Копировать адрес</button><button class="btn ghost" id="newWallet">Новый демо-адрес</button></div></div>
+  <div class="panel"><h2>Отправить демо-перевод</h2><p class="sub">Сначала перевод попадает в очередь, затем включается в демо-блок.</p><form id="sendForm"><div class="field"><label for="recipient">Адрес получателя</label><input id="recipient" required maxlength="80" placeholder="например, qun_demo_alice"></div><div class="field"><label for="amount">Количество QUN demo</label><input id="amount" required type="number" min="0.01" max="1000000" step="0.01" placeholder="25"></div><div class="actions"><button class="btn primary" type="submit">Создать перевод</button></div></form><div class="actions"><button class="btn" id="mineWallet">Подтвердить демо-блок</button></div></div>
+ </div>
+ <div class="panel" style="margin-top:14px"><h2>Очередь ожидающих переводов</h2><p class="sub">Не подтверждены блоком</p><div id="pendingList" class="list"></div></div>
+</section>
+</main>
+<footer class="footer"><span>QUN Core · Interactive prototype</span><span>Без реальных активов · Не mainnet · Не security-audited</span></footer>
+</div>
+<div id="toast" class="toast hidden" role="status"></div>
+<script>
+(function(){
+ const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+ const short=s=>s.length>24?s.slice(0,10)+'…'+s.slice(-7):s;
+ let nextId=13, sequence=8, wallet='qun_demo_serge_01', balance=1250;
+ let accounts={'qun_demo_serge_01':1250,'qun_demo_alice':500,'qun_demo_bob':300,'qun_demo_node':900};
+ let pending=[], txs=[], blocks=[];
+ const hashText=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return ('00000000'+(h>>>0).toString(16)).slice(-8)+Array.from({length:4},(_,i)=>('00000000'+Math.imul((h>>>0)+i+17,2654435761>>>0).toString(16)).slice(-8)).join('')};
+ function blockHash(b){return hashText([b.height,b.time,b.prev,b.txs.map(t=>t.id).join(',')].join('|'))}
+ function addInitial(){let prev='QUN_GENESIS_V1';for(let i=0;i<12;i++){let b={height:i,time:1762200000+i*12,prev,txs:[],hash:''};if(i>0&&i%2===0){let t={id:'tx_demo_'+String(i).padStart(3,'0'),from:i%4===0?'qun_demo_alice':'qun_demo_node',to:i%4===0?'qun_demo_bob':'qun_demo_alice',amount:10+i,fee:0.01,block:i};b.txs.push(t);txs.push(t)}b.hash=blockHash(b);blocks.push(b);prev=b.hash}sequence=txs.length}
+ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.add('hidden'),2600)}
+ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+ function blockRow(b){return '<div class="item"><div><strong>Блок #'+b.height+'</strong><small class="mono">'+short(b.hash)+' · '+b.txs.length+' tx · '+new Date(b.time*1000).toLocaleTimeString('ru-RU')+'</small></div><div class="num">'+b.txs.reduce((a,t)=>a+t.amount,0).toFixed(2)+' <small>QUN</small><br><button class="btn ghost" style="padding:4px 8px;margin-top:5px" data-block="'+b.height+'">Подробнее</button></div></div>'}
+ function txRow(t){return '<div class="item"><div><strong class="mono">'+esc(t.id)+'</strong><small>'+esc(short(t.from))+' → '+esc(short(t.to))+' · блок '+t.block+'</small></div><div class="num">'+Number(t.amount).toFixed(2)+' QUN<small>комиссия '+Number(t.fee||0).toFixed(2)+'</small></div></div>'}
+ function render(){ $('#height').textContent=blocks.length;$('#txCount').textContent=txs.length;$('#pendingCount').textContent=pending.length;$('#validity').textContent=verify()?'OK':'ERROR';$('#walletBalance').textContent=(accounts[wallet]||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});$('#walletAddress').value=wallet;
+  $('#recentBlocks').innerHTML=blocks.slice(-5).reverse().map(blockRow).join('');$('#allBlocks').innerHTML=blocks.slice().reverse().map(blockRow).join('');$('#allTx').innerHTML=txs.slice().reverse().map(txRow).join('')||'<div class="empty">Пока нет транзакций</div>';$('#pendingList').innerHTML=pending.map(t=>txRow({...t,block:'ожидает'})).join('')||'<div class="empty">Очередь пуста. Создай перевод выше.</div>';
+ }
+ function verify(){for(let i=0;i<blocks.length;i++){if(blocks[i].hash!==blockHash(blocks[i]))return false;if(i&&blocks[i].prev!==blocks[i-1].hash)return false}return true}
+ function mine(){let included=pending.splice(0);included.forEach(t=>{t.block=nextId-1;txs.push(t)});let prev=blocks[blocks.length-1].hash;let b={height:blocks.length,time:Math.floor(Date.now()/1000),prev,txs:included,hash:''};b.hash=blockHash(b);blocks.push(b);nextId++;sequence+=included.length;render();toast('Демо-блок #'+b.height+' создан. Это не запись в реальной сети.')}
+ function switchTab(name){$$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$$('.tabview').forEach(v=>v.classList.toggle('hidden',v.id!==name));if(name==='blocks')$('#allBlocks').innerHTML=blocks.slice().reverse().map(blockRow).join('')}
+ document.addEventListener('click',e=>{let t=e.target.closest('[data-tab]');if(t)switchTab(t.dataset.tab);let g=e.target.closest('[data-goto]');if(g)switchTab(g.dataset.goto);let b=e.target.closest('[data-block]');if(b){let n=Number(b.dataset.block),blk=blocks.find(x=>x.height===n);toast('Блок #'+n+' · hash '+blk.hash+' · '+blk.txs.length+' транзакций');}});
+ $('#mineTop').onclick=mine;$('#mineAll').onclick=mine;$('#mineWallet').onclick=mine;
+ $('#sendForm').addEventListener('submit',e=>{e.preventDefault();let to=$('#recipient').value.trim(),amount=Number($('#amount').value);if(!to||to===wallet){toast('Укажи другой адрес получателя.');return}if(!Number.isFinite(amount)||amount<=0||amount>(accounts[wallet]||0)){toast('Недостаточный демо-баланс или неверная сумма.');return}accounts[wallet]-=amount;accounts[to]=(accounts[to]||0)+amount;pending.push({id:'tx_demo_'+Date.now().toString(36)+'_'+(++sequence),from:wallet,to,amount,fee:0,block:'ожидает'});$('#recipient').value='';$('#amount').value='';render();toast('Демо-перевод добавлен в очередь. Создай блок для подтверждения.');});
+ $('#newWallet').onclick=()=>{wallet='qun_demo_'+Math.random().toString(36).slice(2,10);accounts[wallet]=0;render();toast('Создан новый временный демо-адрес без средств.');};
+ $('#copyAddress').onclick=async()=>{try{await navigator.clipboard.writeText(wallet);toast('Демо-адрес скопирован.')}catch(e){$('#walletAddress').select();toast('Выделил адрес — скопируй вручную.')}};
+ addInitial();render();
+})();
+</script>
+</body>
+</html>
