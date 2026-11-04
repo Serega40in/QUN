@@ -43,7 +43,8 @@ curl -X POST http://127.0.0.1:8787/dev/mine \
 - The node persists a JSON snapshot containing both the hash-linked chain and demo ledger, and validates chain hash links when loading.
 - The ledger validates non-empty addresses, positive amounts, no self-transfer, sequential nonces, sufficient sender balance, and balance overflow.
 - A successful demo transfer updates the ledger and appends the corresponding block; a rejected transfer should not mutate the saved snapshot.
-- **Sender identity is not cryptographically authenticated.** Anyone able to reach this unauthenticated API can claim another sender address. Never use this prototype for real assets.
+- The core library now contains an Ed25519 signed-transaction verification primitive with a domain-separated canonical payload and unit tests for valid signatures, tampering, and sender-key mismatch. This is a foundation only: the HTTP node and block acceptance path do **not yet require or persist signatures**.
+- **Sender identity is not cryptographically authenticated by the node.** Anyone able to reach this unauthenticated API can claim another sender address. Never use this prototype for real assets.
 - There is no peer-to-peer networking, distributed consensus, validator set, or finality. A single local process appends blocks.
 - `/dev/fund` is a test-only balance setter, not a consensus-backed genesis allocation. Never enable it on a public node.
 - JSON snapshot replacement is atomic at the file level but is not a transactional database with crash-proof guarantees.
