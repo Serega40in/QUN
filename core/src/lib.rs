@@ -134,6 +134,70 @@ impl Default for Chain {
     }
 }
 
+
+/// Deterministic account state for development and unit tests.
+/// This does not authenticate `Transaction::from`; never use it for real assets
+/// until transaction signatures are verified by the node.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct LedgerState {
+    pub balances: std::collections::BTreeMap<String, u64>,
+    pub nonces: std::collections::BTreeMap<String, u64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LedgerError {
+    EmptyAddress,
+    ZeroAmount,
+    SelfTransfer,
+    InvalidNonce { expected: u64, actual: u64 },
+    InsufficientFunds { available: u64, required: u64 },
+    BalanceOverflow,
+}
+
+impl LedgerState {
+    /// Explicitly fund an account for local development/test fixtures only.
+    /// This is not a blockchain transaction and must never be exposed as a public API.
+    pub fn set_genesis_balance(&mut self, address: impl Into<String>, amount: u64) -> Result<(), LedgerError> {
+        let address = address.into();
+        if address.trim().is_empty() {
+            return Err(LedgerError::EmptyAddress);
+        }
+        self.balances.insert(address, amount);
+        Ok(())
+    }
+
+    /// Apply a transaction to in-memory state. The caller must authenticate its sender first.
+    pub fn apply(&mut self, tx: &Transaction) -> Result<(), LedgerError> {
+        if tx.from.trim().is_empty() || tx.to.trim().is_empty() {
+            return Err(LedgerError::EmptyAddress);
+        }
+        if tx.amount == 0 {
+            return Err(LedgerError::ZeroAmount);
+        }
+        if tx.from == tx.to {
+            return Err(LedgerError::SelfTransfer);
+        }
+
+        let previous_nonce = self.nonces.get(&tx.from).copied().unwrap_or(0);
+        let expected_nonce = previous_nonce.checked_add(1).ok_or(LedgerError::BalanceOverflow)?;
+        if tx.nonce != expected_nonce {
+            return Err(LedgerError::InvalidNonce { expected: expected_nonce, actual: tx.nonce });
+        }
+
+        let available = self.balances.get(&tx.from).copied().unwrap_or(0);
+        if available < tx.amount {
+            return Err(LedgerError::InsufficientFunds { available, required: tx.amount });
+        }
+        let recipient_balance = self.balances.get(&tx.to).copied().unwrap_or(0);
+        let new_recipient_balance = recipient_balance.checked_add(tx.amount).ok_or(LedgerError::BalanceOverflow)?;
+
+        self.balances.insert(tx.from.clone(), available - tx.amount);
+        self.balances.insert(tx.to.clone(), new_recipient_balance);
+        self.nonces.insert(tx.from.clone(), tx.nonce);
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -185,4 +249,56 @@ mod tests {
             Err(ChainError::InvalidPreviousHash { at: 1 })
         );
     }
+
+    fn funded_ledger() -> LedgerState {
+        let mut ledger = LedgerState::default();
+        ledger.set_genesis_balance("alice", 100).unwrap();
+        ledger
+    }
+
+    #[test]
+    fn ledger_applies_transfer_and_advances_nonce() {
+        let mut ledger = funded_ledger();
+        let tx = Transaction { from: "alice".into(), to: "bob".into(), amount: 30, nonce: 1 };
+        assert_eq!(ledger.apply(&tx), Ok(()));
+        assert_eq!(ledger.balances.get("alice"), Some(&70));
+        assert_eq!(ledger.balances.get("bob"), Some(&30));
+        assert_eq!(ledger.nonces.get("alice"), Some(&1));
+    }
+
+    #[test]
+    fn ledger_rejects_insufficient_funds_without_mutation() {
+        let mut ledger = funded_ledger();
+        let tx = Transaction { from: "alice".into(), to: "bob".into(), amount: 101, nonce: 1 };
+        let before = ledger.clone();
+        assert_eq!(ledger.apply(&tx), Err(LedgerError::InsufficientFunds { available: 100, required: 101 }));
+        assert_eq!(ledger, before);
+    }
+
+    #[test]
+    fn ledger_rejects_replayed_or_skipped_nonce() {
+        let mut ledger = funded_ledger();
+        let tx = Transaction { from: "alice".into(), to: "bob".into(), amount: 1, nonce: 2 };
+        assert_eq!(ledger.apply(&tx), Err(LedgerError::InvalidNonce { expected: 1, actual: 2 }));
+    }
+
+    #[test]
+    fn ledger_rejects_zero_amount_and_empty_addresses() {
+        let mut ledger = funded_ledger();
+        let zero = Transaction { from: "alice".into(), to: "bob".into(), amount: 0, nonce: 1 };
+        assert_eq!(ledger.apply(&zero), Err(LedgerError::ZeroAmount));
+        let empty = Transaction { from: "".into(), to: "bob".into(), amount: 1, nonce: 1 };
+        assert_eq!(ledger.apply(&empty), Err(LedgerError::EmptyAddress));
+    }
+
+    #[test]
+    fn ledger_rejects_recipient_balance_overflow_without_mutation() {
+        let mut ledger = funded_ledger();
+        ledger.set_genesis_balance("bob", u64::MAX).unwrap();
+        let tx = Transaction { from: "alice".into(), to: "bob".into(), amount: 1, nonce: 1 };
+        let before = ledger.clone();
+        assert_eq!(ledger.apply(&tx), Err(LedgerError::BalanceOverflow));
+        assert_eq!(ledger, before);
+    }
+
 }
