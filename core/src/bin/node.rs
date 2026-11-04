@@ -5,7 +5,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use qun_core::{Chain, LedgerState, Transaction};
+use qun_core::{Chain, LedgerState, SignedTransaction, Transaction};
 use serde::{Deserialize, Serialize};
 use std::{
     env,
@@ -32,7 +32,7 @@ main{max-width:1040px;margin:auto;padding:28px 18px 60px}header{display:flex;ali
 <div class="layout"><section class="panel"><h2>Блоки</h2><div class="actions"><button class="secondary" onclick="refresh()">Обновить данные</button></div><div id="blocks" class="sub">Загружаем цепочку…</div></section>
 <section class="panel"><h2>Создать демонстрационный блок</h2><p class="sub">Только тестовые данные. Эта форма не выполняет проверку подписей или балансов.</p>
 <form id="txform"><label for="from">Отправитель (demo)</label><input id="from" value="alice-demo" required maxlength="80"><label for="to">Получатель (demo)</label><input id="to" value="bob-demo" required maxlength="80"><label for="amount">Сумма (условные единицы)</label><input id="amount" type="number" min="1" max="18446744073709551615" value="25" required><label for="nonce">Nonce</label><input id="nonce" type="number" min="0" value="1" required><div class="actions"><button id="submit" type="submit">Создать блок</button><button class="secondary" id="fund" type="button">Выдать Alice тестовый баланс</button></div></form><p class="sub" id="accounts">Загрузка счетов…</p><p id="message" class="status" role="status"></p></section></div>
-<p class="notice">Узел работает только на вашем компьютере. Блоки хранятся в локальном JSON-файле. Подписи, консенсус и P2P ещё не подключены. Балансы — только локальный тестовый реестр.</p>
+<p class="notice">Узел работает только на вашем компьютере. Блоки хранятся в локальном JSON-файле. Подписанные транзакции доступны через API /dev/mine-signed. Консенсус и P2P ещё не подключены; /dev/mine остаётся небезопасным demo-endpoint.</p>
 </main><script>
 const el=id=>document.getElementById(id);
 async function request(path,options){const r=await fetch(path,options);const body=await r.json();if(!r.ok)throw new Error(body.error||('HTTP '+r.status));return body}
@@ -88,6 +88,11 @@ struct FundRequest { address: String, amount: u64 }
 #[derive(Deserialize)]
 struct MineRequest {
     transactions: Vec<Transaction>,
+}
+
+#[derive(Deserialize)]
+struct SignedMineRequest {
+    signed_transactions: Vec<SignedTransaction>,
 }
 
 #[derive(Serialize)]
@@ -220,6 +225,48 @@ async fn get_block(
         .ok_or_else(|| api_error(StatusCode::NOT_FOUND, format!("block {index} not found")))
 }
 
+/// Signed transaction path. Unlike /dev/mine, this verifies Ed25519 sender ownership.
+async fn dev_mine_signed(
+    State(state): State<AppState>,
+    Json(request): Json<SignedMineRequest>,
+) -> Result<(StatusCode, Json<qun_core::Block>), ApiFailure> {
+    if request.signed_transactions.is_empty() {
+        return Err(api_error(StatusCode::BAD_REQUEST, "signed_transactions must not be empty"));
+    }
+    if request.signed_transactions.len() > MAX_TRANSACTIONS_PER_BLOCK {
+        return Err(api_error(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            format!("at most {MAX_TRANSACTIONS_PER_BLOCK} signed transactions per block"),
+        ));
+    }
+
+    for (position, signed) in request.signed_transactions.iter().enumerate() {
+        signed.verify().map_err(|error| api_error(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            format!("signed transaction {position} failed signature verification: {error:?}"),
+        ))?;
+    }
+
+    let timestamp = unix_timestamp()?;
+    let mut snapshot = state.snapshot.lock().await;
+    let mut next = snapshot.clone();
+    for (position, signed) in request.signed_transactions.iter().enumerate() {
+        next.ledger.apply(&signed.transaction).map_err(|error| api_error(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            format!("signed transaction {position} rejected by ledger: {error:?}"),
+        ))?;
+    }
+    let block = next.chain.append_signed(timestamp, request.signed_transactions)
+        .map_err(|error| api_error(StatusCode::UNPROCESSABLE_ENTITY, format!("signed block rejected: {error:?}")))?
+        .clone();
+    next.chain.validate().map_err(|error| api_error(
+        StatusCode::INTERNAL_SERVER_ERROR, format!("new signed block failed validation: {error:?}"),
+    ))?;
+    save_snapshot(state.data_file.as_path(), &next)?;
+    *snapshot = next;
+    Ok((StatusCode::CREATED, Json(block)))
+}
+
 async fn dev_mine(
     State(state): State<AppState>,
     Json(request): Json<MineRequest>,
@@ -267,6 +314,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/accounts", get(get_accounts))
         .route("/blocks/:index", get(get_block))
         .route("/dev/mine", post(dev_mine))
+        .route("/dev/mine-signed", post(dev_mine_signed))
         .route("/dev/fund", post(dev_fund))
         .with_state(state);
 
