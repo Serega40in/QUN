@@ -78,6 +78,30 @@ impl TestNode {
     fn post(&mut self, path: &str, body: &Value) -> (u16, Value) {
         self.request("POST", path, Some(body))
     }
+
+    fn restart(&mut self) {
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+        self.child = Command::new(env!("CARGO_BIN_EXE_node"))
+            .env("QUN_BIND", &self.address)
+            .env("QUN_DATA_FILE", &self.data_file)
+            .env("QUN_ENABLE_DEV_FUNDING", "true")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("restart local QUN node test process");
+
+        for _ in 0..100 {
+            if TcpStream::connect(&self.address).is_ok() && self.get("/health").is_ok() {
+                return;
+            }
+            if let Ok(Some(status)) = self.child.try_wait() {
+                panic!("QUN node exited during restart with status {status}");
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+        panic!("QUN node did not restart in time");
+    }
 }
 
 impl Drop for TestNode {
@@ -149,16 +173,24 @@ fn valid_signed_transaction_updates_chain_and_ledger() {
     let (status, _) = node.post("/dev/fund", &json!({"address": address, "amount": 10}));
     assert_eq!(status, 200);
 
-    let (status, block) = node.post(
-        "/dev/mine-signed",
-        &submit(signed_transaction(&key, "recipient-test", 4, 1)),
-    );
+    let signed = signed_transaction(&key, "recipient-test", 4, 1);
+    let (status, block) = node.post("/dev/mine-signed", &submit(signed.clone()));
     assert_eq!(status, 201, "valid signed transaction should be accepted");
     assert_eq!(block["index"], 1);
     assert_eq!(block["signed_transactions"].as_array().unwrap().len(), 1);
 
-    let accounts = node.get("/accounts").unwrap();
-    assert_eq!(accounts["balances"][address], 6);
-    assert_eq!(accounts["balances"]["recipient-test"], 4);
-    assert_eq!(accounts["nonces"][hex::encode(key.verifying_key().as_bytes())], 1);
+    let chain_after_transfer = node.get("/chain").unwrap();
+    let accounts_after_transfer = node.get("/accounts").unwrap();
+    assert_eq!(accounts_after_transfer["balances"][address], 6);
+    assert_eq!(accounts_after_transfer["balances"]["recipient-test"], 4);
+    assert_eq!(accounts_after_transfer["nonces"][hex::encode(key.verifying_key().as_bytes())], 1);
+
+    let (replay_status, _) = node.post("/dev/mine-signed", &submit(signed));
+    assert_eq!(replay_status, 422, "replaying the same signed transaction must be rejected");
+    assert_eq!(node.get("/chain").unwrap(), chain_after_transfer);
+    assert_eq!(node.get("/accounts").unwrap(), accounts_after_transfer);
+
+    node.restart();
+    assert_eq!(node.get("/chain").unwrap(), chain_after_transfer, "chain must survive node restart");
+    assert_eq!(node.get("/accounts").unwrap(), accounts_after_transfer, "balances and nonces must survive node restart");
 }
