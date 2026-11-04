@@ -55,6 +55,7 @@ struct AppState {
     snapshot: Arc<Mutex<NodeSnapshot>>,
     data_file: Arc<PathBuf>,
     dev_funding_enabled: bool,
+    genesis_replay_enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -208,7 +209,7 @@ async fn health(State(state): State<AppState>) -> Json<Health> {
         blocks: snapshot.chain.blocks.len(),
         warning:
             "Local development only; no distributed consensus, P2P, or real assets. Do not expose this API publicly.",
-        dev_funding_enabled: state.dev_funding_enabled,
+        dev_funding_enabled: state.dev_funding_enabled && !state.genesis_replay_enabled,
     })
 }
 
@@ -222,8 +223,8 @@ async fn get_accounts(State(state): State<AppState>) -> Json<AccountsResponse> {
 }
 
 async fn dev_fund(State(state): State<AppState>, Json(request): Json<FundRequest>) -> Result<Json<AccountsResponse>, ApiFailure> {
-    if !state.dev_funding_enabled {
-        return Err(api_error(StatusCode::FORBIDDEN, "development funding is disabled; set QUN_ENABLE_DEV_FUNDING=true for local testing only"));
+    if !state.dev_funding_enabled || state.genesis_replay_enabled {
+        return Err(api_error(StatusCode::FORBIDDEN, "development funding is disabled in this node configuration"));
     }
     if request.amount == 0 || request.address.trim().is_empty() {
         return Err(api_error(StatusCode::BAD_REQUEST, "address must be non-empty and amount must be greater than zero"));
@@ -297,6 +298,12 @@ async fn dev_mine(
     State(state): State<AppState>,
     Json(request): Json<MineRequest>,
 ) -> Result<(StatusCode, Json<qun_core::Block>), ApiFailure> {
+    if state.genesis_replay_enabled {
+        return Err(api_error(
+            StatusCode::FORBIDDEN,
+            "unsigned legacy mining is disabled when QUN_GENESIS_FILE is configured",
+        ));
+    }
     if request.transactions.len() > MAX_TRANSACTIONS_PER_BLOCK {
         return Err(api_error(
             StatusCode::PAYLOAD_TOO_LARGE,
@@ -343,7 +350,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let snapshot = load_snapshot_with_genesis(&data_file, genesis_config.as_ref())
         .map_err(|error| format!("cannot start QUN node: {error}"))?;
     let dev_funding_enabled = env::var("QUN_ENABLE_DEV_FUNDING").map(|v| v == "true" || v == "1").unwrap_or(false);
-    let state = AppState { snapshot: Arc::new(Mutex::new(snapshot)), data_file: Arc::new(data_file.clone()), dev_funding_enabled };
+    let state = AppState {
+        snapshot: Arc::new(Mutex::new(snapshot)),
+        data_file: Arc::new(data_file.clone()),
+        dev_funding_enabled,
+        genesis_replay_enabled: genesis_config.is_some(),
+    };
 
     let app = Router::new()
         .route("/", get(dashboard))
