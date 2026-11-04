@@ -25,7 +25,8 @@ For local testing only, enable demo funding with `QUN_ENABLE_DEV_FUNDING=true`. 
 - `GET /blocks/{index}` — one block by height.
 - `GET /accounts` — current test balances and account nonces.
 - `POST /dev/fund` — set a test balance; disabled unless `QUN_ENABLE_DEV_FUNDING=true`.
-- `POST /dev/mine` — append a block after applying the submitted demo transactions to the persisted in-memory ledger state.
+- `POST /dev/mine` — legacy unsigned demo route. It does not authenticate sender identity; local tests only.
+- `POST /dev/mine-signed` — verify Ed25519 signatures and sender/public-key match, apply ledger checks, then append a block that stores both the transactions and signatures.
 
 Example local test transfer (first enable test funding and fund `alice-demo` using the dashboard):
 
@@ -38,13 +39,36 @@ curl -X POST http://127.0.0.1:8787/dev/mine \
   -d '{"transactions":[{"from":"alice-demo","to":"bob-demo","amount":25,"nonce":1}]}'
 ```
 
+## Signed transaction format
+
+`POST /dev/mine-signed` expects this JSON shape:
+
+```json
+{
+  "signed_transactions": [
+    {
+      "transaction": {
+        "from": "<lowercase-hex Ed25519 public key>",
+        "to": "recipient-demo",
+        "amount": 25,
+        "nonce": 1
+      },
+      "public_key": "<same 32-byte public key encoded as lowercase hex>",
+      "signature": "<64-byte Ed25519 signature encoded as lowercase hex>"
+    }
+  ]
+}
+```
+
+The signature covers a deterministic, domain-separated `QUN_TX_V1` payload containing sender, recipient, amount, and nonce. The sender must equal the public key hex. Signed blocks use a `QUN_BLOCK_V2` hash payload that includes signatures. The `Chain::validate` path re-verifies signatures on signed blocks after loading persisted data. Fund the sender's public-key address only through the local development funding mechanism when testing.
+
 ## Current implementation and limitations
 
-- The node persists a JSON snapshot containing both the hash-linked chain and demo ledger, and validates chain hash links when loading.
+- The node persists a JSON snapshot containing the hash-linked chain and demo ledger, validates chain links and signed transactions when loading, and keeps legacy snapshots readable.
 - The ledger validates non-empty addresses, positive amounts, no self-transfer, sequential nonces, sufficient sender balance, and balance overflow.
-- A successful demo transfer updates the ledger and appends the corresponding block; a rejected transfer should not mutate the saved snapshot.
-- The core library now contains an Ed25519 signed-transaction verification primitive with a domain-separated canonical payload and unit tests for valid signatures, tampering, and sender-key mismatch. This is a foundation only: the HTTP node and block acceptance path do **not yet require or persist signatures**.
-- **Sender identity is not cryptographically authenticated by the node.** Anyone able to reach this unauthenticated API can claim another sender address. Never use this prototype for real assets.
+- `/dev/mine-signed` verifies signatures before ledger mutation, then persists the ledger update and signed block together. A rejected transfer should not mutate the saved snapshot.
+- **The legacy `/dev/mine` endpoint still accepts unsigned demo transactions.** Do not use it as a secure transaction path; the dashboard currently uses this route and has not yet been migrated to browser-side signing.
+- The HTTP API has no authentication. Keep the node on localhost; do not expose it to the internet or real assets.
 - There is no peer-to-peer networking, distributed consensus, validator set, or finality. A single local process appends blocks.
 - `/dev/fund` is a test-only balance setter, not a consensus-backed genesis allocation. Never enable it on a public node.
 - JSON snapshot replacement is atomic at the file level but is not a transactional database with crash-proof guarantees.
