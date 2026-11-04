@@ -411,7 +411,7 @@ mod tests {
         let before = chain.clone();
 
         assert_eq!(
-            chain.append_signed(1, vec![]).map(|block| block.clone()),
+            chain.append_signed(1, vec![]).cloned(),
             Err(ChainError::EmptySignedBlock)
         );
         assert_eq!(chain, before);
