@@ -415,4 +415,83 @@ mod persistence_tests {
 
         let _ = std::fs::remove_file(path);
     }
+
+    #[test]
+    fn configured_genesis_rebuilds_balances_instead_of_trusting_snapshot() {
+        use std::collections::BTreeMap;
+
+        let key = SigningKey::from_bytes(&[41_u8; 32]);
+        let sender = hex::encode(key.verifying_key().as_bytes());
+        let tx = qun_core::Transaction {
+            from: sender.clone(),
+            to: "recipient-replay-test".to_owned(),
+            amount: 9,
+            nonce: 1,
+        };
+        let signature = key.sign(&qun_core::SignedTransaction::signing_payload(&tx));
+        let signed = qun_core::SignedTransaction {
+            transaction: tx,
+            public_key: sender.clone(),
+            signature: hex::encode(signature.to_bytes()),
+        };
+        let genesis = GenesisConfig::new(
+            "qun-testnet-replay",
+            1,
+            BTreeMap::from([(sender.clone(), 50_u64)]),
+        ).unwrap();
+
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "qun-genesis-replay-test-{}-{unique}.json",
+            std::process::id()
+        ));
+
+        let mut snapshot = NodeSnapshot::default();
+        snapshot.chain.append_signed(1, vec![signed]).unwrap();
+        // Deliberately poison the cached ledger; configured startup must ignore it.
+        snapshot.ledger.set_genesis_balance(sender.clone(), 999_999).unwrap();
+        save_snapshot(&path, &snapshot).unwrap();
+
+        let loaded = load_snapshot_with_genesis(&path, Some(&genesis)).unwrap();
+        assert_eq!(loaded.ledger.balances.get(&sender), Some(&41));
+        assert_eq!(loaded.ledger.balances.get("recipient-replay-test"), Some(&9));
+        assert_eq!(loaded.ledger.nonces.get(&sender), Some(&1));
+
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn configured_genesis_replay_rejects_unsigned_legacy_transactions() {
+        use std::collections::BTreeMap;
+
+        let genesis = GenesisConfig::new(
+            "qun-testnet-replay",
+            1,
+            BTreeMap::from([("alice".to_owned(), 100_u64)]),
+        ).unwrap();
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "qun-genesis-unsigned-test-{}-{unique}.json",
+            std::process::id()
+        ));
+        let mut snapshot = NodeSnapshot::default();
+        snapshot.chain.append(1, vec![Transaction {
+            from: "alice".to_owned(),
+            to: "bob".to_owned(),
+            amount: 1,
+            nonce: 1,
+        }]);
+        save_snapshot(&path, &snapshot).unwrap();
+
+        let result = load_snapshot_with_genesis(&path, Some(&genesis));
+        assert!(result.is_err(), "unsigned legacy transaction history must fail closed");
+
+        let _ = std::fs::remove_file(path);
+    }
 }
