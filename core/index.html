@@ -1,3 +1,56 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#071426"><title>QUN Core — Native Blockchain</title><style>:root{--bg:#061426;--panel:#0d2037;--mint:#b1f2dc;--green:#28c8a0;--gold:#d9bd78;--muted:#a8bacb}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 85% 10%,#13735d55,transparent 38%),var(--bg);color:#f5f8fa;font:16px/1.65 system-ui,Arial,sans-serif}.wrap{max-width:1000px;margin:auto;padding:28px 22px}.nav{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid #ffffff20;padding-bottom:18px}.nav a,.link{color:var(--mint);text-decoration:none}.tag{color:var(--gold);font-size:11px;letter-spacing:.2em;text-transform:uppercase}.hero{padding:12vh 0 7vh}.hero h1{font-size:clamp(48px,10vw,100px);line-height:.9;letter-spacing:-.07em;margin:20px 0}.hero h1 span{color:var(--green)}.lead{max-width:700px;font-size:clamp(18px,3vw,24px);color:#d6e1e8}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:28px 0}.card{padding:22px;border:1px solid #ffffff20;border-radius:18px;background:linear-gradient(145deg,#102940,#09182a)}.card h2{font-size:19px;margin:0 0 8px}.muted{color:var(--muted)}code{color:var(--mint)}pre{overflow:auto;background:#020a14;padding:16px;border-radius:12px;color:#c8f5e7}footer{border-top:1px solid #ffffff20;padding-top:20px;color:var(--muted);font-size:13px}</style></head><body><main class="wrap"><nav class="nav"><a href="../">← QUN Ecosystem</a><a href="https://github.com/Serega40in/QUN/tree/main/core">Source on GitHub ↗</a></nav><section class="hero"><div class="tag">Native protocol · Early prototype</div><h1>QUN Core<span>.</span></h1><p class="lead">Собственный блокчейн QUN — отдельный протокол, узлы и правила консенсуса. Не токен на чужой сети. Разработка начинается с проверяемой локальной цепочки и будет двигаться к devnet поэтапно.</p></section><section class="grid"><article class="card"><h2>01 · Chain integrity</h2><p class="muted">SHA-256 хеши блоков, ссылка на предыдущий блок, проверка порядка и обнаружение изменений.</p></article><article class="card"><h2>02 · Transactions</h2><p class="muted">Начальная модель транзакции. Подписи, nonce, состояние балансов и защита от двойной траты — следующие этапы, не считаются готовыми.</p></article><article class="card"><h2>03 · Network</h2><p class="muted">P2P-связь, синхронизация и консенсус предстоит спроектировать и проверить до публичной тестовой сети.</p></article></section><section><div class="tag">Run locally</div><h2>Проверить прототип</h2><pre>cd core
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f6faf9">
+<meta name="description" content="QUN Core — открытый протокол блокчейна: проверяемые данные, криптографические подписи и путь к распределённой сети.">
+<title>QUN Core — Проверяемое доверие</title>
+<style>
+:root{color-scheme:light;--bg:#f6faf9;--surface:#fff;--ink:#132b38;--muted:#5e727b;--line:#dce8e5;--green:#087f68;--mint:#d9f5eb;--gold:#a67c2c;--navy:#102f3b}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 85% 0%,#d9f5eb 0,transparent 35%),var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,Segoe UI,sans-serif}a{color:var(--green)}.wrap{width:min(1100px,100% - 36px);margin:auto}.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}.brand{display:flex;align-items:center;gap:10px;color:var(--ink);font-weight:750;text-decoration:none}.mark{width:38px;height:38px;border-radius:12px;background:var(--navy);display:grid;place-items:center;color:#9be7ce;font-size:22px}.navlinks{display:flex;gap:18px;flex-wrap:wrap}.navlinks a{font-size:14px;text-decoration:none}.hero{padding:clamp(60px,10vw,112px) 0 64px;max-width:850px}.eyebrow{color:var(--green);font-size:12px;font-weight:750;letter-spacing:.16em;text-transform:uppercase}.hero h1{font-size:clamp(42px,8vw,86px);line-height:1.02;letter-spacing:-.065em;margin:18px 0 22px}.hero h1 span{color:var(--green)}.lead{font-size:clamp(18px,2.5vw,23px);color:#435c65;max-width:760px;margin:0}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 18px;border-radius:12px;background:var(--green);color:#fff;text-decoration:none;font-weight:700}.button.alt{background:var(--surface);border:1px solid var(--line);color:var(--ink)}.hint{font-size:13px;color:var(--muted);margin-top:12px}.section{padding:40px 0 56px}.sectionhead{max-width:700px;margin-bottom:24px}.section h2{font-size:clamp(26px,4vw,38px);line-height:1.15;letter-spacing:-.035em;margin:8px 0 12px}.sectionhead p,.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));gap:14px}.card{padding:23px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.84)}.num{font-size:12px;color:var(--gold);font-weight:800;letter-spacing:.12em}.card h3{margin:9px 0 8px;font-size:19px}.card p{margin:0;color:var(--muted);font-size:15px}.principle{background:var(--navy);color:#f4fbf8;border-radius:22px;padding:clamp(24px,5vw,48px);margin:8px 0 52px}.principle .eyebrow{color:#9be7ce}.principle blockquote{margin:14px 0 12px;font-size:clamp(24px,4.5vw,42px);line-height:1.2;letter-spacing:-.035em;max-width:850px}.principle p{color:#c5d9d9;max-width:750px;margin-bottom:0}.runbox{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.runbox pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#102b38;color:#d9f5eb;padding:18px;border-radius:14px;font:14px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace}.runbox ul{padding-left:20px;color:var(--muted)}.status{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:99px;font-size:12px;color:var(--muted);background:#fff}.dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}footer{border-top:1px solid var(--line);padding:24px 0 36px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}@media(max-width:650px){.runbox{grid-template-columns:1fr}.navlinks{gap:12px}.hero{padding-top:58px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<nav class="nav" aria-label="Основная навигация">
+<a class="brand" href="../"><span class="mark" aria-hidden="true">Q</span><span>QUN Core</span></a>
+<div class="navlinks"><a href="#principles">Принципы</a><a href="#features">Возможности</a><a href="#run">Запустить узел</a><a href="https://github.com/Serega40in/QUN/tree/codex/qun-core-node-api">Исходный код ↗</a></div>
+</nav>
+<section class="hero">
+<div class="eyebrow">Открытый протокол · Ранний прототип</div>
+<h1>Доверие, которое можно <span>проверить.</span></h1>
+<p class="lead">QUN Core — собственный блокчейн, который мы строим шаг за шагом: от проверяемой локальной цепочки к независимым узлам и распределённому консенсусу. Прозрачно по устройству. Просто во взаимодействии.</p>
+<div class="actions"><a class="button" href="#run">Запустить локальный узел</a><a class="button alt" href="https://github.com/Serega40in/QUN/pull/84">Следить за разработкой ↗</a></div>
+<p class="hint"><span class="status"><span class="dot"></span>Локальная разработка · не публичная сеть</span></p>
+</section>
+<section class="principle" id="principles">
+<div class="eyebrow">Квинтэссенция QUN</div>
+<blockquote>Проверять — проще, чем слепо доверять. Сотрудничать — не значит терять свободу.</blockquote>
+<p>Интерфейс должен показывать главное сразу и открывать технические детали по запросу. Протокол должен позволять независимо проверять правила, подписи и историю, не обещая того, чего код ещё не умеет.</p>
+</section>
+<section class="section" id="features">
+<div class="sectionhead"><div class="eyebrow">Основа протокола</div><h2>Что уже есть и что строим дальше</h2><p>Отделяем реализованные возможности от будущих этапов — без имитации готовой децентрализации.</p></div>
+<div class="grid">
+<article class="card"><div class="num">01 · СЕЙЧАС</div><h3>Проверка цепочки</h3><p>SHA-256 хеши блоков, связи с предыдущим блоком, порядок блоков и обнаружение изменений в сохранённой истории.</p></article>
+<article class="card"><div class="num">02 · СЕЙЧАС</div><h3>Подписанные переводы</h3><p>Ed25519-подписи транзакций, проверка соответствия отправителя публичному ключу и тестовый локальный реестр балансов.</p></article>
+<article class="card"><div class="num">03 · СЛЕДУЮЩЕЕ</div><h3>Проверяемый интерфейс</h3><p>Обозреватель блоков, понятные статусы, просмотр транзакций и полный тестовый цикл с перезапуском узла.</p></article>
+<article class="card"><div class="num">04 · ПОЗЖЕ</div><h3>Распределённая сеть</h3><p>P2P-связь, независимые узлы, правила консенсуса и защита от конфликтующих историй. Это ещё предстоит реализовать и испытать.</p></article>
+</div>
+</section>
+<section class="section" id="run">
+<div class="sectionhead"><div class="eyebrow">Попробовать самому</div><h2>Запусти QUN Core локально</h2><p>Для разработчиков и тестировщиков. Нужен установленный Rust toolchain.</p></div>
+<div class="runbox">
+<div><pre>git clone https://github.com/Serega40in/QUN.git
+cd QUN
+git checkout codex/qun-core-node-api
+cd core
 cargo test
-cargo run</pre><p class="muted">Нужен установленный Rust toolchain. Это экспериментальный код, не используйте его для хранения или перевода реальных средств.</p><p><a class="link" href="https://github.com/Serega40in/QUN/tree/main/core">Открыть исходный код и тесты ↗</a></p></section><footer>QUN Core · версия 0.1.0 · прототип · Не mainnet и не production-кошелёк.</footer></main></body></html>
+cargo run --bin node</pre><a class="button" href="http://127.0.0.1:8787/">Открыть локальный интерфейс ↗</a><p class="hint">Ссылка работает только на устройстве, где запущен узел по адресу 127.0.0.1:8787.</p></div>
+<div><h3>Перед тестированием</h3><ul><li>Это локальная экспериментальная сеть, а не mainnet.</li><li>Для тестового пополнения запусти узел с <code>QUN_ENABLE_DEV_FUNDING=true</code>.</li><li>Браузерный тестовый ключ хранится только в памяти вкладки и теряется после перезагрузки.</li><li>Не используй реальные средства и не открывай API в публичный интернет.</li><li>Консенсус, P2P и production-уровень безопасности ещё не реализованы.</li></ul></div>
+</div>
+</section>
+<footer><span>QUN Core · прототип протокола · версия 0.1.x</span><span>Проверяемость · свобода · сотрудничество</span></footer>
+</main>
+</body>
+</html>
