@@ -67,6 +67,9 @@ pub struct Block {
     pub timestamp: u64,
     pub previous_hash: String,
     pub transactions: Vec<Transaction>,
+    /// Cryptographically authenticated transactions. Empty for legacy local-demo blocks.
+    #[serde(default)]
+    pub signed_transactions: Vec<SignedTransaction>,
     pub hash: String,
 }
 
@@ -84,6 +87,25 @@ impl Block {
         digest.iter().map(|b| format!("{b:02x}")).collect()
     }
 
+    pub fn calculate_signed_hash(
+        index: u64,
+        timestamp: u64,
+        previous_hash: &str,
+        transactions: &[Transaction],
+        signed_transactions: &[SignedTransaction],
+    ) -> String {
+        let payload = serde_json::to_vec(&(
+            "QUN_BLOCK_V2",
+            index,
+            timestamp,
+            previous_hash,
+            transactions,
+            signed_transactions,
+        )).expect("serializing a fixed QUN signed block payload must succeed");
+        let digest = Sha256::digest(payload);
+        digest.iter().map(|b| format!("{b:02x}")).collect()
+    }
+
     fn new(
         index: u64,
         timestamp: u64,
@@ -96,6 +118,7 @@ impl Block {
             timestamp,
             previous_hash,
             transactions,
+            signed_transactions: vec![],
             hash,
         }
     }
@@ -113,6 +136,7 @@ pub enum ChainError {
     InvalidIndex { at: usize },
     InvalidPreviousHash { at: usize },
     InvalidHash { at: usize },
+    InvalidSignedTransaction { at: usize },
 }
 
 impl Chain {
@@ -135,6 +159,29 @@ impl Chain {
         );
         self.blocks.push(block);
         self.blocks.last().expect("block was just appended")
+    }
+
+    /// Append a block containing signed transactions after verifying every signature.
+    pub fn append_signed(
+        &mut self,
+        timestamp: u64,
+        signed_transactions: Vec<SignedTransaction>,
+    ) -> Result<&Block, ChainError> {
+        for (position, signed) in signed_transactions.iter().enumerate() {
+            signed.verify().map_err(|_| ChainError::InvalidSignedTransaction { at: position })?;
+        }
+        let previous = self.blocks.last().expect("Chain::new always creates genesis");
+        let transactions: Vec<Transaction> = signed_transactions
+            .iter().map(|signed| signed.transaction.clone()).collect();
+        let index = previous.index + 1;
+        let previous_hash = previous.hash.clone();
+        let hash = Block::calculate_signed_hash(
+            index, timestamp, &previous_hash, &transactions, &signed_transactions,
+        );
+        self.blocks.push(Block {
+            index, timestamp, previous_hash, transactions, signed_transactions, hash,
+        });
+        Ok(self.blocks.last().expect("block was just appended"))
     }
 
     pub fn validate(&self) -> Result<(), ChainError> {
@@ -165,14 +212,23 @@ impl Chain {
             if current.previous_hash != previous.hash {
                 return Err(ChainError::InvalidPreviousHash { at: i });
             }
-            if current.hash
-                != Block::calculate_hash(
-                    current.index,
-                    current.timestamp,
-                    &current.previous_hash,
-                    &current.transactions,
+            let expected_hash = if current.signed_transactions.is_empty() {
+                Block::calculate_hash(
+                    current.index, current.timestamp, &current.previous_hash, &current.transactions,
                 )
-            {
+            } else {
+                if current.signed_transactions.len() != current.transactions.len()
+                    || current.signed_transactions.iter().zip(&current.transactions)
+                        .any(|(signed, tx)| signed.transaction != *tx || signed.verify().is_err())
+                {
+                    return Err(ChainError::InvalidSignedTransaction { at: i });
+                }
+                Block::calculate_signed_hash(
+                    current.index, current.timestamp, &current.previous_hash,
+                    &current.transactions, &current.signed_transactions,
+                )
+            };
+            if current.hash != expected_hash {
                 return Err(ChainError::InvalidHash { at: i });
             }
         }
