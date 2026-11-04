@@ -5,7 +5,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use qun_core::{Chain, LedgerState, SignedTransaction, Transaction};
+use qun_core::{Chain, GenesisConfig, LedgerState, SignedTransaction, Transaction};
 use serde::{Deserialize, Serialize};
 use std::{
     env,
@@ -161,16 +161,40 @@ fn save_snapshot(path: &FsPath, snapshot: &NodeSnapshot) -> Result<(), ApiFailur
 }
 
 fn load_snapshot(path: &FsPath) -> Result<NodeSnapshot, String> {
-    if !path.exists() { return Ok(NodeSnapshot::default()); }
-    let bytes = std::fs::read(path).map_err(|error| format!("read {}: {error}", path.display()))?;
-    let snapshot = match serde_json::from_slice::<NodeSnapshot>(&bytes) {
-        Ok(snapshot) => snapshot,
-        Err(_) => {
-            let chain: Chain = serde_json::from_slice(&bytes).map_err(|error| format!("parse {} as snapshot or legacy chain: {error}", path.display()))?;
-            NodeSnapshot { chain, ledger: LedgerState::default() }
+    load_snapshot_with_genesis(path, None)
+}
+
+/// When a genesis config is supplied, never trust persisted balances: reconstruct them
+/// from the configured allocations and the signed chain history. The config is still
+/// out-of-band and is NOT yet committed into the canonical genesis block.
+fn load_snapshot_with_genesis(
+    path: &FsPath,
+    genesis: Option<&GenesisConfig>,
+) -> Result<NodeSnapshot, String> {
+    let mut snapshot = if !path.exists() {
+        NodeSnapshot::default()
+    } else {
+        let bytes = std::fs::read(path)
+            .map_err(|error| format!("read {}: {error}", path.display()))?;
+        match serde_json::from_slice::<NodeSnapshot>(&bytes) {
+            Ok(snapshot) => snapshot,
+            Err(_) => {
+                let chain: Chain = serde_json::from_slice(&bytes)
+                    .map_err(|error| format!("parse {} as snapshot or legacy chain: {error}", path.display()))?;
+                NodeSnapshot { chain, ledger: LedgerState::default() }
+            }
         }
     };
-    snapshot.chain.validate().map_err(|error| format!("stored chain failed integrity validation: {error:?}"))?;
+
+    snapshot.chain.validate()
+        .map_err(|error| format!("stored chain failed integrity validation: {error:?}"))?;
+
+    if let Some(config) = genesis {
+        config.validate().map_err(|error| format!("invalid genesis config: {error:?}"))?;
+        snapshot.ledger = LedgerState::replay_signed_chain(&snapshot.chain, &config.allocations)
+            .map_err(|error| format!("cannot deterministically replay ledger from configured genesis: {error:?}"))?;
+    }
+
     Ok(snapshot)
 }
 
@@ -305,7 +329,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         env::var("QUN_DATA_FILE").unwrap_or_else(|_| "data/qun-chain.json".to_owned()),
     );
 
-    let snapshot = load_snapshot(&data_file).map_err(|error| format!("cannot start QUN node: {error}"))?;
+    let genesis_config = match env::var("QUN_GENESIS_FILE") {
+        Ok(path) => {
+            let bytes = std::fs::read(&path)
+                .map_err(|error| format!("read QUN_GENESIS_FILE {path}: {error}"))?;
+            let config: GenesisConfig = serde_json::from_slice(&bytes)
+                .map_err(|error| format!("parse QUN_GENESIS_FILE {path}: {error}"))?;
+            config.validate().map_err(|error| format!("invalid QUN genesis config: {error:?}"))?;
+            Some(config)
+        }
+        Err(_) => None,
+    };
+    let snapshot = load_snapshot_with_genesis(&data_file, genesis_config.as_ref())
+        .map_err(|error| format!("cannot start QUN node: {error}"))?;
     let dev_funding_enabled = env::var("QUN_ENABLE_DEV_FUNDING").map(|v| v == "true" || v == "1").unwrap_or(false);
     let state = AppState { snapshot: Arc::new(Mutex::new(snapshot)), data_file: Arc::new(data_file.clone()), dev_funding_enabled };
 
@@ -323,6 +359,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind(bind).await?;
     println!("QUN local development node listening on http://{bind}");
     println!("Data file: {}", data_file.display());
+    println!("Configured genesis replay: {} (QUN_GENESIS_FILE)", genesis_config.is_some());
     println!("WARNING: local development-only chain; signed transactions are supported, but consensus, P2P, and real assets are not implemented.");
     println!("Development funding enabled: {dev_funding_enabled} (QUN_ENABLE_DEV_FUNDING)");
     axum::serve(listener, app).await?;
