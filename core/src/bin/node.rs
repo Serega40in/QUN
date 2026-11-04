@@ -5,7 +5,7 @@ use axum::{
     routing::{get, post},
     Html, Json, Router,
 };
-use qun_core::{Chain, Transaction};
+use qun_core::{Chain, LedgerState, Transaction};
 use serde::{Deserialize, Serialize};
 use std::{
     env,
@@ -49,8 +49,19 @@ const MAX_TRANSACTIONS_PER_BLOCK: usize = 1_000;
 
 #[derive(Clone)]
 struct AppState {
-    chain: Arc<Mutex<Chain>>,
+    snapshot: Arc<Mutex<NodeSnapshot>>,
     data_file: Arc<PathBuf>,
+    dev_funding_enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct NodeSnapshot {
+    chain: Chain,
+    ledger: LedgerState,
+}
+
+impl Default for NodeSnapshot {
+    fn default() -> Self { Self { chain: Chain::new(), ledger: LedgerState::default() } }
 }
 
 #[derive(Serialize)]
@@ -61,7 +72,17 @@ struct Health {
     height: u64,
     blocks: usize,
     warning: &'static str,
+    dev_funding_enabled: bool,
 }
+
+#[derive(Serialize)]
+struct AccountsResponse {
+    balances: std::collections::BTreeMap<String, u64>,
+    nonces: std::collections::BTreeMap<String, u64>,
+}
+
+#[derive(Deserialize)]
+struct FundRequest { address: String, amount: u64 }
 
 #[derive(Deserialize)]
 struct MineRequest {
@@ -97,11 +118,11 @@ fn unix_timestamp() -> Result<u64, ApiFailure> {
         })
 }
 
-fn save_chain(path: &FsPath, chain: &Chain) -> Result<(), ApiFailure> {
-    let bytes = serde_json::to_vec_pretty(chain).map_err(|error| {
+fn save_snapshot(path: &FsPath, snapshot: &NodeSnapshot) -> Result<(), ApiFailure> {
+    let bytes = serde_json::to_vec_pretty(snapshot).map_err(|error| {
         api_error(
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("serialize chain: {error}"),
+            format!("serialize node snapshot: {error}"),
         )
     })?;
 
@@ -119,46 +140,69 @@ fn save_chain(path: &FsPath, chain: &Chain) -> Result<(), ApiFailure> {
     std::fs::write(&temporary, bytes).map_err(|error| {
         api_error(
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("write temporary chain: {error}"),
+            format!("write temporary snapshot: {error}"),
         )
     })?;
     std::fs::rename(&temporary, path).map_err(|error| {
         api_error(
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("replace chain file: {error}"),
+            format!("replace node snapshot file: {error}"),
         )
     })?;
     Ok(())
 }
 
-fn load_chain(path: &FsPath) -> Result<Chain, String> {
-    if !path.exists() {
-        return Ok(Chain::new());
-    }
+fn load_snapshot(path: &FsPath) -> Result<NodeSnapshot, String> {
+    if !path.exists() { return Ok(NodeSnapshot::default()); }
     let bytes = std::fs::read(path).map_err(|error| format!("read {}: {error}", path.display()))?;
-    let chain: Chain = serde_json::from_slice(&bytes)
-        .map_err(|error| format!("parse {}: {error}", path.display()))?;
-    chain
-        .validate()
-        .map_err(|error| format!("stored chain failed integrity validation: {error:?}"))?;
-    Ok(chain)
+    let snapshot = match serde_json::from_slice::<NodeSnapshot>(&bytes) {
+        Ok(snapshot) => snapshot,
+        Err(_) => {
+            let chain: Chain = serde_json::from_slice(&bytes).map_err(|error| format!("parse {} as snapshot or legacy chain: {error}", path.display()))?;
+            NodeSnapshot { chain, ledger: LedgerState::default() }
+        }
+    };
+    snapshot.chain.validate().map_err(|error| format!("stored chain failed integrity validation: {error:?}"))?;
+    Ok(snapshot)
 }
 
 async fn health(State(state): State<AppState>) -> Json<Health> {
-    let chain = state.chain.lock().await;
+    let snapshot = state.snapshot.lock().await;
     Json(Health {
         status: "ok",
         network: "qun-local-dev-v0",
         mode: "single-process-development-only",
-        height: chain.blocks.last().map(|block| block.index).unwrap_or(0),
-        blocks: chain.blocks.len(),
+        height: snapshot.chain.blocks.last().map(|block| block.index).unwrap_or(0),
+        blocks: snapshot.chain.blocks.len(),
         warning:
-            "No signatures, balances, consensus, or real assets. Do not expose this API publicly.",
+            "No signatures, consensus, or real assets. Do not expose this API publicly.",
+        dev_funding_enabled: state.dev_funding_enabled,
     })
 }
 
 async fn get_chain(State(state): State<AppState>) -> Json<Chain> {
-    Json(state.chain.lock().await.clone())
+    Json(state.snapshot.lock().await.chain.clone())
+}
+
+async fn get_accounts(State(state): State<AppState>) -> Json<AccountsResponse> {
+    let snapshot = state.snapshot.lock().await;
+    Json(AccountsResponse { balances: snapshot.ledger.balances.clone(), nonces: snapshot.ledger.nonces.clone() })
+}
+
+async fn dev_fund(State(state): State<AppState>, Json(request): Json<FundRequest>) -> Result<Json<AccountsResponse>, ApiFailure> {
+    if !state.dev_funding_enabled {
+        return Err(api_error(StatusCode::FORBIDDEN, "development funding is disabled; set QUN_ENABLE_DEV_FUNDING=true for local testing only"));
+    }
+    if request.amount == 0 || request.address.trim().is_empty() {
+        return Err(api_error(StatusCode::BAD_REQUEST, "address must be non-empty and amount must be greater than zero"));
+    }
+    let mut snapshot = state.snapshot.lock().await;
+    let mut next = snapshot.clone();
+    next.ledger.set_genesis_balance(request.address, request.amount)
+        .map_err(|error| api_error(StatusCode::BAD_REQUEST, format!("invalid funding request: {error:?}")))?;
+    save_snapshot(state.data_file.as_path(), &next)?;
+    *snapshot = next;
+    Ok(Json(AccountsResponse { balances: snapshot.ledger.balances.clone(), nonces: snapshot.ledger.nonces.clone() }))
 }
 
 async fn get_block(
@@ -187,28 +231,17 @@ async fn dev_mine(
     }
 
     let timestamp = unix_timestamp()?;
-    let mut chain = state.chain.lock().await;
-    let old_chain = chain.clone();
-    chain.append(timestamp, request.transactions);
-
-    if let Err(error) = chain.validate() {
-        *chain = old_chain;
-        return Err(api_error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("new block failed validation: {error:?}"),
-        ));
+    let mut snapshot = state.snapshot.lock().await;
+    let mut next = snapshot.clone();
+    for (position, tx) in request.transactions.iter().enumerate() {
+        next.ledger.apply(tx).map_err(|error| api_error(StatusCode::UNPROCESSABLE_ENTITY,
+            format!("transaction {position} rejected by demo ledger: {error:?}; sender identity is NOT cryptographically authenticated")))?;
     }
-
-    if let Err(error) = save_chain(state.data_file.as_path(), &chain) {
-        *chain = old_chain;
-        return Err(error);
-    }
-
-    let block = chain
-        .blocks
-        .last()
-        .expect("append always creates a block")
-        .clone();
+    next.chain.append(timestamp, request.transactions);
+    next.chain.validate().map_err(|error| api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("new block failed validation: {error:?}")))?;
+    save_snapshot(state.data_file.as_path(), &next)?;
+    *snapshot = next;
+    let block = snapshot.chain.blocks.last().expect("append always creates a block").clone();
     Ok((StatusCode::CREATED, Json(block)))
 }
 
@@ -222,27 +255,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         env::var("QUN_DATA_FILE").unwrap_or_else(|_| "data/qun-chain.json".to_owned()),
     );
 
-    let chain =
-        load_chain(&data_file).map_err(|error| format!("cannot start QUN node: {error}"))?;
-    let state = AppState {
-        chain: Arc::new(Mutex::new(chain)),
-        data_file: Arc::new(data_file.clone()),
-    };
+    let snapshot = load_snapshot(&data_file).map_err(|error| format!("cannot start QUN node: {error}"))?;
+    let dev_funding_enabled = env::var("QUN_ENABLE_DEV_FUNDING").map(|v| v == "true" || v == "1").unwrap_or(false);
+    let state = AppState { snapshot: Arc::new(Mutex::new(snapshot)), data_file: Arc::new(data_file.clone()), dev_funding_enabled };
 
     let app = Router::new()
         .route("/", get(dashboard))
         .route("/health", get(health))
         .route("/chain", get(get_chain))
+        .route("/accounts", get(get_accounts))
         .route("/blocks/:index", get(get_block))
         .route("/dev/mine", post(dev_mine))
+        .route("/dev/fund", post(dev_fund))
         .with_state(state);
 
     let listener = TcpListener::bind(bind).await?;
     println!("QUN local development node listening on http://{bind}");
     println!("Data file: {}", data_file.display());
-    println!(
-        "WARNING: development-only chain; no signatures, balances, consensus, or real assets."
-    );
+    println!("WARNING: local development-only chain; no signatures, consensus, or real assets.");
+    println!("Development funding enabled: {dev_funding_enabled} (QUN_ENABLE_DEV_FUNDING)");
     axum::serve(listener, app).await?;
     Ok(())
 }
