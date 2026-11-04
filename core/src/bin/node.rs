@@ -60,24 +60,49 @@ fn unix_timestamp() -> Result<u64, ApiFailure> {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_secs())
-        .map_err(|_| api_error(StatusCode::INTERNAL_SERVER_ERROR, "system clock is before Unix epoch"))
+        .map_err(|_| {
+            api_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "system clock is before Unix epoch",
+            )
+        })
 }
 
 fn save_chain(path: &FsPath, chain: &Chain) -> Result<(), ApiFailure> {
     let bytes = serde_json::to_vec_pretty(chain)
-        .map_err(|error| api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("serialize chain: {error}")))?;
+        .map_err(|error| {
+            api_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("serialize chain: {error}"),
+            )
+        })?;
 
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)
-            .map_err(|error| api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("create data directory: {error}")))?;
+            .map_err(|error| {
+                api_error(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("create data directory: {error}"),
+                )
+            })?;
     }
 
     // Write a temporary file first, then atomically replace the previous snapshot.
     let temporary = path.with_extension("json.tmp");
     std::fs::write(&temporary, bytes)
-        .map_err(|error| api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("write temporary chain: {error}")))?;
+        .map_err(|error| {
+            api_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("write temporary chain: {error}"),
+            )
+        })?;
     std::fs::rename(&temporary, path)
-        .map_err(|error| api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("replace chain file: {error}")))?;
+        .map_err(|error| {
+            api_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("replace chain file: {error}"),
+            )
+        })?;
     Ok(())
 }
 
@@ -140,7 +165,10 @@ async fn dev_mine(
 
     if let Err(error) = chain.validate() {
         *chain = old_chain;
-        return Err(api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("new block failed validation: {error:?}")));
+        return Err(api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("new block failed validation: {error:?}"),
+        ));
     }
 
     if let Err(error) = save_chain(state.data_file.as_path(), &chain) {
