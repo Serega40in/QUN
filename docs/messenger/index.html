@@ -225,7 +225,8 @@ const $=id=>document.getElementById(id);
 let user=null,profile=null,activeId=null,activePerson=null,pollTimer=null,searchTimer=null,knownPeople=[],chatRows=[],unreadCounts={},lastNotificationCheck=null;
 let callChannel=null,peerConnection=null,localCallStream=null,remoteCallStream=null,callMode=null,callState="idle",pendingOffer=null,queuedIce=[],currentCallTarget=null,callMuted=false,cameraEnabled=true,videoFacingMode="user";
  let ringAudioContext=null,ringInterval=null,ringGeneration=0;
- let callChannelReady=false;\n function updateCallButtons(){const busy=callState!=='idle';for(const id of ['audioCall','videoCall']){const b=$(id);if(b){b.disabled=busy||!callChannelReady;b.setAttribute('aria-disabled',String(b.disabled));b.title=busy?'Сначала завершите текущий звонок':(!callChannelReady?'Подключаем защищённый канал звонка…':'')}}}
+ let callChannelReady=false;
+ function updateCallButtons(){const busy=callState!=='idle';for(const id of ['audioCall','videoCall']){const b=$(id);if(b){b.disabled=busy||!callChannelReady;b.setAttribute('aria-disabled',String(b.disabled));b.title=busy?'Сначала завершите текущий звонок':(!callChannelReady?'Подключаем защищённый канал звонка…':'')}}}
  async function unlockCallAudio(){const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return null;if(!ringAudioContext)ringAudioContext=new AudioCtx();if(ringAudioContext.state==='suspended')await ringAudioContext.resume();return ringAudioContext}
  function stopRingTone(){ringGeneration++;if(ringInterval!==null){clearInterval(ringInterval);ringInterval=null}}
  async function startRingTone(){stopRingTone();const generation=ringGeneration;try{const ctx=await unlockCallAudio();if(!ctx||generation!==ringGeneration||ctx.state!=='running')return;const pair=()=>{if(generation!==ringGeneration||ringAudioContext!==ctx||ctx.state!=='running')return;const base=ctx.currentTime+.03;for(const offset of [0,.28]){const at=base+offset,osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=425;gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(.12,at+.025);gain.gain.setValueAtTime(.12,at+.14);gain.gain.linearRampToValueAtTime(0,at+.21);osc.connect(gain);gain.connect(ctx.destination);osc.onended=()=>{osc.disconnect();gain.disconnect()};osc.start(at);osc.stop(at+.22)}};pair();ringInterval=setInterval(pair,3800)}catch(e){console.warn('Call ring tone unavailable:',e)}}
@@ -329,7 +330,8 @@ async function preparePeer(mode){
  for(const track of localCallStream.getTracks())peerConnection.addTrack(track,localCallStream);
 }
 async function startCall(mode){
- if(!activeId||!activePerson)return;\n if(!callChannelReady||!callChannel){callStatus('Канал звонка пока не подключён. Повторно откройте диалог или обновите страницу.');showCallStage(true);return;}
+ if(!activeId||!activePerson)return;
+ if(!callChannelReady||!callChannel){callStatus('Канал звонка пока не подключён. Повторно откройте диалог или обновите страницу.');showCallStage(true);return;}
  if(!navigator.mediaDevices?.getUserMedia){callStatus('Звонки требуют современный браузер и защищённое HTTPS-соединение.');showCallStage(true);return}
  if(callState!=='idle'){callStatus('Сначала завершите текущий звонок.');return}
  try{
