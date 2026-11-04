@@ -11,7 +11,7 @@ cd core
 cargo run --bin node
 ```
 
-Open `http://127.0.0.1:8787/` for the interactive local explorer. It displays blocks and test balances, lets you issue a development-only test balance when explicitly enabled, and submits demo transfers to the local ledger.
+Open `http://127.0.0.1:8787/` for the interactive local explorer. It displays blocks and test balances, creates an ephemeral Ed25519 key in the browser, and submits transfers through the signed transaction endpoint. The private key remains in tab memory and is lost when the tab is closed or reloaded; this is a disposable demo key, not a production wallet.
 
 The node binds to `127.0.0.1:8787` by default and stores the snapshot in `core/data/qun-chain.json` when launched from the repository's `core` directory. Override these with `QUN_BIND` and `QUN_DATA_FILE`. The API has no authentication: do not expose it to a public interface or the internet.
 
@@ -28,7 +28,7 @@ For local testing only, enable demo funding with `QUN_ENABLE_DEV_FUNDING=true`. 
 - `POST /dev/mine` — legacy unsigned demo route. It does not authenticate sender identity; local tests only.
 - `POST /dev/mine-signed` — verify Ed25519 signatures and sender/public-key match, apply ledger checks, then append a block that stores both the transactions and signatures.
 
-Example local test transfer (first enable test funding and fund `alice-demo` using the dashboard):
+Example unsigned legacy/demo transfer (not recommended; use the browser dashboard for signed transfers):
 
 ```sh
 curl http://127.0.0.1:8787/health
@@ -60,14 +60,14 @@ curl -X POST http://127.0.0.1:8787/dev/mine \
 }
 ```
 
-The signature covers a deterministic, domain-separated `QUN_TX_V1` payload containing sender, recipient, amount, and nonce. The sender must equal the public key hex. Signed blocks use a `QUN_BLOCK_V2` hash payload that includes signatures. The `Chain::validate` path re-verifies signatures on signed blocks after loading persisted data. Fund the sender's public-key address only through the local development funding mechanism when testing.
+The signature covers a deterministic, domain-separated `QUN_TX_V1` JSON-array payload containing sender, recipient, amount, and nonce. The dashboard serializes this array in the same field order before signing. The sender must equal the public key hex. Signed blocks use a `QUN_BLOCK_V2` hash payload that includes signatures. The `Chain::validate` path re-verifies signatures on signed blocks after loading persisted data. Fund the sender's public-key address only through the local development funding mechanism when testing.
 
 ## Current implementation and limitations
 
 - The node persists a JSON snapshot containing the hash-linked chain and demo ledger, validates chain links and signed transactions when loading, and keeps legacy snapshots readable.
 - The ledger validates non-empty addresses, positive amounts, no self-transfer, sequential nonces, sufficient sender balance, and balance overflow.
 - `/dev/mine-signed` verifies signatures before ledger mutation, then persists the ledger update and signed block together. A rejected transfer should not mutate the saved snapshot.
-- **The legacy `/dev/mine` endpoint still accepts unsigned demo transactions.** Do not use it as a secure transaction path; the dashboard currently uses this route and has not yet been migrated to browser-side signing.
+- **The legacy `/dev/mine` endpoint still accepts unsigned demo transactions.** Do not use it as a secure transaction path. The dashboard now uses browser-side Ed25519 signing and `/dev/mine-signed`; the old endpoint remains only for compatibility and local testing.
 - The HTTP API has no authentication. Keep the node on localhost; do not expose it to the internet or real assets.
 - There is no peer-to-peer networking, distributed consensus, validator set, or finality. A single local process appends blocks.
 - `/dev/fund` is a test-only balance setter, not a consensus-backed genesis allocation. Never enable it on a public node.
