@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071421">
+<title>QUN Music Video Factory — Бесплатный процедурный клип</title>
+<style>
+:root{color-scheme:dark;--bg:#071421;--panel:#0d2233;--line:#28475b;--mint:#8af0ce;--gold:#f3d18a;--text:#f3f8fb;--muted:#a2b7c6}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 70% 0,#16475a 0,transparent 42%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}.shell{max-width:1080px;margin:auto;padding:18px 14px 48px}header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:8px 0 18px}.brand{font-weight:900;letter-spacing:.1em}.brand span{color:var(--mint)}a{color:var(--mint)}h1{font-size:clamp(30px,5vw,48px);line-height:1.05;letter-spacing:-.04em;margin:24px 0 12px}.lead{color:var(--muted);max-width:780px}.card{background:#0b1c2be8;border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}label{display:block;color:#d6e7f0;font-size:13px;margin:8px 0 5px}input,select,button{font:inherit}input[type=file],input[type=text],select{width:100%;background:#071522;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px}.btn{border:1px solid #397267;background:linear-gradient(135deg,#174f4a,#14384a);color:#dffff6;border-radius:10px;padding:10px 14px;font-weight:750;cursor:pointer}.btn.secondary{background:#102438;border-color:var(--line);color:var(--text)}.btn:disabled{opacity:.4;cursor:not-allowed}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.preview{width:100%;aspect-ratio:16/9;display:block;background:#02070e;border:1px solid var(--line);border-radius:12px}.status{white-space:pre-wrap;color:var(--mint);font-size:13px;min-height:22px;margin-top:10px}.hint{font-size:12px;color:var(--muted)}.notice{padding:12px;border:1px solid #31535e;background:#102b37;color:#c9eadf;border-radius:12px;font-size:13px}.meter{height:5px;background:#163044;border-radius:9px;overflow:hidden;margin:8px 0}.meter>div{height:100%;width:0;background:var(--mint)}@media(max-width:650px){.grid{grid-template-columns:1fr}.card{padding:12px}.shell{padding:12px 10px 35px}}
+</style>
+</head>
+<body><main class="shell">
+<header><div class="brand">QUN <span>MUSIC VIDEO FACTORY</span></div><nav class="row"><a href="./index.html">Studio</a><a href="./director.html">Director</a><a href="./mastercut.html">Mastercut</a></nav></header>
+<h1>Из музыки — в <span style="color:var(--mint)">полный клип.</span></h1>
+<p class="lead">Бесплатный процедурный режим QUN: визуальные миры, частицы, свет, движение и музыкальная реакция создаются прямо в браузере. Без GPU-сервера, API-ключей и оплаты за каждую минуту. Выходной файл записывается на вашем устройстве.</p>
+<div class="notice"><b>Что это за первая версия:</b> она создаёт самостоятельный аудиореактивный клип на всю длину песни. Это не генеративная видеомодель уровня Freebeat: здесь мы строим собственный визуальный движок и проверяем полный конвейер «музыка → движущаяся сцена → видео с аудио». Запись идёт в реальном времени, поэтому трёхминутная песня займёт примерно три минуты.</div>
+<section class="card">
+<h2>1. Подготовить клип</h2>
+<div class="grid">
+<div><label for="audioFile">Музыкальный файл</label><input id="audioFile" type="file" accept="audio/*"><p id="trackInfo" class="hint">MP3, WAV, OGG, M4A или другой формат, который воспроизводит браузер.</p></div>
+<div><label for="style">Визуальный мир</label><select id="style"><option value="cosmic">Космос · кристаллы · звёзды</option><option value="aurora">Северное сияние · световые потоки</option><option value="ocean">Океан · волны · глубина</option><option value="forest">Лес · органические формы</option><option value="geometry">Абстрактная геометрия</option><option value="surprise">Сюрприз · смена миров</option></select><label for="format">Формат</label><select id="format"><option value="landscape">Горизонтальный 16:9 · 1280×720</option><option value="portrait">Вертикальный 9:16 · 720×1280</option><option value="square">Квадрат 1:1 · 900×900</option></select></div>
+</div>
+<label for="title">Название клипа (необязательно)</label><input id="title" type="text" maxlength="100" placeholder="Например, S40in — Путь к свету">
+<div class="row" style="margin-top:14px"><button id="previewBtn" class="btn secondary" disabled>Предпросмотр</button><button id="renderBtn" class="btn" disabled>Создать клип на всю песню</button><button id="stopBtn" class="btn secondary" disabled>Остановить запись</button></div>
+<div class="status" id="status" role="status">Выбери музыкальный файл, чтобы начать.</div><div class="meter"><div id="progress"></div></div>
+</section>
+<section class="card"><h2>2. Предпросмотр сцены</h2><canvas id="canvas" class="preview" width="1280" height="720"></canvas><p class="hint">Предпросмотр показывает анимацию в реальном времени. Во время записи не закрывай вкладку и не блокируй устройство.</p></section>
+<section id="result" class="card" hidden><h2>3. Готовый клип</h2><video id="resultVideo" class="preview" controls playsinline></video><div class="row" style="margin-top:12px"><a id="download" class="btn" download="QUN-Music-Video.webm">Скачать видео</a><button id="again" class="btn secondary">Создать ещё одну вариацию</button></div><p class="hint">Файл WebM содержит и видео, и оригинальную аудиодорожку. Его можно открыть в браузере или перекодировать в MP4 позднее через QUN Mastercut/FFmpeg.</p></section>
+<section class="card"><h2>Что дальше</h2><p class="hint">Следующий этап — сохранять проекты в QUN Library, добавлять режиссёрские сцены и подключать опциональные открытые видеомодели там, где доступен подходящий GPU. Базовый процедурный движок останется бесплатным резервным режимом.</p></section>
+</main>
+<script>
+(() => {
+const $=id=>document.getElementById(id);
+const canvas=$("canvas"),ctx=canvas.getContext("2d",{alpha:false});
+const audio=$("audioFile"),style=$("style"),format=$("format"),title=$("title");
+let audioUrl=null,audioEl=null,audioCtx=null,analyser=null,source=null,raf=0,recorder=null,chunks=[],recording=false,previewing=false,startedAt=0,duration=0,objectUrl=null;
+let particles=[],seed=0, lastScene=-1, beat=0, beatHold=0, previousEnergy=0;
+const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+function resizeCanvas(){const f=format.value;canvas.width=f==="portrait"?720:f==="square"?900:1280;canvas.height=f==="portrait"?1280:f==="square"?900:720;canvas.style.aspectRatio=canvas.width+"/"+canvas.height;initParticles();draw(0,true)}
+function initParticles(){seed=987654;particles=Array.from({length:Math.max(100,Math.floor(canvas.width*canvas.height/7000))},()=>({x:rand()*canvas.width,y:rand()*canvas.height,z:.3+rand()*1.8,r:.5+rand()*2.8,p:rand()*Math.PI*2,h:rand()}))}
+function palette(t){const s=style.value==="surprise"?Math.floor(t/18)%5:({cosmic:0,aurora:1,ocean:2,forest:3,geometry:4}[style.value]||0);return [["#06102a","#163b64","#38e0c2","#f3d18a"],["#071d30","#164e5e","#73ffd4","#a5b7ff"],["#031b30","#075b77","#36d9d1","#d3f6ff"],["#071f1b","#1b624b","#8af0ce","#e7d89c"],["#100a2d","#3d2679","#65d8ff","#f3a7ff"]][s]}
+function roundedRect(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r)}
+function draw(t,staticFrame=false){
+ const w=canvas.width,h=canvas.height,p=palette(t),freq=analyser?new Uint8Array(analyser.frequencyBinCount):null,time=analyser?new Uint8Array(analyser.fftSize):null;
+ let low=0,mid=0,high=0,rms=0;
+ if(analyser&&freq&&time){analyser.getByteFrequencyData(freq);analyser.getByteTimeDomainData(time);for(let i=0;i<Math.min(12,freq.length);i++)low+=freq[i];for(let i=12;i<Math.min(80,freq.length);i++)mid+=freq[i];for(let i=80;i<Math.min(220,freq.length);i++)high+=freq[i];low/=Math.min(12,freq.length)*255;mid/=Math.max(1,Math.min(68,freq.length-12))*255;high/=Math.max(1,Math.min(140,freq.length-80))*255;for(const v of time){const n=(v-128)/128;rms+=n*n}rms=Math.sqrt(rms/time.length)}
+ const energy=Math.min(1,low*.55+mid*.3+high*.15);if(energy>previousEnergy+.08){beat=1;beatHold=1}beat*=.87;beatHold*=.94;previousEnergy=energy;
+ const scene=Math.floor(t/18);if(scene!==lastScene){lastScene=scene; if(style.value==="surprise")initParticles()}
+ const bg=ctx.createLinearGradient(0,0,w,h);bg.addColorStop(0,p[0]);bg.addColorStop(.52,p[1]);bg.addColorStop(1,"#02060e");ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+ const cx=w*.5+Math.sin(t*.13)*w*.08,cy=h*.48+Math.cos(t*.17)*h*.06,base=Math.min(w,h);
+ // atmospheric glow
+ let glow=ctx.createRadialGradient(cx,cy,base*.02,cx,cy,base*(.34+energy*.18));glow.addColorStop(0,p[2]+"55");glow.addColorStop(1,p[0]+"00");ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
+ const mode=style.value==="surprise"?["cosmic","aurora","ocean","forest","geometry"][scene%5]:style.value;
+ // stars and particles
+ for(let i=0;i<particles.length;i++){const a=particles[i];const drift=t*(mode==="ocean"?.3:mode==="forest"?.12:.55)*a.z;let x=(a.x+Math.sin(t*.25+a.p)*base*.025+drift*3)%w,y=(a.y-t*(mode==="forest"?8:mode==="ocean"?2:12)*a.z+h)%h;const alpha=.15+.6*(.5+.5*Math.sin(t*1.8+a.p));ctx.globalAlpha=alpha;ctx.fillStyle=a.h>.82?p[3]:p[2];ctx.beginPath();ctx.arc(x,y,a.r*(1+energy*.7),0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
+ if(mode==="cosmic"){
+  // crystal planet / orbit
+  const r=base*(.12+energy*.045+beat*.025);ctx.save();ctx.translate(cx,cy);ctx.rotate(t*.12);ctx.strokeStyle=p[2]+"99";ctx.lineWidth=Math.max(1,base*.002);for(let j=0;j<4;j++){ctx.beginPath();ctx.ellipse(0,0,r*(1+j*.28),r*(.3+j*.05),j*.42,0,Math.PI*2);ctx.stroke()}const g=ctx.createRadialGradient(-r*.3,-r*.35,r*.05,0,0,r);g.addColorStop(0,"#f7f9ff");g.addColorStop(.25,p[3]);g.addColorStop(.62,p[2]);g.addColorStop(1,p[1]);ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.restore();
+ }else if(mode==="aurora"){
+  for(let j=0;j<8;j++){ctx.beginPath();for(let x=0;x<=w;x+=8){const y=h*(.28+j*.065)+Math.sin(x*.006+j*1.1+t*.4)*h*(.035+energy*.04)+Math.sin(x*.014-t*.8+j)*h*.018;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.strokeStyle=(j%2?p[2]:p[3])+(j<3?"88":"40");ctx.lineWidth=base*(.006+j*.001);ctx.shadowBlur=base*.025;ctx.shadowColor=p[2];ctx.stroke()}ctx.shadowBlur=0;
+ }else if(mode==="ocean"){
+  for(let j=0;j<12;j++){const y0=h*(.45+j*.045);ctx.beginPath();ctx.moveTo(0,h);for(let x=0;x<=w;x+=5){const y=y0+Math.sin(x*.008+t*(.7+j*.025)+j)*h*(.012+energy*.025)+Math.sin(x*.02-t*.5)*h*.008;ctx.lineTo(x,y)}ctx.lineTo(w,h);ctx.closePath();ctx.fillStyle=(j%2?p[2]:p[3])+(j<4?"35":"18");ctx.fill();ctx.strokeStyle=p[2]+"88";ctx.lineWidth=1.2;ctx.stroke()}
+ }else if(mode==="forest"){
+  for(let j=0;j<20;j++){const x=(j/19)*w,treeH=h*(.18+randStable(j)*.24)+energy*h*.04;ctx.beginPath();ctx.moveTo(x,h*.8);ctx.lineTo(x,h*.8-treeH);ctx.strokeStyle=j%3?p[2]+"88":p[3]+"99";ctx.lineWidth=Math.max(2,base*.003);ctx.stroke();for(let k=0;k<5;k++){const yy=h*.8-treeH*(.25+k*.14);ctx.beginPath();ctx.moveTo(x,yy);ctx.lineTo(x-base*(.025+k*.004),yy-base*.045);ctx.moveTo(x,yy);ctx.lineTo(x+base*(.025+k*.004),yy-base*.045);ctx.stroke()}}
+  const g=ctx.createLinearGradient(0,h*.7,0,h);g.addColorStop(0,p[2]+"00");g.addColorStop(1,p[2]+"35");ctx.fillStyle=g;ctx.fillRect(0,h*.6,w,h*.4);
+ }else{
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(t*.12);for(let j=0;j<18;j++){const r=base*(.05+j*.018)*(1+energy*.22);ctx.beginPath();for(let k=0;k<=6;k++){const a=k*Math.PI/3;const x=Math.cos(a)*r,y=Math.sin(a)*r;if(k===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.closePath();ctx.strokeStyle=j%2?p[2]+"99":p[3]+"88";ctx.lineWidth=1+energy*3;ctx.stroke()}ctx.restore();
+ }
+ // waveform ribbon tied to the music
+ ctx.beginPath();const midY=h*.77,amp=h*(.025+energy*.12);for(let x=0;x<=w;x+=3){const idx=Math.floor(x/w*(freq?.length||1));const v=freq?freq[idx]/255:Math.sin(x*.02+t)*.2;const y=midY+Math.sin(x*.009+t*1.4)*amp*.4+(v-.2)*amp*2;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.strokeStyle=p[2];ctx.lineWidth=Math.max(2,base*.002);ctx.shadowColor=p[2];ctx.shadowBlur=base*.018;ctx.stroke();ctx.shadowBlur=0;
+ // cinematic frame + title
+ const pad=base*.035;ctx.strokeStyle="#ffffff35";ctx.lineWidth=1;ctx.strokeRect(pad,pad,w-pad*2,h-pad*2);
+ const titleText=(title.value||"QUN · MUSIC VIDEO").trim();ctx.textAlign="left";ctx.fillStyle="#ffffffd9";ctx.font="600 "+Math.round(base*.026)+"px system-ui";ctx.fillText(titleText.slice(0,60),pad*1.2,h-pad*1.25);
+ ctx.fillStyle="#ffffff88";ctx.font="500 "+Math.round(base*.012)+"px system-ui";ctx.fillText("QUN PROCEDURAL CINEMA",pad*1.2,h-pad*.65);
+ if(!staticFrame){ctx.fillStyle="#ffffff99";ctx.font="500 "+Math.round(base*.012)+"px system-ui";ctx.textAlign="right";ctx.fillText(formatTime(t),w-pad*1.2,h-pad*.65)}
+}
+function randStable(n){const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)}
+function formatTime(s){s=Math.max(0,Math.floor(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
+function loop(){if(!recording&&!previewing)return;const t=audioEl?audioEl.currentTime:0;draw(t);if(recording&&duration>0){const pct=Math.min(100,t/duration*100);$("progress").style.width=pct+"%";$("status").textContent="Записываем клип · "+formatTime(t)+" / "+formatTime(duration)+" · не закрывай вкладку";if(audioEl.ended){finishRecording();return}}if(previewing&&audioEl?.ended){previewing=false;audioEl.pause();$("previewBtn").textContent="Предпросмотр";$("status").textContent="Предпросмотр завершён."}raf=requestAnimationFrame(loop)}
+async function setupAudio(){if(!audioEl)throw new Error("Сначала выбери музыкальный файл.");if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();analyser=audioCtx.createAnalyser();analyser.fftSize=2048;analyser.smoothingTimeConstant=.78;source=audioCtx.createMediaElementSource(audioEl);source.connect(analyser);analyser.connect(audioCtx.destination)}await audioCtx.resume()}
+function mimeType(){return ["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>MediaRecorder.isTypeSupported(t))||""}
+audio.addEventListener("change",()=>{const file=audio.files?.[0];if(!file)return;if(audioUrl)URL.revokeObjectURL(audioUrl);audioUrl=URL.createObjectURL(file);if(audioEl){audioEl.pause();audioEl.remove()}audioEl=new Audio();audioEl.src=audioUrl;audioEl.preload="metadata";audioEl.addEventListener("loadedmetadata",()=>{duration=audioEl.duration||0;$("trackInfo").textContent=file.name+" · "+formatTime(duration)+" · "+(file.size/1024/1024).toFixed(1)+" МБ";$("renderBtn").disabled=!Number.isFinite(duration)||duration<=0;$("previewBtn").disabled=false;$("status").textContent="Файл готов. Выбери стиль и создай клип."});audioEl.addEventListener("error",()=>{$("status").textContent="Браузер не смог прочитать этот аудиоформат. Попробуй MP3 или WAV."})});
+$("previewBtn").addEventListener("click",async()=>{try{if(previewing){previewing=false;audioEl.pause();cancelAnimationFrame(raf);$("previewBtn").textContent="Предпросмотр";$("status").textContent="Предпросмотр остановлен.";draw(audioEl.currentTime);return}await setupAudio();audioEl.currentTime=0;await audioEl.play();previewing=true;$("previewBtn").textContent="Остановить предпросмотр";$("status").textContent="Идёт предпросмотр…";loop()}catch(e){$("status").textContent="Не удалось начать предпросмотр: "+e.message}});
+$("renderBtn").addEventListener("click",async()=>{try{if(!window.MediaRecorder||!canvas.captureStream)throw new Error("В этом браузере нет поддержки записи canvas-видео. Попробуй актуальный Chrome.");await setupAudio();const mime=mimeType();if(!mime)throw new Error("Браузер не поддерживает запись WebM.");if(previewing){previewing=false;audioEl.pause()}resizeCanvas();audioEl.currentTime=0;await audioCtx.resume();const videoStream=canvas.captureStream(30);const audioStream=audioCtx.createMediaStreamDestination();source.connect(audioStream);const stream=new MediaStream([...videoStream.getVideoTracks(),...audioStream.stream.getAudioTracks()]);chunks=[];recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:format.value==="portrait"?4500000:6000000,audioBitsPerSecond:192000});recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};recorder.onstop=()=>{recording=false;cancelAnimationFrame(raf);stream.getTracks().forEach(t=>t.stop());source.disconnect(audioStream);const blob=new Blob(chunks,{type:recorder.mimeType||"video/webm"});if(!blob.size){$("status").textContent="Запись завершилась без данных. Попробуй ещё раз.";return}if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=URL.createObjectURL(blob);$("resultVideo").src=objectUrl;$("download").href=objectUrl;const safe=(title.value||"QUN-Music-Video").replace(/[^a-zA-Z0-9А-Яа-я_-]+/g,"-").slice(0,60)||"QUN-Music-Video";$("download").download=safe+".webm";$("result").hidden=false;$("status").textContent="Готово! Видео и оригинальная музыка в одном WebM · "+(blob.size/1024/1024).toFixed(1)+" МБ. Нажми «Скачать видео»."; $("progress").style.width="100%";$("stopBtn").disabled=true;$("renderBtn").disabled=false;$("previewBtn").disabled=false};recorder.onerror=e=>{$("status").textContent="Ошибка записи: "+(e.error?.message||"неизвестная ошибка")};duration=audioEl.duration||duration;recording=true;startedAt=performance.now();$("result").hidden=true;$("renderBtn").disabled=true;$("previewBtn").disabled=true;$("stopBtn").disabled=false;$("status").textContent="Запускаем рендер…";recorder.start(1000);await audioEl.play();loop()}catch(e){recording=false;$("renderBtn").disabled=false;$("previewBtn").disabled=false;$("stopBtn").disabled=true;$("status").textContent="Не удалось создать клип: "+e.message+" Если устройство ограничивает запись, попробуй Chrome и оставь вкладку активной."}});
+function finishRecording(){if(!recording)return;recording=false;if(recorder&&recorder.state!=="inactive")recorder.stop();if(audioEl)audioEl.pause()}
+$("stopBtn").addEventListener("click",()=>{finishRecording();$("status").textContent="Останавливаем запись и сохраняем уже созданный фрагмент…"});
+$("again").addEventListener("click",()=>{$("result").hidden=true;$("status").textContent="Готов к новой вариации. Измени стиль или название и нажми «Создать клип»."});
+style.addEventListener("change",()=>draw(audioEl?.currentTime||0,true));format.addEventListener("change",resizeCanvas);title.addEventListener("input",()=>{if(!recording&&!previewing)draw(0,true)});
+window.addEventListener("beforeunload",e=>{if(recording){e.preventDefault();e.returnValue=""}});
+resizeCanvas();
+})();
+</script>
+</body></html>
