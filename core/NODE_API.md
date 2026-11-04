@@ -11,11 +11,11 @@ cd core
 cargo run --bin node
 ```
 
-The node binds to `127.0.0.1:8787` by default and stores the chain in `core/data/qun-chain.json` (relative to the working directory). Override these with `QUN_BIND` and `QUN_DATA_FILE` if needed. Do not bind to a public interface: the API has no authentication.
+Open `http://127.0.0.1:8787/` in your browser for the local interactive explorer. It displays the chain and lets you append demo blocks. The node binds to `127.0.0.1:8787` by default and stores the chain in `core/data/qun-chain.json` (relative to the working directory). Override these with `QUN_BIND` and `QUN_DATA_FILE` if needed. Do not bind to a public interface: the API has no authentication.
 
 ## Endpoints
 
-- `GET /health` — status, height, block count and limitations.
+- `GET /` — local interactive dashboard, served by the same node (no cross-origin setup needed).\n- `GET /health` — status, height, block count and limitations.
 - `GET /chain` — complete local chain snapshot.
 - `GET /blocks/{index}` — one block by height.
 - `POST /dev/mine` — append a development block and persist the chain.
@@ -33,7 +33,7 @@ curl -X POST http://127.0.0.1:8787/dev/mine \
 ## Important limitations
 
 - Transactions are plain data, not signed or authorized.
-- The node does not maintain account balances, enforce nonces, or prevent double-spends.
+- The library now contains a deterministic in-memory `LedgerState` with balance/nonce validation and unit tests, but this ledger is not yet wired into block validation or persisted by the HTTP node. The dashboard's demo block endpoint still accepts unauthenticated demo transactions.
 - There is no peer-to-peer networking, consensus, validator set, or finality.
 - `/dev/mine` accepts demo transactions without economic validation and must not be exposed to the public internet.
 - The chain file is an atomic JSON snapshot, not a database with crash-proof transactional semantics. Startup validates its hash links before serving.
