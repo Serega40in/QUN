@@ -598,4 +598,3 @@ mod protocol_golden_vectors {
         );
     }
 }
-
