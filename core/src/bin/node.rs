@@ -183,7 +183,7 @@ async fn health(State(state): State<AppState>) -> Json<Health> {
         height: snapshot.chain.blocks.last().map(|block| block.index).unwrap_or(0),
         blocks: snapshot.chain.blocks.len(),
         warning:
-            "No signatures, consensus, or real assets. Do not expose this API publicly.",
+            "Local development only; no distributed consensus, P2P, or real assets. Do not expose this API publicly.",
         dev_funding_enabled: state.dev_funding_enabled,
     })
 }
@@ -323,7 +323,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind(bind).await?;
     println!("QUN local development node listening on http://{bind}");
     println!("Data file: {}", data_file.display());
-    println!("WARNING: local development-only chain; consensus, P2P, and real assets are not implemented.");
+    println!("WARNING: local development-only chain; signed transactions are supported, but consensus, P2P, and real assets are not implemented.");
     println!("Development funding enabled: {dev_funding_enabled} (QUN_ENABLE_DEV_FUNDING)");
     axum::serve(listener, app).await?;
     Ok(())
