@@ -453,7 +453,7 @@ mod persistence_tests {
         snapshot.chain.append_signed(1, vec![signed]).unwrap();
         // Deliberately poison the cached ledger; configured startup must ignore it.
         snapshot.ledger.set_genesis_balance(sender.clone(), 999_999).unwrap();
-        save_snapshot(&path, &snapshot).unwrap();
+        assert!(save_snapshot(&path, &snapshot).is_ok());
 
         let loaded = load_snapshot_with_genesis(&path, Some(&genesis)).unwrap();
         assert_eq!(loaded.ledger.balances.get(&sender), Some(&41));
@@ -487,7 +487,7 @@ mod persistence_tests {
             amount: 1,
             nonce: 1,
         }]);
-        save_snapshot(&path, &snapshot).unwrap();
+        assert!(save_snapshot(&path, &snapshot).is_ok());
 
         let result = load_snapshot_with_genesis(&path, Some(&genesis));
         assert!(result.is_err(), "unsigned legacy transaction history must fail closed");
