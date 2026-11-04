@@ -102,6 +102,28 @@ input:focus-visible,button:focus-visible{outline:2px solid #4bd6a2;outline-offse
 @media(max-width:720px){.top{backdrop-filter:blur(14px)}.panel{box-shadow:none}.bubble,.bubble.mine{box-shadow:0 2px 7px #00000010}.chatbody{overscroll-behavior:contain}.composer{padding-bottom:max(9px,env(safe-area-inset-bottom))}.sidebar{padding-bottom:env(safe-area-inset-bottom)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
+
+/* Call UI: mobile-safe header and always-visible call controls */
+@media(max-width:720px){
+ .chathead{display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:8px;padding:10px 12px;position:sticky;top:56px;z-index:24;background:#0c2130}
+ .chathead #mobileBack{grid-column:1;grid-row:1}
+ .chathead .avatar{grid-column:2;grid-row:1}
+ .chathead>div:not(.avatar){grid-column:3/5;grid-row:1;min-width:0}
+ .chathead>div:not(.avatar) h2{overflow-wrap:anywhere}
+ .chathead #audioCall{grid-column:1/3;grid-row:2;width:100%;min-height:42px}
+ .chathead #videoCall{grid-column:3/5;grid-row:2;width:100%;min-height:42px}
+ .chathead #deleteConversation{grid-column:1/5;grid-row:3;justify-self:end;padding:6px 9px!important;font-size:11px!important}
+}
+.chathead #audioCall:disabled,.chathead #videoCall:disabled{opacity:.48;filter:grayscale(.35)}
+#callStage{position:fixed!important;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:80;width:auto;max-width:620px;margin:0!important;max-height:min(46dvh,460px);overflow-y:auto;background:#0c2130!important;box-shadow:0 18px 56px #000b!important;border:1px solid #4bd6a2!important;overscroll-behavior:contain}
+#callStage #activeCallActions{display:flex;flex-wrap:wrap;gap:8px;position:sticky;top:0;padding:2px 0 9px;background:#0c2130;z-index:2}
+#callStage #activeCallActions button:last-child{flex:1 0 100%;min-height:46px;font-size:14px}
+#callStage #incomingCallActions button{min-height:44px;flex:1}
+#callStage #callVideos{grid-template-columns:repeat(2,minmax(0,1fr))}
+#callStage #remoteVideo,#callStage #localVideo{max-height:18dvh!important;min-height:72px;object-fit:cover}
+@media(min-width:721px){#callStage{left:auto;right:24px;bottom:24px;width:min(520px,calc(100vw - 48px))}}
+@media(max-width:720px){#callStage{left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));max-height:44dvh;padding:10px!important}}
+
 </style>
 <link rel="stylesheet" href="../assets/qun-design-system.css">
 
@@ -169,7 +191,7 @@ html[data-qun-theme="work"] .notice.error{color:#FFB9A8!important}
 <div class="sectionlabel" id="listLabel">Люди и диалоги</div><div id="peopleList" class="list"><div class="empty">Загрузка профиля…</div></div>
 <div style="padding:14px;border-top:1px solid var(--line)"><div class="profilebar"><div class="avatar" id="myAvatar">К</div><div style="min-width:0;flex:1"><div id="myName" class="name">Мой профиль</div><div id="myHandle" class="handle"></div></div><button id="editProfile" class="btn light" style="padding:8px 10px;font-size:11px">Изменить</button></div><div id="profileEditor" class="hidden" style="margin-top:12px"><div class="field"><label for="displayName">ИМЯ</label><input id="displayName" maxlength="60" placeholder="Как вас называть"></div><div class="field"><label for="username">USERNAME (БЕЗ @)</label><input id="username" maxlength="24" placeholder="например, qun_user"></div><button id="saveProfile" class="btn green full">Сохранить профиль</button></div></div>
 </aside>
-<section id="chatPanel" class="panel chatpanel"><div class="chat"><div id="chatHeader" class="chathead"><div class="empty" style="padding:0;text-align:left"><div class="eyebrow">ДОБРО ПОЖАЛОВАТЬ</div><h2 style="font-size:22px;margin:8px 0">КЮН — рядом</h2><div class="muted">Выберите человека, чтобы начать диалог.</div></div></div><div id="callStage" class="panel hidden" style="margin:12px;padding:12px;border:1px solid var(--line);border-radius:16px"><div id="callStatus" role="status" aria-live="polite" style="font-weight:750;margin-bottom:10px">Звонок</div><div id="callVideos" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px"><video id="remoteVideo" autoplay playsinline style="display:none;width:100%;max-height:260px;background:#071b2a;border-radius:12px"></video><video id="localVideo" autoplay muted playsinline style="display:none;width:100%;max-height:180px;background:#071b2a;border-radius:12px"></video></div><div id="incomingCallActions" class="hidden" style="display:flex;gap:8px;margin-top:10px"><button id="answerCall" class="btn green" type="button">Принять</button><button id="rejectCall" class="btn light" type="button">Отклонить</button></div><div id="activeCallActions" class="hidden" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button id="muteCall" class="btn light" type="button">Выключить микрофон</button><button id="cameraCall" class="btn light" type="button">Выключить камеру</button><button id="switchCameraCall" class="btn light" type="button">Сменить камеру</button><button id="hangupCall" class="btn" style="background:#b4233b;color:white" type="button">Завершить звонок</button></div></div><div id="chatBody" class="chatbody"><div class="empty"><div class="mark" style="margin:0 auto 16px">К</div><strong style="color:var(--navy)">Ваши разговоры начинаются здесь</strong><p>Найдите человека по имени или username и напишите первое сообщение.</p></div></div><form id="composer" class="composer hidden"><button id="attachFile" class="btn" type="button" title="Прикрепить файл" aria-label="Прикрепить файл">＋</button><input id="fileInput" type="file" hidden><button id="addSticker" class="btn" type="button" title="Создать или загрузить стикер" aria-label="Создать или загрузить стикер">☺</button><input id="stickerInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden><button id="recordVoice" class="btn" type="button" title="Записать голосовое" aria-label="Записать голосовое">🎙</button><input id="messageInput" maxlength="4000" autocomplete="off" placeholder="Напишите сообщение…" aria-label="Сообщение"><button id="sendMessage" class="btn green" type="submit">Отправить</button></form><div id="mediaStatus" class="tiny muted" style="padding:0 16px 8px" aria-live="polite"></div><div id="chatNotice" class="notice" style="padding:0 16px 10px"></div></div></section>
+<section id="chatPanel" class="panel chatpanel"><div class="chat"><div id="chatHeader" class="chathead"><div class="empty" style="padding:0;text-align:left"><div class="eyebrow">ДОБРО ПОЖАЛОВАТЬ</div><h2 style="font-size:22px;margin:8px 0">КЮН — рядом</h2><div class="muted">Выберите человека, чтобы начать диалог.</div></div></div><div id="callStage" class="panel hidden" style="margin:12px;padding:12px;border:1px solid var(--line);border-radius:16px"><div id="callStatus" role="status" aria-live="polite" style="font-weight:750;margin-bottom:10px">Звонок</div><div id="incomingCallActions" class="hidden" style="display:flex;gap:8px;margin-top:10px"><button id="answerCall" class="btn green" type="button">Принять</button><button id="rejectCall" class="btn light" type="button">Отклонить</button></div><div id="activeCallActions" class="hidden" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button id="muteCall" class="btn light" type="button">Выключить микрофон</button><button id="cameraCall" class="btn light" type="button">Выключить камеру</button><button id="switchCameraCall" class="btn light" type="button">Сменить камеру</button><button id="hangupCall" class="btn" style="background:#b4233b;color:white" type="button">Завершить звонок</button></div><div id="callVideos" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px"><video id="remoteVideo" autoplay playsinline style="display:none;width:100%;max-height:260px;background:#071b2a;border-radius:12px"></video><video id="localVideo" autoplay muted playsinline style="display:none;width:100%;max-height:180px;background:#071b2a;border-radius:12px"></video></div></div><div id="chatBody" class="chatbody"><div class="empty"><div class="mark" style="margin:0 auto 16px">К</div><strong style="color:var(--navy)">Ваши разговоры начинаются здесь</strong><p>Найдите человека по имени или username и напишите первое сообщение.</p></div></div><form id="composer" class="composer hidden"><button id="attachFile" class="btn" type="button" title="Прикрепить файл" aria-label="Прикрепить файл">＋</button><input id="fileInput" type="file" hidden><button id="addSticker" class="btn" type="button" title="Создать или загрузить стикер" aria-label="Создать или загрузить стикер">☺</button><input id="stickerInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden><button id="recordVoice" class="btn" type="button" title="Записать голосовое" aria-label="Записать голосовое">🎙</button><input id="messageInput" maxlength="4000" autocomplete="off" placeholder="Напишите сообщение…" aria-label="Сообщение"><button id="sendMessage" class="btn green" type="submit">Отправить</button></form><div id="mediaStatus" class="tiny muted" style="padding:0 16px 8px" aria-live="polite"></div><div id="chatNotice" class="notice" style="padding:0 16px 10px"></div></div></section>
 </div>
 </main>
 <footer class="foot">КЮН · Создаём пространство для связи и сотрудничества</footer>
@@ -183,6 +205,11 @@ const sb=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoR
 const $=id=>document.getElementById(id);
 let user=null,profile=null,activeId=null,activePerson=null,pollTimer=null,searchTimer=null,knownPeople=[],chatRows=[],unreadCounts={},lastNotificationCheck=null;
 let callChannel=null,peerConnection=null,localCallStream=null,remoteCallStream=null,callMode=null,callState="idle",pendingOffer=null,queuedIce=[],currentCallTarget=null,callMuted=false,cameraEnabled=true,videoFacingMode="user";
+ let ringAudioContext=null,ringInterval=null;
+ function updateCallButtons(){const busy=callState!=='idle';for(const id of ['audioCall','videoCall']){const b=$(id);if(b){b.disabled=busy;b.setAttribute('aria-disabled',String(busy));b.title=busy?'Сначала завершите текущий звонок':''}}}
+ function stopRingTone(){if(ringInterval!==null){clearInterval(ringInterval);ringInterval=null}const ctx=ringAudioContext;ringAudioContext=null;if(ctx){try{ctx.close()}catch{}}}
+ async function startRingTone(){stopRingTone();const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;try{const ctx=new AudioCtx();ringAudioContext=ctx;await ctx.resume();const pair=()=>{if(ringAudioContext!==ctx||ctx.state!=='running')return;const base=ctx.currentTime+.03;for(const offset of [0,.28]){const at=base+offset,osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=425;gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(.12,at+.025);gain.gain.setValueAtTime(.12,at+.14);gain.gain.linearRampToValueAtTime(0,at+.21);osc.connect(gain);gain.connect(ctx.destination);osc.onended=()=>{osc.disconnect();gain.disconnect()};osc.start(at);osc.stop(at+.22)}};pair();ringInterval=setInterval(pair,3800)}catch(e){stopRingTone();console.warn('Call ring tone unavailable:',e)}}
+
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const initials=s=>(s||'К').trim().slice(0,1).toUpperCase();
 const publicName=p=>{const n=String(p?.display_name||'').trim();return n&& !/^[+\d\s()\-]{7,}$/.test(n)?n:(p?.username||'Участник КЮН')};
@@ -220,10 +247,11 @@ async function setupCallChannel(chatId){
   if(!payload||payload.to!==user?.id||payload.from===user?.id||payload.conversationId!==activeId)return;
   if(payload.type==='offer'){
    if(callState!=='idle'){try{await callChannel.send({type:'broadcast',event:'signal',payload:{type:'busy',from:user.id,to:payload.from,conversationId:activeId}})}catch{}return}
-   pendingOffer=payload.description;currentCallTarget=payload.from;callMode=payload.mode||'audio';callState='ringing';showCallStage(true);setCallActions(false,true);
+   pendingOffer=payload.description;currentCallTarget=payload.from;callMode=payload.mode||'audio';callState='ringing';updateCallButtons();showCallStage(true);setCallActions(false,true);startRingTone();
    callStatus((callMode==='video'?'Входящий видеозвонок':'Входящий аудиозвонок')+' от '+(activePerson?publicName(activePerson):'собеседника'));
    notice('chatNotice','Входящий звонок. Нажмите «Принять» в панели звонка.','ok');
   }else if(payload.type==='answer'&&peerConnection){
+   stopRingTone();
    try{await peerConnection.setRemoteDescription(payload.description);for(const c of queuedIce.splice(0)){try{await peerConnection.addIceCandidate(c)}catch{}}callState='connected';callStatus('Соединение устанавливается…')}
    catch(e){callStatus('Ошибка согласования: '+e.message)}
   }else if(payload.type==='ice'&&payload.candidate){
@@ -246,19 +274,19 @@ async function startCall(mode){
  if(!navigator.mediaDevices?.getUserMedia){callStatus('Звонки требуют современный браузер и защищённое HTTPS-соединение.');showCallStage(true);return}
  if(callState!=='idle'){callStatus('Сначала завершите текущий звонок.');return}
  try{
-  callMode=mode;callState='calling';currentCallTarget=activePerson.id;showCallStage(true);setCallActions(true,false);callStatus('Запрашиваем доступ к '+(mode==='video'?'камере и микрофону…':'микрофону…'));
+  callMode=mode;callState='calling';updateCallButtons();currentCallTarget=activePerson.id;showCallStage(true);setCallActions(true,false);callStatus('Запрашиваем доступ к '+(mode==='video'?'камере и микрофону…':'микрофону…'));
   localCallStream=await navigator.mediaDevices.getUserMedia({audio:true,video:mode==='video'?{facingMode:videoFacingMode}:false});
   $('localVideo').srcObject=localCallStream;$('localVideo').style.display=mode==='video'?'block':'none';$('cameraCall').style.display=mode==='video'?'inline-flex':'none';$('switchCameraCall').style.display=mode==='video'?'inline-flex':'none';
   await preparePeer(mode);
   const offer=await peerConnection.createOffer();await peerConnection.setLocalDescription(offer);
   await sendCallSignal({type:'offer',mode,description:peerConnection.localDescription.toJSON()});
-  callStatus(mode==='video'?'Видеозвонок: вызов отправлен…':'Аудиозвонок: вызов отправлен…');
+  callStatus(mode==='video'?'Видеозвонок: вызов отправлен. Ожидаем ответа…':'Аудиозвонок: вызов отправлен. Ожидаем ответа…');startRingTone();
  }catch(e){callStatus('Не удалось начать звонок: '+(e.message||e));await finishCall(false)}
 }
 async function answerCall(){
  if(!pendingOffer||!currentCallTarget)return;
  try{
-  callState='answering';setCallActions(true,false);callStatus('Запрашиваем доступ к микрофону…');
+  callState='answering';updateCallButtons();stopRingTone();setCallActions(true,false);callStatus('Запрашиваем доступ к микрофону…');
   localCallStream=await navigator.mediaDevices.getUserMedia({audio:true,video:callMode==='video'?{facingMode:videoFacingMode}:false});
   $('localVideo').srcObject=localCallStream;$('localVideo').style.display=callMode==='video'?'block':'none';$('cameraCall').style.display=callMode==='video'?'inline-flex':'none';$('switchCameraCall').style.display=callMode==='video'?'inline-flex':'none';
   await preparePeer(callMode);await peerConnection.setRemoteDescription(pendingOffer);pendingOffer=null;
@@ -269,13 +297,14 @@ async function answerCall(){
  }catch(e){callStatus('Не удалось принять звонок: '+(e.message||e));await finishCall(true)}
 }
 async function finishCall(notifyPeer=true){
+  stopRingTone();
  if(notifyPeer&&callChannel&&currentCallTarget&&callState!=='idle'){try{await sendCallSignal({type:'hangup'})}catch{}}
  if(peerConnection){peerConnection.ontrack=null;peerConnection.onicecandidate=null;peerConnection.close();peerConnection=null}
  if(localCallStream){localCallStream.getTracks().forEach(t=>t.stop());localCallStream=null}
  remoteCallStream=null;pendingOffer=null;queuedIce=[];callState='idle';callMode=null;currentCallTarget=null;callMuted=false;cameraEnabled=true;
  if($('localVideo')){$('localVideo').srcObject=null;$('localVideo').style.display='none'}$('cameraCall').style.display='';$('switchCameraCall').style.display='';
  if($('remoteVideo')){$('remoteVideo').srcObject=null;$('remoteVideo').style.display='none'}
- setCallActions(false,false);showCallStage(false);
+ setCallActions(false,false);showCallStage(false);updateCallButtons();
 }
 document.addEventListener('click',e=>{const button=e.target.closest('#audioCall,#videoCall');if(!button)return;startCall(button.id==='videoCall'?'video':'audio')});
 $('answerCall')?.addEventListener('click',answerCall);
