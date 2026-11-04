@@ -1,3 +1,5 @@
+mod genesis;
+pub use genesis::{GenesisConfig, GenesisConfigError};
 mod state_replay;
 pub use state_replay::StateReplayError;
 
