@@ -269,6 +269,52 @@ mod tests {
     use super::*;
 
     #[test]
+    fn signed_transaction_verifies_and_rejects_tampering() {
+        use ed25519_dalek::{Signer, SigningKey};
+
+        let signing_key = SigningKey::from_bytes(&[7_u8; 32]);
+        let public_key = hex::encode(signing_key.verifying_key().as_bytes());
+        let transaction = Transaction {
+            from: public_key.clone(),
+            to: "recipient-demo".into(),
+            amount: 42,
+            nonce: 1,
+        };
+        let signature = signing_key.sign(&SignedTransaction::signing_payload(&transaction));
+        let signed = SignedTransaction {
+            transaction,
+            public_key,
+            signature: hex::encode(signature.to_bytes()),
+        };
+        assert_eq!(signed.verify(), Ok(()));
+
+        let mut tampered = signed;
+        tampered.transaction.amount += 1;
+        assert_eq!(tampered.verify(), Err(SignatureError::InvalidSignature));
+    }
+
+    #[test]
+    fn signed_transaction_rejects_sender_key_mismatch() {
+        use ed25519_dalek::{Signer, SigningKey};
+
+        let signing_key = SigningKey::from_bytes(&[9_u8; 32]);
+        let public_key = hex::encode(signing_key.verifying_key().as_bytes());
+        let transaction = Transaction {
+            from: "not-the-public-key".into(),
+            to: "recipient-demo".into(),
+            amount: 1,
+            nonce: 1,
+        };
+        let signature = signing_key.sign(&SignedTransaction::signing_payload(&transaction));
+        let signed = SignedTransaction {
+            transaction,
+            public_key,
+            signature: hex::encode(signature.to_bytes()),
+        };
+        assert_eq!(signed.verify(), Err(SignatureError::SenderDoesNotMatchPublicKey));
+    }
+
+    #[test]
     fn genesis_chain_is_valid() {
         assert!(Chain::new().validate().is_ok());
     }
