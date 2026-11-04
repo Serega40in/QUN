@@ -180,8 +180,8 @@ async function setupCallChannel(chatId){
   }else if(payload.type==='answer'&&peerConnection){
    try{await peerConnection.setRemoteDescription(payload.description);for(const c of queuedIce.splice(0)){try{await peerConnection.addIceCandidate(c)}catch{}}callState='connected';callStatus('Соединение устанавливается…')}
    catch(e){callStatus('Ошибка согласования: '+e.message)}
-  }else if(payload.type==='ice'&&peerConnection&&payload.candidate){
-   try{if(peerConnection.remoteDescription)await peerConnection.addIceCandidate(payload.candidate);else queuedIce.push(payload.candidate)}catch(e){console.warn('ICE candidate:',e)}
+  }else if(payload.type==='ice'&&payload.candidate){
+   try{if(peerConnection&&peerConnection.remoteDescription)await peerConnection.addIceCandidate(payload.candidate);else queuedIce.push(payload.candidate)}catch(e){console.warn('ICE candidate:',e)}
   }else if(payload.type==='reject'||payload.type==='busy'){callStatus(payload.type==='busy'?'Собеседник уже разговаривает.':'Собеседник отклонил звонок.');await finishCall(false)}
   else if(payload.type==='hangup'){callStatus('Собеседник завершил звонок.');await finishCall(false)}
  });
@@ -230,8 +230,7 @@ async function finishCall(notifyPeer=true){
  if($('remoteVideo')){$('remoteVideo').srcObject=null;$('remoteVideo').style.display='none'}
  setCallActions(false,false);showCallStage(false);
 }
-$('audioCall')?.addEventListener('click',()=>startCall('audio'));
-$('videoCall')?.addEventListener('click',()=>startCall('video'));
+document.addEventListener('click',e=>{const button=e.target.closest('#audioCall,#videoCall');if(!button)return;startCall(button.id==='videoCall'?'video':'audio')});
 $('answerCall')?.addEventListener('click',answerCall);
 $('rejectCall')?.addEventListener('click',async()=>{try{if(callChannel&&currentCallTarget)await sendCallSignal({type:'reject'})}catch{}await finishCall(false);callStatus('Звонок отклонён.')});
 $('hangupCall')?.addEventListener('click',async()=>{await finishCall(true);callStatus('Звонок завершён.')});
