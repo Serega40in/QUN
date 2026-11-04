@@ -180,6 +180,9 @@ mod tests {
         let mut chain = Chain::new();
         chain.append(1, vec![]);
         chain.blocks[1].previous_hash = "broken".into();
-        assert_eq!(chain.validate(), Err(ChainError::InvalidPreviousHash { at: 1 }));
+        assert_eq!(
+            chain.validate(),
+            Err(ChainError::InvalidPreviousHash { at: 1 })
+        );
     }
 }
