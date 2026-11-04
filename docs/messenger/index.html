@@ -224,12 +224,15 @@ const sb=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoR
 const $=id=>document.getElementById(id);
 let user=null,profile=null,activeId=null,activePerson=null,pollTimer=null,searchTimer=null,knownPeople=[],chatRows=[],unreadCounts={},lastNotificationCheck=null;
 let callChannel=null,peerConnection=null,localCallStream=null,remoteCallStream=null,callMode=null,callState="idle",pendingOffer=null,queuedIce=[],currentCallTarget=null,callMuted=false,cameraEnabled=true,videoFacingMode="user";
- let ringAudioContext=null,ringInterval=null,ringGeneration=0;
+ let ringAudioContext=null,ringInterval=null,ringGeneration=0,ringNodes=new Set();
  function updateCallButtons(){const busy=callState!=='idle';for(const id of ['audioCall','videoCall']){const b=$(id);if(b){b.disabled=busy;b.setAttribute('aria-disabled',String(busy));b.title=busy?'Сначала завершите текущий звонок':''}}}
  async function unlockCallAudio(){const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return null;if(!ringAudioContext)ringAudioContext=new AudioCtx();if(ringAudioContext.state==='suspended')await ringAudioContext.resume();return ringAudioContext}
- function stopRingTone(){ringGeneration++;if(ringInterval!==null){clearInterval(ringInterval);ringInterval=null}}
- async function startRingTone(){stopRingTone();const generation=ringGeneration;try{const ctx=await unlockCallAudio();if(!ctx||generation!==ringGeneration||ctx.state!=='running')return;const pair=()=>{if(generation!==ringGeneration||ringAudioContext!==ctx||ctx.state!=='running')return;const base=ctx.currentTime+.03;for(const offset of [0,.28]){const at=base+offset,osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=425;gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(.12,at+.025);gain.gain.setValueAtTime(.12,at+.14);gain.gain.linearRampToValueAtTime(0,at+.21);osc.connect(gain);gain.connect(ctx.destination);osc.onended=()=>{osc.disconnect();gain.disconnect()};osc.start(at);osc.stop(at+.22)}};pair();ringInterval=setInterval(pair,3800)}catch(e){console.warn('Call ring tone unavailable:',e)}}
- document.addEventListener('pointerdown',()=>{unlockCallAudio().catch(()=>{})},{capture:true,once:true});
+ function stopRingTone(){ringGeneration++;if(ringInterval!==null){clearInterval(ringInterval);ringInterval=null}for(const osc of ringNodes){try{osc.stop()}catch{}}ringNodes.clear()}
+ function scheduleCallTone(ctx,frequency,offset,duration,volume=.11){const at=ctx.currentTime+offset,osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=frequency;gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(volume,at+.025);gain.gain.setValueAtTime(volume,Math.max(at+.03,at+duration-.045));gain.gain.linearRampToValueAtTime(0,at+duration);osc.connect(gain);gain.connect(ctx.destination);ringNodes.add(osc);osc.onended=()=>{ringNodes.delete(osc);osc.disconnect();gain.disconnect()};osc.start(at);osc.stop(at+duration+.01)}
+ async function playCallSignal(kind){try{const ctx=await unlockCallAudio();if(!ctx||ctx.state!=='running')return;if(kind==='answer'){scheduleCallTone(ctx,660,0,.12,.09);scheduleCallTone(ctx,880,.14,.2,.09)}else if(kind==='end'){scheduleCallTone(ctx,480,0,.22,.08)}}catch(e){console.warn('Call signal unavailable:',e)}}
+ async function startCallTone(kind){stopRingTone();const generation=ringGeneration;try{const ctx=await unlockCallAudio();if(!ctx||generation!==ringGeneration||ctx.state!=='running')return;const play=()=>{if(generation!==ringGeneration||ringAudioContext!==ctx||ctx.state!=='running')return;if(kind==='incoming'){scheduleCallTone(ctx,440,0,.82,.12);scheduleCallTone(ctx,480,0,.82,.12)}else{scheduleCallTone(ctx,425,0,.22,.11);scheduleCallTone(ctx,425,.28,.22,.11)}};play();ringInterval=setInterval(play,kind==='incoming'?3000:3800)}catch(e){console.warn('Call ring tone unavailable:',e)}}
+ document.addEventListener('pointerdown',()=>{unlockCallAudio().catch(()=>{})},{capture:true});
+ document.addEventListener('keydown',()=>{unlockCallAudio().catch(()=>{})},{capture:true});
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const initials=s=>(s||'К').trim().slice(0,1).toUpperCase();
@@ -281,11 +284,11 @@ async function setupCallChannel(chatId){
   if(!payload||payload.to!==user?.id||payload.from===user?.id||payload.conversationId!==activeId)return;
   if(payload.type==='offer'){
    if(callState!=='idle'){try{await callChannel.send({type:'broadcast',event:'signal',payload:{type:'busy',from:user.id,to:payload.from,conversationId:activeId}})}catch{}return}
-   pendingOffer=payload.description;currentCallTarget=payload.from;callMode=payload.mode||'audio';$('callStage').classList.toggle('video-call',callMode==='video');callState='ringing';updateCallButtons();showCallStage(true);setCallActions(false,true);startRingTone();
+   pendingOffer=payload.description;currentCallTarget=payload.from;callMode=payload.mode||'audio';$('callStage').classList.toggle('video-call',callMode==='video');callState='ringing';updateCallButtons();showCallStage(true);setCallActions(false,true);startCallTone('incoming');
    callStatus((callMode==='video'?'Входящий видеозвонок':'Входящий аудиозвонок')+' от '+(activePerson?publicName(activePerson):'собеседника'));
    notice('chatNotice','Входящий звонок. Нажмите «Принять» в панели звонка.','ok');
   }else if(payload.type==='answer'&&peerConnection){
-   stopRingTone();
+   stopRingTone();playCallSignal('answer');
    try{await peerConnection.setRemoteDescription(payload.description);for(const c of queuedIce.splice(0)){try{await peerConnection.addIceCandidate(c)}catch{}}callState='connected';callStatus('Соединение устанавливается…')}
    catch(e){callStatus('Ошибка согласования: '+e.message)}
   }else if(payload.type==='ice'&&payload.candidate){
@@ -309,7 +312,7 @@ async function startCall(mode){
  if(!navigator.mediaDevices?.getUserMedia){callStatus('Звонки требуют современный браузер и защищённое HTTPS-соединение.');showCallStage(true);return}
  if(callState!=='idle'){callStatus('Сначала завершите текущий звонок.');return}
  try{
-  callMode=mode;$('callStage').classList.toggle('video-call',mode==='video');callState='calling';updateCallButtons();currentCallTarget=activePerson.id;showCallStage(true);setCallActions(true,false);startRingTone();callStatus('Запрашиваем доступ к '+(mode==='video'?'камере и микрофону…':'микрофону…'));
+  callMode=mode;$('callStage').classList.toggle('video-call',mode==='video');callState='calling';updateCallButtons();currentCallTarget=activePerson.id;showCallStage(true);setCallActions(true,false);startCallTone('ringback');callStatus('Запрашиваем доступ к '+(mode==='video'?'камере и микрофону…':'микрофону…'));
   localCallStream=await navigator.mediaDevices.getUserMedia({audio:true,video:mode==='video'?{facingMode:videoFacingMode}:false});
   $('localVideo').srcObject=localCallStream;$('localVideo').style.display=mode==='video'?'block':'none';$('cameraCall').style.display=mode==='video'?'inline-flex':'none';$('switchCameraCall').style.display=mode==='video'?'inline-flex':'none';
   await preparePeer(mode);
@@ -321,7 +324,7 @@ async function startCall(mode){
 async function answerCall(){
  if(!pendingOffer||!currentCallTarget)return;
  try{
-  callState='answering';$('callStage').classList.toggle('video-call',callMode==='video');updateCallButtons();stopRingTone();setCallActions(true,false);callStatus('Запрашиваем доступ к микрофону…');
+  callState='answering';$('callStage').classList.toggle('video-call',callMode==='video');updateCallButtons();stopRingTone();playCallSignal('answer');setCallActions(true,false);callStatus('Запрашиваем доступ к микрофону…');
   localCallStream=await navigator.mediaDevices.getUserMedia({audio:true,video:callMode==='video'?{facingMode:videoFacingMode}:false});
   $('localVideo').srcObject=localCallStream;$('localVideo').style.display=callMode==='video'?'block':'none';$('cameraCall').style.display=callMode==='video'?'inline-flex':'none';$('switchCameraCall').style.display=callMode==='video'?'inline-flex':'none';
   await preparePeer(callMode);await peerConnection.setRemoteDescription(pendingOffer);pendingOffer=null;
