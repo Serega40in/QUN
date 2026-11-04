@@ -39,7 +39,7 @@
   <div class="panel"><h2>Состояние стенда</h2><p class="sub">Текущий режим работы</p><div class="item"><div><strong>Источник данных</strong><small>Локальное состояние страницы</small></div><span class="tag">DEMO</span></div><div class="item"><div><strong>Подключение к узлу</strong><small>JSON-RPC API ещё не реализован</small></div><span style="color:var(--gold)">Ожидает</span></div><div class="item"><div><strong>Подписи транзакций</strong><small>Будут включены в протокол</small></div><span style="color:var(--muted)">План</span></div><p class="sub" style="margin-top:16px">Следующий инженерный этап: Rust devnet-узел, HTTP JSON-RPC, постоянное состояние и подключение этого интерфейса к реальным данным.</p></div>
  </div>
 </section>
-<section id="blocks" class="tabview hidden"><div class="panel"><div class="split"><div><h2>Блоки цепочки</h2><p class="sub">Демо-блоки с вычисляемыми SHA-256 идентификаторами</p></div><button class="btn primary" id="mineAll">Создать следующий блок</button></div><div id="allBlocks" class="list"></div></div></section>
+<section id="blocks" class="tabview hidden"><div class="panel"><div class="split"><div><h2>Блоки цепочки</h2><p class="sub">Демо-блоки с учебными идентификаторами (не криптографические хеши)</p></div><button class="btn primary" id="mineAll">Создать следующий блок</button></div><div id="allBlocks" class="list"></div></div></section>
 <section id="transactions" class="tabview hidden"><div class="panel"><h2>История транзакций</h2><p class="sub">Переводы из демо-кошелька и встроенных тестовых аккаунтов</p><div id="allTx" class="list"></div></div></section>
 <section id="wallet" class="tabview hidden">
  <div class="grid">
