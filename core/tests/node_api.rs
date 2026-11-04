@@ -41,8 +41,13 @@ impl TestNode {
 
         let mut node = Self { child, address, data_file };
         for _ in 0..100 {
-            if node.get("/health").is_ok() {
+            // Wait for the TCP listener before sending an HTTP request; otherwise startup
+            // can race the bind and the request helper panics on ConnectionRefused.
+            if TcpStream::connect(&node.address).is_ok() && node.get("/health").is_ok() {
                 return node;
+            }
+            if let Ok(Some(status)) = node.child.try_wait() {
+                panic!("QUN node exited during startup with status {status}");
             }
             thread::sleep(Duration::from_millis(50));
         }
