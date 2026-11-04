@@ -69,40 +69,36 @@ fn unix_timestamp() -> Result<u64, ApiFailure> {
 }
 
 fn save_chain(path: &FsPath, chain: &Chain) -> Result<(), ApiFailure> {
-    let bytes = serde_json::to_vec_pretty(chain)
-        .map_err(|error| {
-            api_error(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("serialize chain: {error}"),
-            )
-        })?;
+    let bytes = serde_json::to_vec_pretty(chain).map_err(|error| {
+        api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("serialize chain: {error}"),
+        )
+    })?;
 
     if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent)
-            .map_err(|error| {
-                api_error(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("create data directory: {error}"),
-                )
-            })?;
+        std::fs::create_dir_all(parent).map_err(|error| {
+            api_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("create data directory: {error}"),
+            )
+        })?;
     }
 
     // Write a temporary file first, then atomically replace the previous snapshot.
     let temporary = path.with_extension("json.tmp");
-    std::fs::write(&temporary, bytes)
-        .map_err(|error| {
-            api_error(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("write temporary chain: {error}"),
-            )
-        })?;
-    std::fs::rename(&temporary, path)
-        .map_err(|error| {
-            api_error(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("replace chain file: {error}"),
-            )
-        })?;
+    std::fs::write(&temporary, bytes).map_err(|error| {
+        api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("write temporary chain: {error}"),
+        )
+    })?;
+    std::fs::rename(&temporary, path).map_err(|error| {
+        api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("replace chain file: {error}"),
+        )
+    })?;
     Ok(())
 }
 
@@ -113,7 +109,9 @@ fn load_chain(path: &FsPath) -> Result<Chain, String> {
     let bytes = std::fs::read(path).map_err(|error| format!("read {}: {error}", path.display()))?;
     let chain: Chain = serde_json::from_slice(&bytes)
         .map_err(|error| format!("parse {}: {error}", path.display()))?;
-    chain.validate().map_err(|error| format!("stored chain failed integrity validation: {error:?}"))?;
+    chain
+        .validate()
+        .map_err(|error| format!("stored chain failed integrity validation: {error:?}"))?;
     Ok(chain)
 }
 
@@ -125,7 +123,8 @@ async fn health(State(state): State<AppState>) -> Json<Health> {
         mode: "single-process-development-only",
         height: chain.blocks.last().map(|block| block.index).unwrap_or(0),
         blocks: chain.blocks.len(),
-        warning: "No signatures, balances, consensus, or real assets. Do not expose this API publicly.",
+        warning:
+            "No signatures, balances, consensus, or real assets. Do not expose this API publicly.",
     })
 }
 
@@ -176,7 +175,11 @@ async fn dev_mine(
         return Err(error);
     }
 
-    let block = chain.blocks.last().expect("append always creates a block").clone();
+    let block = chain
+        .blocks
+        .last()
+        .expect("append always creates a block")
+        .clone();
     Ok((StatusCode::CREATED, Json(block)))
 }
 
@@ -190,8 +193,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         env::var("QUN_DATA_FILE").unwrap_or_else(|_| "data/qun-chain.json".to_owned()),
     );
 
-    let chain = load_chain(&data_file)
-        .map_err(|error| format!("cannot start QUN node: {error}"))?;
+    let chain =
+        load_chain(&data_file).map_err(|error| format!("cannot start QUN node: {error}"))?;
     let state = AppState {
         chain: Arc::new(Mutex::new(chain)),
         data_file: Arc::new(data_file.clone()),
@@ -207,7 +210,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind(bind).await?;
     println!("QUN local development node listening on http://{bind}");
     println!("Data file: {}", data_file.display());
-    println!("WARNING: development-only chain; no signatures, balances, consensus, or real assets.");
+    println!(
+        "WARNING: development-only chain; no signatures, balances, consensus, or real assets."
+    );
     axum::serve(listener, app).await?;
     Ok(())
 }
