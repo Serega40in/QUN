@@ -5,7 +5,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use qun_core::{Chain, LedgerState, SignedTransaction, Transaction};
+use qun_core::{Chain, GenesisConfig, LedgerState, SignedTransaction, Transaction};
 use serde::{Deserialize, Serialize};
 use std::{
     env,
@@ -55,6 +55,7 @@ struct AppState {
     snapshot: Arc<Mutex<NodeSnapshot>>,
     data_file: Arc<PathBuf>,
     dev_funding_enabled: bool,
+    genesis_replay_enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -161,16 +162,40 @@ fn save_snapshot(path: &FsPath, snapshot: &NodeSnapshot) -> Result<(), ApiFailur
 }
 
 fn load_snapshot(path: &FsPath) -> Result<NodeSnapshot, String> {
-    if !path.exists() { return Ok(NodeSnapshot::default()); }
-    let bytes = std::fs::read(path).map_err(|error| format!("read {}: {error}", path.display()))?;
-    let snapshot = match serde_json::from_slice::<NodeSnapshot>(&bytes) {
-        Ok(snapshot) => snapshot,
-        Err(_) => {
-            let chain: Chain = serde_json::from_slice(&bytes).map_err(|error| format!("parse {} as snapshot or legacy chain: {error}", path.display()))?;
-            NodeSnapshot { chain, ledger: LedgerState::default() }
+    load_snapshot_with_genesis(path, None)
+}
+
+/// When a genesis config is supplied, never trust persisted balances: reconstruct them
+/// from the configured allocations and the signed chain history. The config is still
+/// out-of-band and is NOT yet committed into the canonical genesis block.
+fn load_snapshot_with_genesis(
+    path: &FsPath,
+    genesis: Option<&GenesisConfig>,
+) -> Result<NodeSnapshot, String> {
+    let mut snapshot = if !path.exists() {
+        NodeSnapshot::default()
+    } else {
+        let bytes = std::fs::read(path)
+            .map_err(|error| format!("read {}: {error}", path.display()))?;
+        match serde_json::from_slice::<NodeSnapshot>(&bytes) {
+            Ok(snapshot) => snapshot,
+            Err(_) => {
+                let chain: Chain = serde_json::from_slice(&bytes)
+                    .map_err(|error| format!("parse {} as snapshot or legacy chain: {error}", path.display()))?;
+                NodeSnapshot { chain, ledger: LedgerState::default() }
+            }
         }
     };
-    snapshot.chain.validate().map_err(|error| format!("stored chain failed integrity validation: {error:?}"))?;
+
+    snapshot.chain.validate()
+        .map_err(|error| format!("stored chain failed integrity validation: {error:?}"))?;
+
+    if let Some(config) = genesis {
+        config.validate().map_err(|error| format!("invalid genesis config: {error:?}"))?;
+        snapshot.ledger = LedgerState::replay_signed_chain(&snapshot.chain, &config.allocations)
+            .map_err(|error| format!("cannot deterministically replay ledger from configured genesis: {error:?}"))?;
+    }
+
     Ok(snapshot)
 }
 
@@ -184,7 +209,7 @@ async fn health(State(state): State<AppState>) -> Json<Health> {
         blocks: snapshot.chain.blocks.len(),
         warning:
             "Local development only; no distributed consensus, P2P, or real assets. Do not expose this API publicly.",
-        dev_funding_enabled: state.dev_funding_enabled,
+        dev_funding_enabled: state.dev_funding_enabled && !state.genesis_replay_enabled,
     })
 }
 
@@ -198,8 +223,8 @@ async fn get_accounts(State(state): State<AppState>) -> Json<AccountsResponse> {
 }
 
 async fn dev_fund(State(state): State<AppState>, Json(request): Json<FundRequest>) -> Result<Json<AccountsResponse>, ApiFailure> {
-    if !state.dev_funding_enabled {
-        return Err(api_error(StatusCode::FORBIDDEN, "development funding is disabled; set QUN_ENABLE_DEV_FUNDING=true for local testing only"));
+    if !state.dev_funding_enabled || state.genesis_replay_enabled {
+        return Err(api_error(StatusCode::FORBIDDEN, "development funding is disabled in this node configuration"));
     }
     if request.amount == 0 || request.address.trim().is_empty() {
         return Err(api_error(StatusCode::BAD_REQUEST, "address must be non-empty and amount must be greater than zero"));
@@ -273,6 +298,12 @@ async fn dev_mine(
     State(state): State<AppState>,
     Json(request): Json<MineRequest>,
 ) -> Result<(StatusCode, Json<qun_core::Block>), ApiFailure> {
+    if state.genesis_replay_enabled {
+        return Err(api_error(
+            StatusCode::FORBIDDEN,
+            "unsigned legacy mining is disabled when QUN_GENESIS_FILE is configured",
+        ));
+    }
     if request.transactions.len() > MAX_TRANSACTIONS_PER_BLOCK {
         return Err(api_error(
             StatusCode::PAYLOAD_TOO_LARGE,
@@ -305,9 +336,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         env::var("QUN_DATA_FILE").unwrap_or_else(|_| "data/qun-chain.json".to_owned()),
     );
 
-    let snapshot = load_snapshot(&data_file).map_err(|error| format!("cannot start QUN node: {error}"))?;
+    let genesis_config = match env::var("QUN_GENESIS_FILE") {
+        Ok(path) => {
+            let bytes = std::fs::read(&path)
+                .map_err(|error| format!("read QUN_GENESIS_FILE {path}: {error}"))?;
+            let config: GenesisConfig = serde_json::from_slice(&bytes)
+                .map_err(|error| format!("parse QUN_GENESIS_FILE {path}: {error}"))?;
+            config.validate().map_err(|error| format!("invalid QUN genesis config: {error:?}"))?;
+            Some(config)
+        }
+        Err(_) => None,
+    };
+    let snapshot = load_snapshot_with_genesis(&data_file, genesis_config.as_ref())
+        .map_err(|error| format!("cannot start QUN node: {error}"))?;
     let dev_funding_enabled = env::var("QUN_ENABLE_DEV_FUNDING").map(|v| v == "true" || v == "1").unwrap_or(false);
-    let state = AppState { snapshot: Arc::new(Mutex::new(snapshot)), data_file: Arc::new(data_file.clone()), dev_funding_enabled };
+    let state = AppState {
+        snapshot: Arc::new(Mutex::new(snapshot)),
+        data_file: Arc::new(data_file.clone()),
+        dev_funding_enabled,
+        genesis_replay_enabled: genesis_config.is_some(),
+    };
 
     let app = Router::new()
         .route("/", get(dashboard))
@@ -323,6 +371,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind(bind).await?;
     println!("QUN local development node listening on http://{bind}");
     println!("Data file: {}", data_file.display());
+    println!("Configured genesis replay: {} (QUN_GENESIS_FILE)", genesis_config.is_some());
     println!("WARNING: local development-only chain; signed transactions are supported, but consensus, P2P, and real assets are not implemented.");
     println!("Development funding enabled: {dev_funding_enabled} (QUN_ENABLE_DEV_FUNDING)");
     axum::serve(listener, app).await?;
@@ -375,6 +424,85 @@ mod persistence_tests {
             load_snapshot(&path).is_err(),
             "a persisted chain with a modified signature must be rejected"
         );
+
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn configured_genesis_rebuilds_balances_instead_of_trusting_snapshot() {
+        use std::collections::BTreeMap;
+
+        let key = SigningKey::from_bytes(&[41_u8; 32]);
+        let sender = hex::encode(key.verifying_key().as_bytes());
+        let tx = qun_core::Transaction {
+            from: sender.clone(),
+            to: "recipient-replay-test".to_owned(),
+            amount: 9,
+            nonce: 1,
+        };
+        let signature = key.sign(&qun_core::SignedTransaction::signing_payload(&tx));
+        let signed = qun_core::SignedTransaction {
+            transaction: tx,
+            public_key: sender.clone(),
+            signature: hex::encode(signature.to_bytes()),
+        };
+        let genesis = GenesisConfig::new(
+            "qun-testnet-replay",
+            1,
+            BTreeMap::from([(sender.clone(), 50_u64)]),
+        ).unwrap();
+
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "qun-genesis-replay-test-{}-{unique}.json",
+            std::process::id()
+        ));
+
+        let mut snapshot = NodeSnapshot::default();
+        snapshot.chain.append_signed(1, vec![signed]).unwrap();
+        // Deliberately poison the cached ledger; configured startup must ignore it.
+        snapshot.ledger.set_genesis_balance(sender.clone(), 999_999).unwrap();
+        assert!(save_snapshot(&path, &snapshot).is_ok());
+
+        let loaded = load_snapshot_with_genesis(&path, Some(&genesis)).unwrap();
+        assert_eq!(loaded.ledger.balances.get(&sender), Some(&41));
+        assert_eq!(loaded.ledger.balances.get("recipient-replay-test"), Some(&9));
+        assert_eq!(loaded.ledger.nonces.get(&sender), Some(&1));
+
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn configured_genesis_replay_rejects_unsigned_legacy_transactions() {
+        use std::collections::BTreeMap;
+
+        let genesis = GenesisConfig::new(
+            "qun-testnet-replay",
+            1,
+            BTreeMap::from([("alice".to_owned(), 100_u64)]),
+        ).unwrap();
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "qun-genesis-unsigned-test-{}-{unique}.json",
+            std::process::id()
+        ));
+        let mut snapshot = NodeSnapshot::default();
+        snapshot.chain.append(1, vec![Transaction {
+            from: "alice".to_owned(),
+            to: "bob".to_owned(),
+            amount: 1,
+            nonce: 1,
+        }]);
+        assert!(save_snapshot(&path, &snapshot).is_ok());
+
+        let result = load_snapshot_with_genesis(&path, Some(&genesis));
+        assert!(result.is_err(), "unsigned legacy transaction history must fail closed");
 
         let _ = std::fs::remove_file(path);
     }
