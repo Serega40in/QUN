@@ -328,3 +328,54 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     axum::serve(listener, app).await?;
     Ok(())
 }
+
+
+#[cfg(test)]
+mod persistence_tests {
+    use super::*;
+    use ed25519_dalek::{Signer, SigningKey};
+
+    #[test]
+    fn persisted_signed_chain_is_revalidated_on_load() {
+        let signing_key = SigningKey::from_bytes(&[23_u8; 32]);
+        let public_key = hex::encode(signing_key.verifying_key().as_bytes());
+        let transaction = qun_core::Transaction {
+            from: public_key.clone(),
+            to: "recipient-persistence-test".to_owned(),
+            amount: 3,
+            nonce: 1,
+        };
+        let signature = signing_key.sign(&qun_core::SignedTransaction::signing_payload(&transaction));
+        let signed = qun_core::SignedTransaction {
+            transaction,
+            public_key,
+            signature: hex::encode(signature.to_bytes()),
+        };
+
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock must be after Unix epoch")
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "qun-snapshot-test-{}-{unique}.json",
+            std::process::id()
+        ));
+
+        let mut snapshot = NodeSnapshot::default();
+        snapshot.chain.append_signed(1, vec![signed]).expect("valid signature should append");
+        save_snapshot(&path, &snapshot).expect("valid snapshot should persist");
+
+        let loaded = load_snapshot(&path).expect("persisted signed chain should validate");
+        assert_eq!(loaded.chain, snapshot.chain);
+
+        let mut tampered = loaded;
+        tampered.chain.blocks[1].signed_transactions[0].signature = "00".repeat(64);
+        save_snapshot(&path, &tampered).expect("test fixture should be writable");
+        assert!(
+            load_snapshot(&path).is_err(),
+            "a persisted chain with a modified signature must be rejected"
+        );
+
+        let _ = std::fs::remove_file(path);
+    }
+}
