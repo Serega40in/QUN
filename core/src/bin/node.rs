@@ -363,14 +363,14 @@ mod persistence_tests {
 
         let mut snapshot = NodeSnapshot::default();
         snapshot.chain.append_signed(1, vec![signed]).expect("valid signature should append");
-        save_snapshot(&path, &snapshot).expect("valid snapshot should persist");
+        assert!(save_snapshot(&path, &snapshot).is_ok(), "valid snapshot should persist");
 
         let loaded = load_snapshot(&path).expect("persisted signed chain should validate");
         assert_eq!(loaded.chain, snapshot.chain);
 
         let mut tampered = loaded;
         tampered.chain.blocks[1].signed_transactions[0].signature = "00".repeat(64);
-        save_snapshot(&path, &tampered).expect("test fixture should be writable");
+        assert!(save_snapshot(&path, &tampered).is_ok(), "test fixture should be writable");
         assert!(
             load_snapshot(&path).is_err(),
             "a persisted chain with a modified signature must be rejected"
