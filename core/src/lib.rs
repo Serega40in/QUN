@@ -543,3 +543,58 @@ mod tests {
     }
 
 }
+
+/// Golden vectors freeze the current v0 JSON byte representation. If these
+/// change, the transaction/block encoding is protocol-breaking and must be
+/// versioned deliberately rather than changed as an incidental refactor.
+#[cfg(test)]
+mod protocol_golden_vectors {
+    use super::*;
+
+    #[test]
+    fn transaction_signing_payload_matches_golden_bytes() {
+        let tx = Transaction {
+            from: "alice".into(),
+            to: "bob".into(),
+            amount: 7,
+            nonce: 1,
+        };
+        assert_eq!(
+            SignedTransaction::signing_payload(&tx),
+            br#"["QUN_TX_V1","alice","bob",7,1]"#.to_vec()
+        );
+    }
+
+    #[test]
+    fn legacy_block_hash_matches_golden_vector() {
+        let tx = Transaction {
+            from: "alice".into(),
+            to: "bob".into(),
+            amount: 7,
+            nonce: 1,
+        };
+        assert_eq!(
+            Block::calculate_hash(1, 123, "prev", &[tx]),
+            "d1a28b094516acbd71cd1adea9a0c1bca5b0792a4dc466788675da8f956c8e2d"
+        );
+    }
+
+    #[test]
+    fn signed_block_hash_matches_golden_vector() {
+        let tx = Transaction {
+            from: "alice".into(),
+            to: "bob".into(),
+            amount: 7,
+            nonce: 1,
+        };
+        let signed = SignedTransaction {
+            transaction: tx.clone(),
+            public_key: "aa".into(),
+            signature: "bb".into(),
+        };
+        assert_eq!(
+            Block::calculate_signed_hash(1, 123, "prev", &[tx], &[signed]),
+            "8f334016050a2e6d8edf20ff830040f1cba4f5fc54f086c0a11b60e0e3e17ce3"
+        );
+    }
+}
