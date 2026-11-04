@@ -9,6 +9,58 @@ pub struct Transaction {
     pub nonce: u64,
 }
 
+
+/// A transaction paired with its Ed25519 public key and detached signature.
+/// The node must verify this signature before applying the transaction.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SignedTransaction {
+    pub transaction: Transaction,
+    /// Lowercase hexadecimal Ed25519 public key; also the sender address.
+    pub public_key: String,
+    /// Lowercase hexadecimal Ed25519 signature.
+    pub signature: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SignatureError {
+    InvalidPublicKeyEncoding,
+    InvalidPublicKey,
+    SenderDoesNotMatchPublicKey,
+    InvalidSignatureEncoding,
+    InvalidSignature,
+}
+
+impl SignedTransaction {
+    /// Canonical, domain-separated payload. Field order and domain are protocol constants.
+    pub fn signing_payload(tx: &Transaction) -> Vec<u8> {
+        serde_json::to_vec(&("QUN_TX_V1", &tx.from, &tx.to, tx.amount, tx.nonce))
+            .expect("serializing a fixed QUN transaction payload must succeed")
+    }
+
+    /// Verify sender ownership and the Ed25519 signature over the transaction fields.
+    pub fn verify(&self) -> Result<(), SignatureError> {
+        use ed25519_dalek::{Signature, Verifier, VerifyingKey};
+
+        let public_key_bytes = hex::decode(&self.public_key)
+            .map_err(|_| SignatureError::InvalidPublicKeyEncoding)?;
+        let public_key_array: [u8; 32] = public_key_bytes
+            .try_into()
+            .map_err(|_| SignatureError::InvalidPublicKeyEncoding)?;
+        let verifying_key = VerifyingKey::from_bytes(&public_key_array)
+            .map_err(|_| SignatureError::InvalidPublicKey)?;
+        if self.transaction.from != self.public_key {
+            return Err(SignatureError::SenderDoesNotMatchPublicKey);
+        }
+        let signature_bytes = hex::decode(&self.signature)
+            .map_err(|_| SignatureError::InvalidSignatureEncoding)?;
+        let signature = Signature::from_slice(&signature_bytes)
+            .map_err(|_| SignatureError::InvalidSignatureEncoding)?;
+        verifying_key
+            .verify(&Self::signing_payload(&self.transaction), &signature)
+            .map_err(|_| SignatureError::InvalidSignature)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Block {
     pub index: u64,
