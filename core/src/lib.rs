@@ -192,6 +192,7 @@ impl Chain {
             || genesis.timestamp != 0
             || genesis.previous_hash != "QUN_GENESIS_V1"
             || !genesis.transactions.is_empty()
+            || !genesis.signed_transactions.is_empty()
             || genesis.hash
                 != Block::calculate_hash(
                     genesis.index,
@@ -368,6 +369,36 @@ mod tests {
             signature: hex::encode(signature.to_bytes()),
         };
         assert_eq!(signed.verify(), Err(SignatureError::SenderDoesNotMatchPublicKey));
+    }
+
+    #[test]
+    fn signed_block_persists_and_revalidates_signatures() {
+        use ed25519_dalek::{Signer, SigningKey};
+
+        let signing_key = SigningKey::from_bytes(&[11_u8; 32]);
+        let public_key = hex::encode(signing_key.verifying_key().as_bytes());
+        let transaction = Transaction {
+            from: public_key.clone(),
+            to: "recipient-demo".into(),
+            amount: 7,
+            nonce: 1,
+        };
+        let signature = signing_key.sign(&SignedTransaction::signing_payload(&transaction));
+        let signed = SignedTransaction {
+            transaction,
+            public_key,
+            signature: hex::encode(signature.to_bytes()),
+        };
+
+        let mut chain = Chain::new();
+        chain.append_signed(1, vec![signed]).unwrap();
+        assert!(chain.validate().is_ok());
+
+        chain.blocks[1].signed_transactions[0].signature = "00".repeat(64);
+        assert_eq!(
+            chain.validate(),
+            Err(ChainError::InvalidSignedTransaction { at: 1 })
+        );
     }
 
     #[test]
