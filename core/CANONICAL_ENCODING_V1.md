@@ -68,11 +68,12 @@ The block identifier is SHA-256 of this payload. Genesis parameters and genesis 
 5. Only after tests pass, expose the v1 format to a local multi-node harness.
 6. Decide consensus and fork-choice rules before peer networking; canonical bytes alone do not create consensus.
 
-## Acceptance criteria
+## Implementation status
 
 - The Rust implementation includes bounded transaction/block encoding and decoding, strict embedded-transaction validation, a pinned transaction byte vector and SHA-256 digest, plus malformed-input regression tests.
 - An opt-in Ed25519 verifier signs/verifies canonical v1 transaction bytes and binds the signature to a 32-byte network ID; the legacy verifier remains unchanged.
-- This is not yet a complete cross-language golden-vector suite, and canonical signatures are not yet wired into block admission, state transitions, or consensus.
+- `LedgerState::apply_signed_canonical` now verifies the canonical signature before applying a transfer and stages the transition on a cloned ledger, so authentication or transition failures leave the original ledger unchanged.
+- This is not yet a complete cross-language golden-vector suite. Canonical verification is not yet wired into chain block admission, canonical block IDs, persisted v1 snapshots, or consensus. The legacy `Chain::append_signed` remains on legacy signatures by design until a versioned chain format and network activation rules are specified.
 
 - Golden vectors are stable and documented.
 - Independent implementations produce identical transaction bytes, signatures, block bytes, and block hashes.
