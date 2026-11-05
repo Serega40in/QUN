@@ -61,6 +61,6 @@ PoW makes attacks costly through external resource expenditure but may concentra
 
 ## 6. Current implementation boundary
 
-CanonicalBlockV1, CanonicalChainV1, canonical signature validation, ledger replay, snapshots, and CanonicalNodeStore are building blocks for deterministic validation and local recovery. They are not a consensus implementation. In particular, current blocks have no PoW target/nonce validation, no cumulative-work field, no peer network, no fork-choice engine, and no protocol-level issuance rule.
+CanonicalBlockV1, CanonicalChainV1, canonical signature validation, ledger replay, snapshots, and CanonicalNodeStore are building blocks for deterministic validation and local recovery. An isolated pow module now provides canonical header hashing, bounded nonce search, and target checks for experiments. It is not yet connected to block acceptance and does not derive targets from chain history. There is no cumulative-work fork-choice engine, difficulty adjustment, peer network, or protocol-level issuance rule.
 
 No mainnet launch, token sale, exchange listing, or real-value claims are authorized by this proposal.
