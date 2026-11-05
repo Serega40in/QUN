@@ -3,6 +3,7 @@ pub mod canonical_chain;
 pub mod snapshot;
 pub mod persistent_store;
 pub mod pow;
+pub mod pow_consensus;
 pub mod pow_work;
 pub mod versioned_block;
 
