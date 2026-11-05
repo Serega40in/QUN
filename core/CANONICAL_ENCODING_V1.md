@@ -82,3 +82,8 @@ The block identifier is SHA-256 of this payload. Genesis parameters and genesis 
 - Existing local demo behavior remains clearly labelled and cannot be mistaken for the v1 protocol.
 - CI runs formatting checks, Clippy, unit tests, and integration tests without mutating tracked source files.
 - No public network, exchange listing, or real-value token is claimed from this design document alone.
+
+
+## Local validator harness
+
+The integration test `core/tests/canonical_node_harness.rs` models two independent validator views. It checks independently reconstructed blocks produce the same hash, that JSON transport round-trips preserve the block, and that validators reject blocks when network ID, expected height, parent hash, or transaction signatures do not match. This is a deterministic acceptance harness only: it does not open sockets, persist node state, execute consensus, or establish fork choice.
