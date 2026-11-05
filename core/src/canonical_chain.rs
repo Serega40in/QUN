@@ -64,6 +64,7 @@ impl CanonicalChainV1 {
     /// Append a block only if its chain position and all signed transactions are valid.
     /// This validates block structure/signatures, but not balances or nonces.
     pub fn append(&mut self, block: CanonicalBlockV1) -> Result<(), CanonicalChainError> {
+        self.validate_structure()?;
         let parent = self.blocks.last().ok_or(CanonicalChainError::Empty)?;
         let expected_height = parent.height.checked_add(1)
             .ok_or(CanonicalChainError::HeightOverflow)?;
@@ -97,6 +98,7 @@ impl CanonicalChainV1 {
         ledger: &mut LedgerState,
         block: CanonicalBlockV1,
     ) -> Result<(), CanonicalChainError> {
+        self.validate_structure()?;
         let parent = self.blocks.last().ok_or(CanonicalChainError::Empty)?;
         let expected_height = parent.height.checked_add(1)
             .ok_or(CanonicalChainError::HeightOverflow)?;
