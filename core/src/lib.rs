@@ -1,4 +1,5 @@
 pub mod canonical;
+pub mod canonical_chain;
 pub mod snapshot;
 pub mod versioned_block;
 
