@@ -217,7 +217,7 @@ mod tests {
         unsupported[7] = 2;
         assert_eq!(decode_transaction_payload(&unsupported), Err(EncodingError::UnsupportedVersion));
         let mut invalid_utf8 = encode_transaction_payload(&[0; 32], &[1; 32], "x", 1, 1).unwrap();
-        invalid_utf8[75] = 0xff;
+        invalid_utf8[76] = 0xff;
         assert_eq!(decode_transaction_payload(&invalid_utf8), Err(EncodingError::InvalidRecipientUtf8));
     }
 
