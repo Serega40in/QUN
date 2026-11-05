@@ -382,6 +382,24 @@ impl LedgerState {
         *self = staged;
         Ok(())
     }
+
+    /// Apply a block's transactions in order as one atomic ledger transition.
+    ///
+    /// If any signature or state transition fails, no transaction from the batch is
+    /// committed. The caller must separately validate the versioned block envelope,
+    /// parent link, and consensus rules before invoking this method.
+    pub fn apply_block_canonical(
+        &mut self,
+        signed_transactions: &[SignedTransaction],
+        network_id: &[u8; 32],
+    ) -> Result<(), AuthenticatedLedgerError> {
+        let mut staged = self.clone();
+        for signed in signed_transactions {
+            staged.apply_signed_canonical(signed, network_id)?;
+        }
+        *self = staged;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -690,6 +708,25 @@ mod tests {
         assert_eq!(
             ledger.apply_signed_canonical(&signed, &[2_u8; 32]),
             Err(AuthenticatedLedgerError::InvalidSignature(SignatureError::InvalidSignature))
+        );
+        assert_eq!(ledger, before);
+    }
+
+    #[test]
+    fn canonical_block_transition_is_atomic_when_later_transaction_fails() {
+        let network = [44_u8; 32];
+        let first = canonical_signed_transfer(34, "recipient-a", 20, 1, &network);
+        let second = canonical_signed_transfer(34, "recipient-b", 90, 2, &network);
+        let mut ledger = LedgerState::default();
+        ledger.set_genesis_balance(&first.transaction.from, 100).unwrap();
+        let before = ledger.clone();
+
+        assert_eq!(
+            ledger.apply_block_canonical(&[first, second], &network),
+            Err(AuthenticatedLedgerError::InvalidTransition(LedgerError::InsufficientFunds {
+                available: 80,
+                required: 90,
+            }))
         );
         assert_eq!(ledger, before);
     }
