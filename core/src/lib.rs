@@ -298,6 +298,13 @@ pub enum LedgerError {
     BalanceOverflow,
 }
 
+/// Failure while authenticating and applying a network-bound transaction.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AuthenticatedLedgerError {
+    InvalidSignature(SignatureError),
+    InvalidTransition(LedgerError),
+}
+
 impl LedgerState {
     /// Explicitly fund an account for local development/test fixtures only.
     /// This is not a blockchain transaction and must never be exposed as a public API.
@@ -352,6 +359,27 @@ impl LedgerState {
         self.balances.insert(tx.from.clone(), available - tx.amount);
         self.balances.insert(tx.to.clone(), new_recipient_balance);
         self.nonces.insert(tx.from.clone(), tx.nonce);
+        Ok(())
+    }
+
+    /// Verify a network-bound canonical signature and atomically apply its transfer.
+    ///
+    /// The sender address must be the transaction's Ed25519 public-key hex. State is
+    /// mutated only after authentication and transition validation both succeed.
+    pub fn apply_signed_canonical(
+        &mut self,
+        signed: &SignedTransaction,
+        network_id: &[u8; 32],
+    ) -> Result<(), AuthenticatedLedgerError> {
+        signed
+            .verify_canonical(network_id)
+            .map_err(AuthenticatedLedgerError::InvalidSignature)?;
+
+        let mut staged = self.clone();
+        staged
+            .apply(&signed.transaction)
+            .map_err(AuthenticatedLedgerError::InvalidTransition)?;
+        *self = staged;
         Ok(())
     }
 }
@@ -615,6 +643,73 @@ mod tests {
             nonce: 1,
         };
         assert_eq!(ledger.apply(&empty), Err(LedgerError::EmptyAddress));
+    }
+
+    fn canonical_signed_transfer(seed: u8, to: &str, amount: u64, nonce: u64, network: &[u8; 32]) -> SignedTransaction {
+        use ed25519_dalek::{Signer, SigningKey};
+
+        let signing_key = SigningKey::from_bytes(&[seed; 32]);
+        let public_key_bytes = signing_key.verifying_key().to_bytes();
+        let public_key = hex::encode(public_key_bytes);
+        let transaction = Transaction {
+            from: public_key.clone(),
+            to: to.into(),
+            amount,
+            nonce,
+        };
+        let payload = canonical::encode_transaction_payload(
+            network, &public_key_bytes, &transaction.to, transaction.amount, transaction.nonce,
+        ).unwrap();
+        SignedTransaction {
+            transaction,
+            public_key,
+            signature: hex::encode(signing_key.sign(&payload).to_bytes()),
+        }
+    }
+
+    #[test]
+    fn authenticated_ledger_applies_only_valid_network_bound_transfers() {
+        let network = [42_u8; 32];
+        let signed = canonical_signed_transfer(31, "recipient", 25, 1, &network);
+        let mut ledger = LedgerState::default();
+        ledger.set_genesis_balance(&signed.transaction.from, 100).unwrap();
+
+        assert_eq!(ledger.apply_signed_canonical(&signed, &network), Ok(()));
+        assert_eq!(ledger.balances.get(&signed.transaction.from), Some(&75));
+        assert_eq!(ledger.balances.get("recipient"), Some(&25));
+        assert_eq!(ledger.nonces.get(&signed.transaction.from), Some(&1));
+    }
+
+    #[test]
+    fn authenticated_ledger_rejects_wrong_network_without_mutation() {
+        let signed = canonical_signed_transfer(32, "recipient", 25, 1, &[1_u8; 32]);
+        let mut ledger = LedgerState::default();
+        ledger.set_genesis_balance(&signed.transaction.from, 100).unwrap();
+        let before = ledger.clone();
+
+        assert_eq!(
+            ledger.apply_signed_canonical(&signed, &[2_u8; 32]),
+            Err(AuthenticatedLedgerError::InvalidSignature(SignatureError::InvalidSignature))
+        );
+        assert_eq!(ledger, before);
+    }
+
+    #[test]
+    fn authenticated_ledger_rejects_insufficient_funds_without_mutation() {
+        let network = [43_u8; 32];
+        let signed = canonical_signed_transfer(33, "recipient", 101, 1, &network);
+        let mut ledger = LedgerState::default();
+        ledger.set_genesis_balance(&signed.transaction.from, 100).unwrap();
+        let before = ledger.clone();
+
+        assert_eq!(
+            ledger.apply_signed_canonical(&signed, &network),
+            Err(AuthenticatedLedgerError::InvalidTransition(LedgerError::InsufficientFunds {
+                available: 100,
+                required: 101,
+            }))
+        );
+        assert_eq!(ledger, before);
     }
 
     #[test]
