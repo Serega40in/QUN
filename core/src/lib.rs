@@ -1,4 +1,5 @@
 pub mod canonical;
+pub mod snapshot;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
