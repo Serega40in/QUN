@@ -90,7 +90,7 @@ mod tests {
     fn params() -> PowConsensusParamsV1 {
         PowConsensusParamsV1 {
             network_id: [1; 32],
-            target: [0xff; 32],
+            target: { let mut t = [0xff; 32]; t[0] = 0x7f; t },
             median_time_window: 3,
             max_future_drift_secs: 60,
         }
@@ -110,7 +110,8 @@ mod tests {
     #[test]
     fn accepts_header_and_derives_work_from_local_target() {
         let p = params();
-        let h = header();
+        let mut h = header();
+        assert!(h.mine(&p.target, 100).unwrap());
         let work = p.validate_header(&h, 4, &[2; 32], &[100, 101, 102], 104).unwrap();
         assert_eq!(work, work_from_target(&p.target).unwrap());
     }
