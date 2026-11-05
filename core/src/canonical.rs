@@ -19,6 +19,8 @@ pub enum EncodingError {
     InvalidRecipientUtf8,
     InvalidPublicKey,
     InvalidHash,
+    InvalidTransactionPayload,
+    NetworkMismatch,
     TooManyTransactions,
     BlockTooLarge,
     Truncated,
@@ -117,6 +119,10 @@ pub fn encode_block_payload(
     out.extend_from_slice(parent_hash);
     out.extend_from_slice(&(transactions.len() as u32).to_be_bytes());
     for (tx, signature) in transactions.iter().zip(signatures) {
+        let decoded = decode_transaction_payload(tx).map_err(|_| EncodingError::InvalidTransactionPayload)?;
+        if decoded.network_id != *network_id {
+            return Err(EncodingError::NetworkMismatch);
+        }
         put_bytes(&mut out, tx)?;
         out.extend_from_slice(signature);
         if out.len() > MAX_ENCODED_BLOCK_BYTES {
@@ -162,7 +168,10 @@ pub fn decode_block_payload(mut input: &[u8]) -> Result<DecodedBlock, EncodingEr
     let mut signatures = Vec::with_capacity(count);
     for _ in 0..count {
         let tx = read_bytes(&mut input, MAX_ENCODED_BLOCK_BYTES)?.to_vec();
-        decode_transaction_payload(&tx)?;
+        let decoded = decode_transaction_payload(&tx)?;
+        if decoded.network_id != network_id {
+            return Err(EncodingError::NetworkMismatch);
+        }
         let signature = read_exact(&mut input, 64)?.try_into().expect("fixed length");
         transactions.push(tx);
         signatures.push(signature);
@@ -257,6 +266,21 @@ mod tests {
         let mut invalid_utf8 = encode_transaction_payload(&[0; 32], &[1; 32], "x", 1, 1).unwrap();
         invalid_utf8[76] = 0xff;
         assert_eq!(decode_transaction_payload(&invalid_utf8), Err(EncodingError::InvalidRecipientUtf8));
+    }
+
+    #[test]
+    fn block_rejects_transactions_from_another_network_and_malformed_payloads() {
+        let tx_other_network = encode_transaction_payload(&[4; 32], &[4; 32], "recipient", 5, 6).unwrap();
+        assert_eq!(
+            encode_block_payload(&[3; 32], 1, 7, &[0; 32], &[tx_other_network], &[[8; 64]]),
+            Err(EncodingError::NetworkMismatch)
+        );
+
+        let malformed = vec![1, 2, 3];
+        assert_eq!(
+            encode_block_payload(&[3; 32], 1, 7, &[0; 32], &[malformed], &[[8; 64]]),
+            Err(EncodingError::InvalidTransactionPayload)
+        );
     }
 
     #[test]
