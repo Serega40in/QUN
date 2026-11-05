@@ -138,7 +138,8 @@ mod tests {
         assert_eq!(work[0], 0x80);
         assert!(work[1..].iter().all(|byte| *byte == 0));
 
-        let max_target = [0x7f; 32];
+        let mut max_target = [0xff; 32];
+        max_target[0] = 0x7f;
         let work = work_from_target(&max_target).unwrap().to_bytes();
         let mut expected = [0u8; 32];
         expected[31] = 2;
