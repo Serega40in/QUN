@@ -1,6 +1,7 @@
 pub mod canonical;
 pub mod canonical_chain;
 pub mod snapshot;
+pub mod persistent_store;
 pub mod versioned_block;
 
 use serde::{Deserialize, Serialize};
