@@ -42,9 +42,8 @@ impl Work256 {
 /// integer PoW work formula. Target is a big-endian 256-bit unsigned integer.
 ///
 /// For v1 safety, target must be nonzero and no greater than 2^255 - 1.
-/// That bound keeps target + 1 representable and ensures per-block work fits
-/// in 256 bits. The network's consensus rules must derive this target; never
-/// trust a target supplied by an untrusted peer.
+/// The 257-bit intermediate remainder is represented explicitly to avoid
+/// losing the carry while long-dividing the 257-bit numerator 2^256.
 pub fn work_from_target(target: &[u8; 32]) -> Result<Work256, WorkError> {
     if *target == [0; 32] {
         return Err(WorkError::InvalidTarget);
@@ -53,42 +52,46 @@ pub fn work_from_target(target: &[u8; 32]) -> Result<Work256, WorkError> {
         return Err(WorkError::TargetAboveProtocolMaximum);
     }
 
-    let mut divisor = *target;
+    let mut divisor_256 = *target;
     let mut carry = 1u16;
     for index in (0..32).rev() {
-        let value = divisor[index] as u16 + carry;
-        divisor[index] = value as u8;
+        let value = divisor_256[index] as u16 + carry;
+        divisor_256[index] = value as u8;
         carry = value >> 8;
     }
     if carry != 0 {
         return Err(WorkError::TargetAboveProtocolMaximum);
     }
 
-    // Binary long division of 2^256 by target + 1. The numerator's leading
-    // bit is handled as the first input bit; subsequent 256 bits are zero.
-    let mut remainder = [0u8; 32];
+    // Use 33-byte big-endian values for the division remainder and divisor.
+    let mut divisor = [0u8; 33];
+    divisor[1..].copy_from_slice(&divisor_256);
+    let mut remainder = [0u8; 33];
     let mut quotient = [0u8; 32];
+
+    // Divide the 257-bit numerator (binary 1 followed by 256 zero bits).
     for bit_position in (0..=256).rev() {
-        shift_left_one(&mut remainder);
+        shift_left_one_33(&mut remainder);
         if bit_position == 256 {
-            remainder[31] |= 1;
+            remainder[32] |= 1;
         }
-        if compare_be(&remainder, &divisor) != core::cmp::Ordering::Less {
-            subtract_be(&mut remainder, &divisor);
+        if compare_be_33(&remainder, &divisor) != core::cmp::Ordering::Less {
+            subtract_be_33(&mut remainder, &divisor);
+            // Since divisor >= 2, the quotient is at most 2^255 and fits 256 bits.
             if bit_position < 256 {
-                quotient[31 - bit_position / 8] |= 1 << (7 - (bit_position % 8));
+                quotient[31 - bit_position / 8] |= 1 << (bit_position % 8);
             }
         }
     }
 
     // ceil(n / d) = floor(n / d) + 1 when a remainder remains.
-    if remainder != [0; 32] {
+    if remainder != [0; 33] {
         increment_be(&mut quotient).ok_or(WorkError::Overflow)?;
     }
     Ok(Work256(quotient))
 }
 
-fn shift_left_one(value: &mut [u8; 32]) {
+fn shift_left_one_33(value: &mut [u8; 33]) {
     let mut carry = 0u8;
     for byte in value.iter_mut().rev() {
         let next = *byte >> 7;
@@ -97,13 +100,13 @@ fn shift_left_one(value: &mut [u8; 32]) {
     }
 }
 
-fn compare_be(left: &[u8; 32], right: &[u8; 32]) -> core::cmp::Ordering {
+fn compare_be_33(left: &[u8; 33], right: &[u8; 33]) -> core::cmp::Ordering {
     left.iter().cmp(right.iter())
 }
 
-fn subtract_be(left: &mut [u8; 32], right: &[u8; 32]) {
+fn subtract_be_33(left: &mut [u8; 33], right: &[u8; 33]) {
     let mut borrow = 0i16;
-    for index in (0..32).rev() {
+    for index in (0..33).rev() {
         let value = left[index] as i16 - right[index] as i16 - borrow;
         if value < 0 {
             left[index] = (value + 256) as u8;
