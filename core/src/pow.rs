@@ -55,13 +55,15 @@ impl PowHeaderV1 {
         if *target == [0; 32] {
             return Ok(false);
         }
-        for _ in 0..max_attempts {
+        for attempt in 0..max_attempts {
             if self.meets_target(target) {
                 return Ok(true);
             }
-            self.nonce = self.nonce.checked_add(1).ok_or(PowError::NonceExhausted)?;
+            if attempt + 1 < max_attempts {
+                self.nonce = self.nonce.checked_add(1).ok_or(PowError::NonceExhausted)?;
+            }
         }
-        Ok(self.meets_target(target))
+        Ok(false)
     }
 
     pub fn validate_work(&self, expected_target: &[u8; 32]) -> Result<(), PowError> {
@@ -122,5 +124,7 @@ mod tests {
         assert!(!candidate.mine(&[0; 32], 100).unwrap());
         assert_eq!(candidate.validate_work(&[0; 32]), Err(PowError::InvalidTarget));
         assert!(!candidate.mine(&[0; 32], 0).unwrap());
+        let impossible_target = [0; 32];
+        assert!(!candidate.mine(&impossible_target, 1).unwrap());
     }
 }
