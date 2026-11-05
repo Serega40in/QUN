@@ -133,8 +133,18 @@ pub fn hash_block_payload(payload: &[u8]) -> [u8; 32] {
     Sha256::digest(payload).into()
 }
 
-/// Small strict reader for transaction payloads, used by tests and future node decoding.
-pub fn validate_transaction_payload(mut input: &[u8]) -> Result<(), EncodingError> {
+/// Decoded, structurally valid v1 transaction payload.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DecodedTransaction {
+    pub network_id: [u8; 32],
+    pub sender_public_key: [u8; 32],
+    pub recipient: String,
+    pub amount: u64,
+    pub nonce: u64,
+}
+
+/// Decode a complete transaction payload, rejecting malformed or non-canonical input.
+pub fn decode_transaction_payload(mut input: &[u8]) -> Result<DecodedTransaction, EncodingError> {
     if read_exact(&mut input, TX_DOMAIN.len())? != TX_DOMAIN {
         return Err(EncodingError::InvalidDomain);
     }
@@ -142,16 +152,19 @@ pub fn validate_transaction_payload(mut input: &[u8]) -> Result<(), EncodingErro
     if version != PROTOCOL_VERSION {
         return Err(EncodingError::UnsupportedVersion);
     }
-    read_exact(&mut input, 32)?; // network id
-    read_exact(&mut input, 32)?; // sender key
-    let recipient = read_bytes(&mut input, MAX_RECIPIENT_BYTES)?;
-    std::str::from_utf8(recipient).map_err(|_| EncodingError::InvalidRecipientUtf8)?;
-    read_exact(&mut input, 8)?; // amount
-    read_exact(&mut input, 8)?; // nonce
-    if !input.is_empty() {
-        return Err(EncodingError::TrailingBytes);
-    }
-    Ok(())
+    let network_id: [u8; 32] = read_exact(&mut input, 32)?.try_into().expect("fixed length");
+    let sender_public_key: [u8; 32] = read_exact(&mut input, 32)?.try_into().expect("fixed length");
+    let recipient_bytes = read_bytes(&mut input, MAX_RECIPIENT_BYTES)?;
+    let recipient = std::str::from_utf8(recipient_bytes).map_err(|_| EncodingError::InvalidRecipientUtf8)?.to_owned();
+    let amount = u64::from_be_bytes(read_exact(&mut input, 8)?.try_into().expect("fixed length"));
+    let nonce = u64::from_be_bytes(read_exact(&mut input, 8)?.try_into().expect("fixed length"));
+    if !input.is_empty() { return Err(EncodingError::TrailingBytes); }
+    Ok(DecodedTransaction { network_id, sender_public_key, recipient, amount, nonce })
+}
+
+/// Structural validation helper for callers that only need a pass/fail result.
+pub fn validate_transaction_payload(input: &[u8]) -> Result<(), EncodingError> {
+    decode_transaction_payload(input).map(|_| ())
 }
 
 #[cfg(test)]
@@ -181,6 +194,12 @@ mod tests {
             hex::encode(Sha256::digest(&encoded)),
             "9d627b96e6486273ebcb3fdc489377b0f6453594b2b3c8ab4454e4a0e72bf8da"
         );
+        let decoded = decode_transaction_payload(&encoded).unwrap();
+        assert_eq!(decoded.network_id, network);
+        assert_eq!(decoded.sender_public_key, key);
+        assert_eq!(decoded.recipient, "bob");
+        assert_eq!(decoded.amount, 0x0102);
+        assert_eq!(decoded.nonce, 3);
         assert_eq!(validate_transaction_payload(&encoded), Ok(()));
     }
 
@@ -191,9 +210,15 @@ mod tests {
         let mut trailing = payload.clone();
         trailing.push(0);
         assert_eq!(validate_transaction_payload(&trailing), Err(EncodingError::TrailingBytes));
-        let mut wrong = payload;
+        let mut wrong = payload.clone();
         wrong[0] = b'X';
         assert_eq!(validate_transaction_payload(&wrong), Err(EncodingError::InvalidDomain));
+        let mut unsupported = payload.clone();
+        unsupported[7] = 2;
+        assert_eq!(decode_transaction_payload(&unsupported), Err(EncodingError::UnsupportedVersion));
+        let mut invalid_utf8 = encode_transaction_payload(&[0; 32], &[1; 32], "x", 1, 1).unwrap();
+        invalid_utf8[75] = 0xff;
+        assert_eq!(decode_transaction_payload(&invalid_utf8), Err(EncodingError::InvalidRecipientUtf8));
     }
 
     #[test]
