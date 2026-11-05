@@ -167,7 +167,13 @@ pub fn decode_block_payload(mut input: &[u8]) -> Result<DecodedBlock, EncodingEr
     let mut transactions = Vec::with_capacity(count);
     let mut signatures = Vec::with_capacity(count);
     for _ in 0..count {
-        let tx = read_bytes(&mut input, MAX_ENCODED_BLOCK_BYTES)?.to_vec();
+        // A block transaction is not a recipient field: report the block-size
+        // error rather than leaking the recipient-specific length error.
+        let tx_len = read_u32(&mut input)? as usize;
+        if tx_len > MAX_ENCODED_BLOCK_BYTES {
+            return Err(EncodingError::BlockTooLarge);
+        }
+        let tx = read_exact(&mut input, tx_len)?.to_vec();
         let decoded = decode_transaction_payload(&tx)?;
         if decoded.network_id != network_id {
             return Err(EncodingError::NetworkMismatch);
@@ -281,6 +287,16 @@ mod tests {
             encode_block_payload(&[3; 32], 1, 7, &[0; 32], &[malformed], &[[8; 64]]),
             Err(EncodingError::InvalidTransactionPayload)
         );
+    }
+
+    #[test]
+    fn block_decoder_rejects_embedded_transaction_network_mismatch() {
+        let tx = encode_transaction_payload(&[3; 32], &[4; 32], "recipient", 5, 6).unwrap();
+        let mut block = encode_block_payload(&[3; 32], 1, 7, &[0; 32], &[tx], &[[8; 64]]).unwrap();
+        // Header is 95 bytes, then a 4-byte transaction length; the tx network
+        // identifier begins 8 bytes into the transaction payload.
+        block[107] = 9;
+        assert_eq!(decode_block_payload(&block), Err(EncodingError::NetworkMismatch));
     }
 
     #[test]
