@@ -133,6 +133,44 @@ pub fn hash_block_payload(payload: &[u8]) -> [u8; 32] {
     Sha256::digest(payload).into()
 }
 
+/// Decoded block payload. Each transaction is retained as its canonical signed payload.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DecodedBlock {
+    pub network_id: [u8; 32],
+    pub height: u64,
+    pub timestamp: u64,
+    pub parent_hash: [u8; 32],
+    pub transactions: Vec<Vec<u8>>,
+    pub signatures: Vec<[u8; 64]>,
+}
+
+/// Decode a complete bounded block payload and validate every embedded transaction.
+pub fn decode_block_payload(mut input: &[u8]) -> Result<DecodedBlock, EncodingError> {
+    if input.len() > MAX_ENCODED_BLOCK_BYTES { return Err(EncodingError::BlockTooLarge); }
+    if read_exact(&mut input, BLOCK_DOMAIN.len())? != BLOCK_DOMAIN {
+        return Err(EncodingError::InvalidDomain);
+    }
+    let version = u16::from_be_bytes(read_exact(&mut input, 2)?.try_into().expect("fixed length"));
+    if version != PROTOCOL_VERSION { return Err(EncodingError::UnsupportedVersion); }
+    let network_id = read_exact(&mut input, 32)?.try_into().expect("fixed length");
+    let height = u64::from_be_bytes(read_exact(&mut input, 8)?.try_into().expect("fixed length"));
+    let timestamp = u64::from_be_bytes(read_exact(&mut input, 8)?.try_into().expect("fixed length"));
+    let parent_hash = read_exact(&mut input, 32)?.try_into().expect("fixed length");
+    let count = read_u32(&mut input)? as usize;
+    if count > MAX_TRANSACTIONS_PER_BLOCK { return Err(EncodingError::TooManyTransactions); }
+    let mut transactions = Vec::with_capacity(count);
+    let mut signatures = Vec::with_capacity(count);
+    for _ in 0..count {
+        let tx = read_bytes(&mut input, MAX_ENCODED_BLOCK_BYTES)?.to_vec();
+        decode_transaction_payload(&tx)?;
+        let signature = read_exact(&mut input, 64)?.try_into().expect("fixed length");
+        transactions.push(tx);
+        signatures.push(signature);
+    }
+    if !input.is_empty() { return Err(EncodingError::TrailingBytes); }
+    Ok(DecodedBlock { network_id, height, timestamp, parent_hash, transactions, signatures })
+}
+
 /// Decoded, structurally valid v1 transaction payload.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DecodedTransaction {
@@ -239,6 +277,16 @@ mod tests {
         let a = encode_block_payload(&[3; 32], 1, 7, &[0; 32], &[tx.clone()], &[[8; 64]]).unwrap();
         let b = encode_block_payload(&[3; 32], 1, 7, &[0; 32], &[tx], &[[9; 64]]).unwrap();
         assert_ne!(hash_block_payload(&a), hash_block_payload(&b));
+        let decoded = decode_block_payload(&a).unwrap();
+        assert_eq!(decoded.network_id, [3; 32]);
+        assert_eq!(decoded.height, 1);
+        assert_eq!(decoded.timestamp, 7);
+        assert_eq!(decoded.parent_hash, [0; 32]);
+        assert_eq!(decoded.transactions.len(), 1);
+        assert_eq!(decoded.signatures, vec![[8; 64]]);
+        let mut trailing = a.clone();
+        trailing.push(0);
+        assert_eq!(decode_block_payload(&trailing), Err(EncodingError::TrailingBytes));
         assert_eq!(a, encode_block_payload(&[3; 32], 1, 7, &[0; 32], &[encode_transaction_payload(&[3; 32], &[4; 32], "recipient", 5, 6).unwrap()], &[[8; 64]]).unwrap());
     }
 }
