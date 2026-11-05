@@ -70,6 +70,8 @@ The block identifier is SHA-256 of this payload. Genesis parameters and genesis 
 
 ## Acceptance criteria
 
+- The Rust implementation includes a pinned transaction byte vector and SHA-256 digest as an initial regression fixture; this is not yet a complete cross-language golden-vector suite.
+
 - Golden vectors are stable and documented.
 - Independent implementations produce identical transaction bytes, signatures, block bytes, and block hashes.
 - Invalid/non-canonical input is rejected deterministically.
