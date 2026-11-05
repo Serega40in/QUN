@@ -30,6 +30,7 @@ pub enum SignatureError {
     SenderDoesNotMatchPublicKey,
     InvalidSignatureEncoding,
     InvalidSignature,
+    InvalidCanonicalPayload,
 }
 
 impl SignedTransaction {
@@ -39,7 +40,39 @@ impl SignedTransaction {
             .expect("serializing a fixed QUN transaction payload must succeed")
     }
 
-    /// Verify sender ownership and the Ed25519 signature over the transaction fields.
+    /// Verify an Ed25519 signature over canonical v1 bytes bound to a network ID.
+    ///
+    /// This is opt-in during migration: the legacy verify() and persisted block hashes
+    /// remain unchanged until the v1 protocol is explicitly activated.
+    pub fn verify_canonical(&self, network_id: &[u8; 32]) -> Result<(), SignatureError> {
+        use ed25519_dalek::{Signature, Verifier, VerifyingKey};
+
+        let public_key_bytes = hex::decode(&self.public_key)
+            .map_err(|_| SignatureError::InvalidPublicKeyEncoding)?;
+        let public_key_array: [u8; 32] = public_key_bytes
+            .try_into()
+            .map_err(|_| SignatureError::InvalidPublicKeyEncoding)?;
+        let verifying_key = VerifyingKey::from_bytes(&public_key_array)
+            .map_err(|_| SignatureError::InvalidPublicKey)?;
+        if self.transaction.from != self.public_key {
+            return Err(SignatureError::SenderDoesNotMatchPublicKey);
+        }
+        let payload = canonical::encode_transaction_payload(
+            network_id,
+            &public_key_array,
+            &self.transaction.to,
+            self.transaction.amount,
+            self.transaction.nonce,
+        ).map_err(|_| SignatureError::InvalidCanonicalPayload)?;
+        let signature_bytes = hex::decode(&self.signature)
+            .map_err(|_| SignatureError::InvalidSignatureEncoding)?;
+        let signature = Signature::from_slice(&signature_bytes)
+            .map_err(|_| SignatureError::InvalidSignatureEncoding)?;
+        verifying_key.verify(&payload, &signature)
+            .map_err(|_| SignatureError::InvalidSignature)
+    }
+
+    /// Verify sender ownership and the Ed25519 signature over the legacy payload.
     pub fn verify(&self) -> Result<(), SignatureError> {
         use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 
@@ -350,6 +383,61 @@ mod tests {
         let mut tampered = signed;
         tampered.transaction.amount += 1;
         assert_eq!(tampered.verify(), Err(SignatureError::InvalidSignature));
+    }
+
+    #[test]
+    fn canonical_signature_is_bound_to_network_and_transaction_fields() {
+        use ed25519_dalek::{Signer, SigningKey};
+
+        let signing_key = SigningKey::from_bytes(&[17_u8; 32]);
+        let public_key_bytes = signing_key.verifying_key().to_bytes();
+        let public_key = hex::encode(public_key_bytes);
+        let network = [1_u8; 32];
+        let transaction = Transaction {
+            from: public_key.clone(),
+            to: "recipient-demo".into(),
+            amount: 42,
+            nonce: 1,
+        };
+        let payload = canonical::encode_transaction_payload(
+            &network, &public_key_bytes, &transaction.to, transaction.amount, transaction.nonce,
+        ).unwrap();
+        let signature = signing_key.sign(&payload);
+        let signed = SignedTransaction {
+            transaction,
+            public_key,
+            signature: hex::encode(signature.to_bytes()),
+        };
+
+        assert_eq!(signed.verify_canonical(&network), Ok(()));
+        assert_eq!(signed.verify_canonical(&[2_u8; 32]), Err(SignatureError::InvalidSignature));
+
+        let mut tampered = signed.clone();
+        tampered.transaction.amount += 1;
+        assert_eq!(tampered.verify_canonical(&network), Err(SignatureError::InvalidSignature));
+    }
+
+    #[test]
+    fn canonical_signature_rejects_oversized_recipient() {
+        use ed25519_dalek::{Signer, SigningKey};
+
+        let signing_key = SigningKey::from_bytes(&[18_u8; 32]);
+        let public_key = hex::encode(signing_key.verifying_key().as_bytes());
+        let transaction = Transaction {
+            from: public_key.clone(),
+            to: "x".repeat(canonical::MAX_RECIPIENT_BYTES + 1),
+            amount: 1,
+            nonce: 1,
+        };
+        let signed = SignedTransaction {
+            transaction,
+            public_key,
+            signature: hex::encode(signing_key.sign(b"placeholder").to_bytes()),
+        };
+        assert_eq!(
+            signed.verify_canonical(&[1_u8; 32]),
+            Err(SignatureError::InvalidCanonicalPayload)
+        );
     }
 
     #[test]
