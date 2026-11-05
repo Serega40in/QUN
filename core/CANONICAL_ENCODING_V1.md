@@ -87,3 +87,10 @@ The block identifier is SHA-256 of this payload. Genesis parameters and genesis 
 ## Local validator harness
 
 The integration test `core/tests/canonical_node_harness.rs` models two independent validator views. It checks independently reconstructed blocks produce the same hash, that JSON transport round-trips preserve the block, and that validators reject blocks when network ID, expected height, parent hash, or transaction signatures do not match. This is a deterministic acceptance harness only: it does not open sockets, persist node state, execute consensus, or establish fork choice.
+
+
+## Canonical chain validation and replay
+
+The additive `CanonicalChainV1` type now supplies a deterministic empty genesis block per 32-byte network ID, sequential height/parent validation, and full structural validation of all canonical block signatures and hashes. `append_with_ledger` validates the candidate block and applies all transfers to a staged ledger before committing either the block or ledger, so a failed state transition leaves both unchanged. `validate_and_replay` replays the chain from a caller-supplied trusted initial ledger into a new state and reports the first block whose transitions fail.
+
+This is still an in-memory chain primitive. The initial ledger must come from a trusted genesis allocation/configuration; no disk persistence, P2P networking, fork choice, validator voting, or consensus is implemented. The current genesis convention is a development protocol choice and must be reviewed/pinned before a public network launch.
