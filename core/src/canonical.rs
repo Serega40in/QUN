@@ -172,6 +172,15 @@ mod tests {
         assert_eq!(&encoded[79..87], &0x0102_u64.to_be_bytes());
         assert_eq!(&encoded[87..95], &3_u64.to_be_bytes());
         assert_eq!(encode_transaction_payload(&network, &key, "bob", 0x0102, 3).unwrap(), encoded);
+        // Golden vector: keep this exact byte string stable across implementations.
+        assert_eq!(
+            hex::encode(&encoded),
+            "51554e2d545800011111111111111111111111111111111111111111111111111111111111111111222222222222222222222222222222222222222222222222222222222222222200000003626f6200000000000001020000000000000003"
+        );
+        assert_eq!(
+            hex::encode(hash_block_payload(&encoded)),
+            "9d627b96e6486273ebcb3fdc489377b0f6453594b2b3c8ab4454e4a0e72bf8da"
+        );
         assert_eq!(validate_transaction_payload(&encoded), Ok(()));
     }
 
