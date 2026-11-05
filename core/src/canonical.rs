@@ -178,7 +178,7 @@ mod tests {
             "51554e2d545800011111111111111111111111111111111111111111111111111111111111111111222222222222222222222222222222222222222222222222222222222222222200000003626f6200000000000001020000000000000003"
         );
         assert_eq!(
-            hex::encode(hash_block_payload(&encoded)),
+            hex::encode(Sha256::digest(&encoded)),
             "9d627b96e6486273ebcb3fdc489377b0f6453594b2b3c8ab4454e4a0e72bf8da"
         );
         assert_eq!(validate_transaction_payload(&encoded), Ok(()));
