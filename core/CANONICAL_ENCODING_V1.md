@@ -61,7 +61,7 @@ The block identifier is SHA-256 of this payload. Genesis parameters and genesis 
 
 ## Compatibility and rollout
 
-1. Keep the isolated encoder/decoder and golden test vectors additive; do not change current hashes until migration and protocol activation are reviewed.
+1. Keep the isolated transaction/block encoders and decoders plus golden test vectors additive; do not change current hashes until migration and protocol activation are reviewed.
 2. Add tests for boundary values, malformed/truncated inputs, trailing bytes, wrong domain/version/network, and cross-language vectors.
 3. Add a new explicitly versioned block format and snapshot migration policy. Never reinterpret legacy hashes as v1 hashes.
 4. Validate the entire chain and state transition history when loading a v1 snapshot.
@@ -70,7 +70,7 @@ The block identifier is SHA-256 of this payload. Genesis parameters and genesis 
 
 ## Acceptance criteria
 
-- The Rust implementation includes bounded transaction encoding, strict transaction decoding, a pinned transaction byte vector and SHA-256 digest, plus malformed-input regression tests. This is not yet a complete cross-language golden-vector suite.
+- The Rust implementation includes bounded transaction/block encoding and decoding, strict embedded-transaction validation, a pinned transaction byte vector and SHA-256 digest, plus malformed-input regression tests. This is not yet a complete cross-language golden-vector suite.
 
 - Golden vectors are stable and documented.
 - Independent implementations produce identical transaction bytes, signatures, block bytes, and block hashes.
