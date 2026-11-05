@@ -76,7 +76,7 @@ pub fn work_from_target(target: &[u8; 32]) -> Result<Work256, WorkError> {
         if compare_be(&remainder, &divisor) != core::cmp::Ordering::Less {
             subtract_be(&mut remainder, &divisor);
             if bit_position < 256 {
-                quotient[bit_position / 8] |= 1 << (7 - (bit_position % 8));
+                quotient[31 - bit_position / 8] |= 1 << (7 - (bit_position % 8));
             }
         }
     }
