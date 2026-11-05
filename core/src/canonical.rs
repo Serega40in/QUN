@@ -70,7 +70,7 @@ pub fn encode_transaction_payload(
     if sender_public_key.len() != 32 {
         return Err(EncodingError::InvalidPublicKey);
     }
-    if recipient.as_bytes().len() > MAX_RECIPIENT_BYTES {
+    if recipient.len() > MAX_RECIPIENT_BYTES {
         return Err(EncodingError::RecipientTooLong);
     }
     let mut out = Vec::with_capacity(6 + 2 + 32 + 32 + 4 + recipient.len() + 16);
@@ -314,7 +314,7 @@ mod tests {
     #[test]
     fn block_payload_hash_is_stable_and_commits_to_signature() {
         let tx = encode_transaction_payload(&[3; 32], &[4; 32], "recipient", 5, 6).unwrap();
-        let a = encode_block_payload(&[3; 32], 1, 7, &[0; 32], &[tx.clone()], &[[8; 64]]).unwrap();
+        let a = encode_block_payload(&[3; 32], 1, 7, &[0; 32], std::slice::from_ref(&tx), &[[8; 64]]).unwrap();
         let b = encode_block_payload(&[3; 32], 1, 7, &[0; 32], &[tx], &[[9; 64]]).unwrap();
         assert_ne!(hash_block_payload(&a), hash_block_payload(&b));
         let decoded = decode_block_payload(&a).unwrap();
