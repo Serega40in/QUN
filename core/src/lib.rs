@@ -1,5 +1,6 @@
 pub mod canonical;
 pub mod snapshot;
+pub mod versioned_block;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
