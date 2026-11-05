@@ -150,6 +150,28 @@ mod tests {
     }
 
     #[test]
+    fn exact_power_of_two_work_vector() {
+        // target = 3 => target + 1 = 4, so 2^256 / 4 = 2^254 exactly.
+        let mut target = [0u8; 32];
+        target[31] = 3;
+        let work = work_from_target(&target).unwrap().to_bytes();
+        let mut expected = [0u8; 32];
+        expected[0] = 0x40;
+        assert_eq!(work, expected);
+    }
+
+    #[test]
+    fn division_by_five_rounds_up_to_repeating_hex_vector() {
+        // target = 4 => ceil(2^256 / 5) = 0x33..34.
+        let mut target = [0u8; 32];
+        target[31] = 4;
+        let work = work_from_target(&target).unwrap().to_bytes();
+        let mut expected = [0x33; 32];
+        expected[31] = 0x34;
+        assert_eq!(work, expected);
+    }
+
+    #[test]
     fn rejects_invalid_or_out_of_range_targets() {
         assert_eq!(work_from_target(&[0; 32]), Err(WorkError::InvalidTarget));
         assert_eq!(
