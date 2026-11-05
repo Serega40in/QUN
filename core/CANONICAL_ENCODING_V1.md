@@ -1,6 +1,6 @@
 # QUN Core canonical encoding v1 — implementation gate
 
-Status: isolated v1 primitives implemented for review. This document does not change the current wire format or activate a public network.
+Status: v1 encoding primitives and opt-in network-bound Ed25519 verification are implemented for review. This does not change the default verification path, current wire format, or activate a public network.
 
 ## Why this is next
 
@@ -61,7 +61,7 @@ The block identifier is SHA-256 of this payload. Genesis parameters and genesis 
 
 ## Compatibility and rollout
 
-1. Keep the isolated transaction/block encoders and decoders plus golden test vectors additive; do not change current hashes until migration and protocol activation are reviewed.
+1. Keep canonical verification opt-in while legacy verification and block hashes remain active; do not change current hashes until migration and protocol activation are reviewed.
 2. Add tests for boundary values, malformed/truncated inputs, trailing bytes, wrong domain/version/network, and cross-language vectors.
 3. Add a new explicitly versioned block format and snapshot migration policy. Never reinterpret legacy hashes as v1 hashes.
 4. Validate the entire chain and state transition history when loading a v1 snapshot.
@@ -70,7 +70,9 @@ The block identifier is SHA-256 of this payload. Genesis parameters and genesis 
 
 ## Acceptance criteria
 
-- The Rust implementation includes bounded transaction/block encoding and decoding, strict embedded-transaction validation, a pinned transaction byte vector and SHA-256 digest, plus malformed-input regression tests. This is not yet a complete cross-language golden-vector suite.
+- The Rust implementation includes bounded transaction/block encoding and decoding, strict embedded-transaction validation, a pinned transaction byte vector and SHA-256 digest, plus malformed-input regression tests.
+- An opt-in Ed25519 verifier signs/verifies canonical v1 transaction bytes and binds the signature to a 32-byte network ID; the legacy verifier remains unchanged.
+- This is not yet a complete cross-language golden-vector suite, and canonical signatures are not yet wired into block admission, state transitions, or consensus.
 
 - Golden vectors are stable and documented.
 - Independent implementations produce identical transaction bytes, signatures, block bytes, and block hashes.
