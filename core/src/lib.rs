@@ -1,6 +1,59 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+/// Network identifier bound into every transaction signature and block hash.
+/// A signature made for one QUN network is never valid on another one.
+pub const CHAIN_ID: &str = "qun-devnet-1";
+
+/// Domain tag for the version 2 transaction signing payload.
+pub const TX_SIGNING_DOMAIN: &str = "QUN_TX_V2";
+/// Domain tags for version 3 block hashes.
+pub const BLOCK_HASH_DOMAIN: &str = "QUN_BLOCK_V3";
+pub const SIGNED_BLOCK_HASH_DOMAIN: &str = "QUN_SIGNED_BLOCK_V3";
+
+/// Canonical binary encoding used for consensus-critical bytes.
+///
+/// Rules (all integers big-endian):
+/// - a byte string is `u64 length` followed by the raw bytes;
+/// - an integer is a fixed 8-byte `u64`;
+/// - a list is `u64 count` followed by each item.
+///
+/// Length prefixes make the encoding unambiguous: `("ab", "c")` and
+/// `("a", "bc")` can never produce the same bytes.
+pub mod encoding {
+    use super::{SignedTransaction, Transaction};
+
+    pub fn put_u64(out: &mut Vec<u8>, value: u64) {
+        out.extend_from_slice(&value.to_be_bytes());
+    }
+
+    pub fn put_bytes(out: &mut Vec<u8>, bytes: &[u8]) {
+        put_u64(out, bytes.len() as u64);
+        out.extend_from_slice(bytes);
+    }
+
+    pub fn put_str(out: &mut Vec<u8>, value: &str) {
+        put_bytes(out, value.as_bytes());
+    }
+
+    pub fn put_transaction(out: &mut Vec<u8>, tx: &Transaction) {
+        put_str(out, &tx.from);
+        put_str(out, &tx.to);
+        put_u64(out, tx.amount);
+        put_u64(out, tx.nonce);
+    }
+
+    pub fn put_signed_transaction(out: &mut Vec<u8>, signed: &SignedTransaction) {
+        put_transaction(out, &signed.transaction);
+        put_str(out, &signed.public_key);
+        put_str(out, &signed.signature);
+    }
+}
+
+fn hex_digest(payload: &[u8]) -> String {
+    hex::encode(Sha256::digest(payload))
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Transaction {
     pub from: String,
@@ -31,10 +84,19 @@ pub enum SignatureError {
 }
 
 impl SignedTransaction {
-    /// Canonical, domain-separated payload. Field order and domain are protocol constants.
+    /// Canonical, domain-separated payload for this node's network (`CHAIN_ID`).
     pub fn signing_payload(tx: &Transaction) -> Vec<u8> {
-        serde_json::to_vec(&("QUN_TX_V1", &tx.from, &tx.to, tx.amount, tx.nonce))
-            .expect("serializing a fixed QUN transaction payload must succeed")
+        Self::signing_payload_for_chain(CHAIN_ID, tx)
+    }
+
+    /// Canonical binary payload: domain tag, chain ID, then the transaction fields.
+    /// See [`encoding`] for the byte rules.
+    pub fn signing_payload_for_chain(chain_id: &str, tx: &Transaction) -> Vec<u8> {
+        let mut out = Vec::with_capacity(64 + tx.from.len() + tx.to.len());
+        encoding::put_str(&mut out, TX_SIGNING_DOMAIN);
+        encoding::put_str(&mut out, chain_id);
+        encoding::put_transaction(&mut out, tx);
+        out
     }
 
     /// Verify sender ownership and the Ed25519 signature over the transaction fields.
@@ -80,11 +142,17 @@ impl Block {
         previous_hash: &str,
         transactions: &[Transaction],
     ) -> String {
-        // Stable field order; JSON serialization is used only for this fixed struct schema.
-        let payload = serde_json::to_vec(&(index, timestamp, previous_hash, transactions))
-            .expect("serializing a fixed QUN block payload must succeed");
-        let digest = Sha256::digest(payload);
-        digest.iter().map(|b| format!("{b:02x}")).collect()
+        let mut payload = Vec::new();
+        encoding::put_str(&mut payload, BLOCK_HASH_DOMAIN);
+        encoding::put_str(&mut payload, CHAIN_ID);
+        encoding::put_u64(&mut payload, index);
+        encoding::put_u64(&mut payload, timestamp);
+        encoding::put_str(&mut payload, previous_hash);
+        encoding::put_u64(&mut payload, transactions.len() as u64);
+        for tx in transactions {
+            encoding::put_transaction(&mut payload, tx);
+        }
+        hex_digest(&payload)
     }
 
     pub fn calculate_signed_hash(
@@ -94,16 +162,21 @@ impl Block {
         transactions: &[Transaction],
         signed_transactions: &[SignedTransaction],
     ) -> String {
-        let payload = serde_json::to_vec(&(
-            "QUN_BLOCK_V2",
-            index,
-            timestamp,
-            previous_hash,
-            transactions,
-            signed_transactions,
-        )).expect("serializing a fixed QUN signed block payload must succeed");
-        let digest = Sha256::digest(payload);
-        digest.iter().map(|b| format!("{b:02x}")).collect()
+        let mut payload = Vec::new();
+        encoding::put_str(&mut payload, SIGNED_BLOCK_HASH_DOMAIN);
+        encoding::put_str(&mut payload, CHAIN_ID);
+        encoding::put_u64(&mut payload, index);
+        encoding::put_u64(&mut payload, timestamp);
+        encoding::put_str(&mut payload, previous_hash);
+        encoding::put_u64(&mut payload, transactions.len() as u64);
+        for tx in transactions {
+            encoding::put_transaction(&mut payload, tx);
+        }
+        encoding::put_u64(&mut payload, signed_transactions.len() as u64);
+        for signed in signed_transactions {
+            encoding::put_signed_transaction(&mut payload, signed);
+        }
+        hex_digest(&payload)
     }
 
     fn new(
@@ -542,4 +615,44 @@ mod tests {
         assert_eq!(ledger, before);
     }
 
+
+    #[test]
+    fn signing_payload_matches_published_test_vector() {
+        // Shared with the browser dashboard; any change here is a protocol break.
+        let tx = Transaction { from: "aa".into(), to: "bob".into(), amount: 25, nonce: 1 };
+        assert_eq!(
+            hex::encode(SignedTransaction::signing_payload(&tx)),
+            concat!(
+                "0000000000000009", "51554e5f54585f5632",             // "QUN_TX_V2"
+                "000000000000000c", "71756e2d6465766e65742d31",       // "qun-devnet-1"
+                "0000000000000002", "6161",                           // from "aa"
+                "0000000000000003", "626f62",                         // to "bob"
+                "0000000000000019",                                   // amount 25
+                "0000000000000001",                                   // nonce 1
+            )
+        );
+    }
+
+    #[test]
+    fn signing_payload_is_unambiguous() {
+        let a = Transaction { from: "ab".into(), to: "c".into(), amount: 1, nonce: 1 };
+        let b = Transaction { from: "a".into(), to: "bc".into(), amount: 1, nonce: 1 };
+        assert_ne!(SignedTransaction::signing_payload(&a), SignedTransaction::signing_payload(&b));
+    }
+
+    #[test]
+    fn signature_for_another_chain_is_rejected() {
+        use ed25519_dalek::{Signer, SigningKey};
+
+        let signing_key = SigningKey::from_bytes(&[9_u8; 32]);
+        let public_key = hex::encode(signing_key.verifying_key().as_bytes());
+        let transaction = Transaction { from: public_key.clone(), to: "bob".into(), amount: 5, nonce: 1 };
+        let foreign = signing_key.sign(&SignedTransaction::signing_payload_for_chain("qun-other-net", &transaction));
+        let signed = SignedTransaction {
+            transaction,
+            public_key,
+            signature: hex::encode(foreign.to_bytes()),
+        };
+        assert_eq!(signed.verify(), Err(SignatureError::InvalidSignature));
+    }
 }
