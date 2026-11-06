@@ -38,9 +38,11 @@ async function request(path,options){const r=await fetch(path,options);const bod
 async function refresh(){try{const [h,c,a]=await Promise.all([request('/health'),request('/chain'),request('/accounts')]);el('fund').hidden=!h.dev_funding_enabled;el('accounts').textContent='Счета: '+(Object.keys(a.balances).length?Object.entries(a.balances).map(([k,v])=>k+': '+v+' (nonce '+(a.nonces[k]||0)+')').join(' · '):'пока нет');el('status').textContent=h.status==='ok'?'Онлайн':'Ошибка';el('height').textContent=h.height;el('count').textContent=h.blocks;el('blocks').innerHTML='';[...c.blocks].reverse().forEach(b=>{const d=document.createElement('div');d.className='block';const title=document.createElement('strong');title.textContent='Блок #'+b.index+' · '+b.transactions.length+' транз.';const hash=document.createElement('div');hash.className='hash';hash.textContent='Hash: '+b.hash;const prev=document.createElement('div');prev.className='hash';prev.textContent='Prev: '+b.previous_hash;const signed=document.createElement('div');signed.className='label';signed.textContent='Подписанных транзакций: '+(b.signed_transactions||[]).length;const details=document.createElement('button');details.className='secondary';details.type='button';details.textContent='Проверить содержимое блока';details.addEventListener('click',async()=>{const existing=d.querySelector('.detail');if(existing){existing.remove();details.textContent='Проверить содержимое блока';return}try{const full=await request('/blocks/'+b.index);const view=document.createElement('pre');view.className='detail hash';view.style.whiteSpace='pre-wrap';view.textContent=JSON.stringify({index:full.index,hash:full.hash,previous_hash:full.previous_hash,transactions:full.transactions,signed_transactions:(full.signed_transactions||[]).map(s=>({transaction:s.transaction,public_key:s.public_key,signature:s.signature,signature_present:!!s.signature}))},null,2);d.append(view);details.textContent='Скрыть содержимое'}catch(err){const view=document.createElement('pre');view.className='detail hash';view.textContent='Не удалось загрузить блок: '+err.message;d.append(view)}});d.append(title,hash,prev,signed,details);el('blocks').append(d)});if(!c.blocks.length)el('blocks').textContent='Цепочка пока пуста.'}catch(e){el('status').textContent='Нет соединения';el('message').textContent=e.message;el('message').className='status error'}}
 let wallet=null;
 const toHex=bytes=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
+// Canonical QUN_TX_V2 payload: u64 big-endian length-prefixed strings, u64 big-endian integers.
+function txPayload(chainId,tx){const enc=new TextEncoder(),parts=[];const u64=v=>{const a=new Uint8Array(8);new DataView(a.buffer).setBigUint64(0,BigInt(v));parts.push(a)};const str=v=>{const b=enc.encode(v);u64(b.length);parts.push(b)};str('QUN_TX_V2');str(chainId);str(tx.from);str(tx.to);u64(tx.amount);u64(tx.nonce);const out=new Uint8Array(parts.reduce((n,p)=>n+p.length,0));let o=0;for(const p of parts){out.set(p,o);o+=p.length}return out}
 el('create-wallet').addEventListener('click',async()=>{try{el('message').textContent='Создаём Ed25519-ключ…';wallet=await crypto.subtle.generateKey({name:'Ed25519'},true,['sign','verify']);const raw=await crypto.subtle.exportKey('raw',wallet.publicKey);wallet.address=toHex(raw);el('wallet-address').textContent='Адрес: '+wallet.address;el('fund').disabled=false;el('submit').disabled=false;el('message').textContent='Ключ создан. Закрытие или перезагрузка вкладки удалит его.';await refresh()}catch(err){wallet=null;el('message').textContent='Браузер не поддержал Ed25519 WebCrypto: '+err.message;el('message').className='status error'}});
 el('fund').addEventListener('click',async()=>{if(!wallet)return;try{await request('/dev/fund',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({address:wallet.address,amount:1000})});el('message').textContent='Выдано 1000 тестовых единиц для текущего ключа';await refresh()}catch(err){el('message').textContent=err.message;el('message').className='status error'}});
-el('txform').addEventListener('submit',async e=>{e.preventDefault();if(!wallet)throw new Error('Сначала создайте ключ в браузере.');const b=el('submit');b.disabled=true;el('message').textContent='Подписываем транзакцию и отправляем узлу…';el('message').className='status';try{const a=await request('/accounts');const tx={from:wallet.address,to:el('to').value.trim(),amount:Number(el('amount').value),nonce:(a.nonces[wallet.address]||0)+1};if(!tx.to||!Number.isSafeInteger(tx.amount)||tx.amount<1)throw new Error('Проверьте адрес получателя и сумму.');const payload=new TextEncoder().encode(JSON.stringify(['QUN_TX_V1',tx.from,tx.to,tx.amount,tx.nonce]));const signature=await crypto.subtle.sign({name:'Ed25519'},wallet.privateKey,payload);const signed={transaction:tx,public_key:wallet.address,signature:toHex(signature)};const block=await request('/dev/mine-signed',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({signed_transactions:[signed]})});el('message').textContent='Подписанная транзакция включена в блок #'+block.index;await refresh()}catch(err){el('message').textContent=err.message;el('message').className='status error'}finally{b.disabled=!wallet}});
+el('txform').addEventListener('submit',async e=>{e.preventDefault();if(!wallet)throw new Error('Сначала создайте ключ в браузере.');const b=el('submit');b.disabled=true;el('message').textContent='Подписываем транзакцию и отправляем узлу…';el('message').className='status';try{const [h,a]=await Promise.all([request('/health'),request('/accounts')]);const tx={from:wallet.address,to:el('to').value.trim(),amount:Number(el('amount').value),nonce:(a.nonces[wallet.address]||0)+1};if(!tx.to||!Number.isSafeInteger(tx.amount)||tx.amount<1)throw new Error('Проверьте адрес получателя и сумму.');const payload=txPayload(h.chain_id,tx);const signature=await crypto.subtle.sign({name:'Ed25519'},wallet.privateKey,payload);const signed={transaction:tx,public_key:wallet.address,signature:toHex(signature)};const block=await request('/dev/mine-signed',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({signed_transactions:[signed]})});el('message').textContent='Подписанная транзакция включена в блок #'+block.index;await refresh()}catch(err){el('message').textContent=err.message;el('message').className='status error'}finally{b.disabled=!wallet}});
 refresh();
 </script></body></html>"#;
 
@@ -55,6 +57,7 @@ struct AppState {
     snapshot: Arc<Mutex<NodeSnapshot>>,
     data_file: Arc<PathBuf>,
     dev_funding_enabled: bool,
+    unsigned_dev_mine_enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,11 +74,13 @@ impl Default for NodeSnapshot {
 struct Health {
     status: &'static str,
     network: &'static str,
+    chain_id: &'static str,
     mode: &'static str,
     height: u64,
     blocks: usize,
     warning: &'static str,
     dev_funding_enabled: bool,
+    unsigned_dev_mine_enabled: bool,
 }
 
 #[derive(Serialize)]
@@ -179,12 +184,14 @@ async fn health(State(state): State<AppState>) -> Json<Health> {
     Json(Health {
         status: "ok",
         network: "qun-local-dev-v0",
+        chain_id: qun_core::CHAIN_ID,
         mode: "single-process-development-only",
         height: snapshot.chain.blocks.last().map(|block| block.index).unwrap_or(0),
         blocks: snapshot.chain.blocks.len(),
         warning:
             "Local development only; no distributed consensus, P2P, or real assets. Do not expose this API publicly.",
         dev_funding_enabled: state.dev_funding_enabled,
+        unsigned_dev_mine_enabled: state.unsigned_dev_mine_enabled,
     })
 }
 
@@ -273,6 +280,13 @@ async fn dev_mine(
     State(state): State<AppState>,
     Json(request): Json<MineRequest>,
 ) -> Result<(StatusCode, Json<qun_core::Block>), ApiFailure> {
+    // Unsigned transfers let anyone move anyone's balance. Off unless explicitly enabled.
+    if !state.unsigned_dev_mine_enabled {
+        return Err(api_error(
+            StatusCode::FORBIDDEN,
+            "unsigned /dev/mine is disabled; use /dev/mine-signed (set QUN_ENABLE_UNSIGNED_DEV_MINE=true for local legacy tests only)",
+        ));
+    }
     if request.transactions.len() > MAX_TRANSACTIONS_PER_BLOCK {
         return Err(api_error(
             StatusCode::PAYLOAD_TOO_LARGE,
@@ -295,6 +309,16 @@ async fn dev_mine(
     Ok((StatusCode::CREATED, Json(block)))
 }
 
+/// Dev routes mint balances or skip signatures, so they may only run on a loopback address.
+fn check_dev_routes_are_local(bind: SocketAddr, dev_funding: bool, unsigned_mine: bool) -> Result<(), String> {
+    if (dev_funding || unsigned_mine) && !bind.ip().is_loopback() {
+        return Err(format!(
+            "refusing to start: development routes (QUN_ENABLE_DEV_FUNDING / QUN_ENABLE_UNSIGNED_DEV_MINE) are enabled on non-loopback address {bind}"
+        ));
+    }
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Localhost is the safe default. This prototype has no authentication.
@@ -306,8 +330,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let snapshot = load_snapshot(&data_file).map_err(|error| format!("cannot start QUN node: {error}"))?;
-    let dev_funding_enabled = env::var("QUN_ENABLE_DEV_FUNDING").map(|v| v == "true" || v == "1").unwrap_or(false);
-    let state = AppState { snapshot: Arc::new(Mutex::new(snapshot)), data_file: Arc::new(data_file.clone()), dev_funding_enabled };
+    let flag = |name: &str| env::var(name).map(|v| v == "true" || v == "1").unwrap_or(false);
+    let dev_funding_enabled = flag("QUN_ENABLE_DEV_FUNDING");
+    let unsigned_dev_mine_enabled = flag("QUN_ENABLE_UNSIGNED_DEV_MINE");
+    check_dev_routes_are_local(bind, dev_funding_enabled, unsigned_dev_mine_enabled)?;
+    let state = AppState {
+        snapshot: Arc::new(Mutex::new(snapshot)),
+        data_file: Arc::new(data_file.clone()),
+        dev_funding_enabled,
+        unsigned_dev_mine_enabled,
+    };
 
     let app = Router::new()
         .route("/", get(dashboard))
@@ -324,7 +356,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("QUN local development node listening on http://{bind}");
     println!("Data file: {}", data_file.display());
     println!("WARNING: local development-only chain; signed transactions are supported, but consensus, P2P, and real assets are not implemented.");
+    println!("Chain ID: {}", qun_core::CHAIN_ID);
     println!("Development funding enabled: {dev_funding_enabled} (QUN_ENABLE_DEV_FUNDING)");
+    println!("Unsigned /dev/mine enabled: {unsigned_dev_mine_enabled} (QUN_ENABLE_UNSIGNED_DEV_MINE)");
     axum::serve(listener, app).await?;
     Ok(())
 }
@@ -334,6 +368,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 mod persistence_tests {
     use super::*;
     use ed25519_dalek::{Signer, SigningKey};
+
+    #[test]
+    fn dev_routes_require_loopback_bind() {
+        let public: SocketAddr = "0.0.0.0:8787".parse().unwrap();
+        let local: SocketAddr = "127.0.0.1:8787".parse().unwrap();
+        assert!(check_dev_routes_are_local(public, true, false).is_err());
+        assert!(check_dev_routes_are_local(public, false, true).is_err());
+        assert!(check_dev_routes_are_local(public, false, false).is_ok());
+        assert!(check_dev_routes_are_local(local, true, true).is_ok());
+    }
 
     #[test]
     fn persisted_signed_chain_is_revalidated_on_load() {
