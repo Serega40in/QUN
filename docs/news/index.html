@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#fbfbf8">
+<meta name="description" content="QUN News — идеи, продукты и люди, которые создают технологии добрее и понятнее.">
+<meta property="og:title" content="QUN News — ясные идеи, живые проекты">
+<meta property="og:description" content="Новости QUN, открытые бета-тесты и истории развития экосистемы.">
+<title>QUN News — идеи, которые соединяют</title>
+<style>
+:root{color-scheme:light;--paper:#fbfbf8;--white:#fff;--ink:#18231f;--muted:#6d7771;--line:#e7e9e3;--green:#147c63;--blue:#174f76;--gold:#c39a4a;--soft:#f0f5f1}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}a:focus-visible,button:focus-visible{outline:3px solid #79bda7;outline-offset:3px}
+.top{height:72px;border-bottom:1px solid var(--line);background:#fbfbf8ed;backdrop-filter:blur(14px);position:sticky;top:0;z-index:5}
+.topin{max-width:1160px;height:100%;margin:auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:850;letter-spacing:.16em;font-size:14px}.mark{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#174f76,#16866b 70%,#d3b56b);color:white;font-family:Georgia,serif;font-size:21px;box-shadow:0 4px 12px #174f761a}
+.nav{display:flex;align-items:center;gap:22px;color:var(--muted);font-size:13px}.nav a:hover{color:var(--green)}.nav .community{padding:8px 13px;border:1px solid var(--line);border-radius:999px;color:var(--ink)}
+.wrap{width:min(1120px,calc(100% - 40px));margin:auto}
+.hero{padding:80px 0 54px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:minmax(0,1.1fr) minmax(220px,.7fr);align-items:center;gap:60px}
+.kicker{font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--green)}
+h1{font:500 clamp(44px,7vw,76px)/.99 Georgia,"Times New Roman",serif;letter-spacing:-.055em;margin:17px 0 22px;max-width:720px}
+.hero p{font-size:18px;line-height:1.7;color:var(--muted);max-width:620px;margin:0}
+.heroart{aspect-ratio:1;display:grid;place-items:center;position:relative}
+.orb{width:min(290px,85%);aspect-ratio:1;border-radius:38% 62% 55% 45% / 47% 38% 62% 53%;background:radial-gradient(circle at 32% 28%,#fff 0 7%,#e5f3ef 20%,#b9dfd1 38%,#6daea1 52%,#285e78 72%,#183f59 100%);box-shadow:inset -20px -24px 45px #13394b45,inset 12px 12px 30px #ffffffd9,0 24px 65px #2c776322;transform:rotate(-12deg);position:relative}
+.orb:before{content:"";position:absolute;width:40%;height:40%;left:27%;top:18%;border-radius:45% 55% 52% 48%;background:linear-gradient(135deg,#fff9,#ffffff05);filter:blur(1px)}
+.orb:after{content:"";position:absolute;width:22%;height:22%;right:13%;bottom:14%;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff,#d9bd78 42%,#b38a40 78%);box-shadow:0 0 35px #d9bd7850}
+.hero-caption{position:absolute;bottom:3%;right:0;color:#8a938c;font:italic 13px Georgia,serif}
+.sectionhead{display:flex;justify-content:space-between;align-items:end;gap:24px;padding:38px 0 20px}.sectionhead h2{font:500 32px/1.1 Georgia,serif;letter-spacing:-.035em;margin:0}.sectionhead p{margin:0;color:var(--muted);font-size:13px}
+.feature{display:grid;grid-template-columns:1fr 1fr;background:var(--white);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:50px}
+.featurevisual{min-height:310px;background:linear-gradient(145deg,#f2f7f3,#e6f0eb);display:grid;place-items:center;padding:35px;position:relative;overflow:hidden}
+.featurevisual .orb{width:min(230px,80%)}
+.featurecopy{padding:clamp(28px,5vw,58px);display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+.meta{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);font-weight:800;display:flex;gap:12px;flex-wrap:wrap}
+.feature h3{font:500 clamp(29px,4vw,42px)/1.1 Georgia,serif;letter-spacing:-.04em;margin:15px 0}
+.feature p{color:var(--muted);margin:0 0 22px;max-width:460px}
+.linkline{display:inline-flex;align-items:center;gap:12px;color:var(--green);font-weight:750;font-size:13px;border-bottom:1px solid #9ac7b8;padding-bottom:5px}
+.linkline span{transition:transform .2s}.linkline:hover span{transform:translateX(4px)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:70px}
+.card{background:var(--white);border:1px solid var(--line);padding:24px;min-height:230px;display:flex;flex-direction:column;transition:transform .2s,border-color .2s}
+.card:hover{transform:translateY(-3px);border-color:#b4d1c4}.card .number{font:italic 14px Georgia,serif;color:#9ba49d}.card h3{font:500 25px/1.15 Georgia,serif;letter-spacing:-.03em;margin:24px 0 12px}.card p{font-size:14px;color:var(--muted);margin:0 0 24px}.card .linkline{margin-top:auto;align-self:flex-start}
+.principles{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:38px 0 42px;display:grid;grid-template-columns:.7fr 1.3fr;gap:50px;margin-bottom:56px}
+.principles h2{font:500 32px/1.1 Georgia,serif;margin:0;letter-spacing:-.04em}.principles p{margin:0;color:var(--muted);max-width:680px}
+.footer{padding:25px 0 42px;display:flex;justify-content:space-between;gap:20px;color:#858d86;font-size:12px}.footer a:hover{color:var(--green)}
+.empty{color:var(--muted);padding:20px 0}.search{width:100%;max-width:280px;padding:10px 13px;border:1px solid var(--line);border-radius:999px;background:var(--white);font:inherit;font-size:13px;outline:none}.search:focus{border-color:#8ebba9}
+@media(max-width:760px){.topin{padding:0 18px}.nav{gap:12px}.nav a:first-child{display:none}.wrap{width:calc(100% - 34px)}.hero{padding:50px 0 36px;grid-template-columns:1fr;gap:22px}.heroart{grid-row:1;max-height:210px}.orb{width:180px}h1{font-size:clamp(43px,13vw,62px);margin-top:12px}.hero p{font-size:16px}.feature{grid-template-columns:1fr}.featurevisual{min-height:220px}.featurevisual .orb{width:160px}.featurecopy{padding:27px}.grid{grid-template-columns:1fr;gap:10px}.card{min-height:0;padding:22px}.card h3{margin:14px 0 8px}.sectionhead{align-items:start;flex-direction:column}.principles{grid-template-columns:1fr;gap:14px;padding:30px 0}.footer{flex-direction:column}.nav .community{padding:7px 10px}}
+</style></head>
+<body>
+<header class="top"><div class="topin"><a class="brand" href="./"><span class="mark">Q</span><span>QUN <span style="font-weight:500;color:#7a837d">/ NEWS</span></span></a><nav class="nav"><a href="#latest">Публикации</a><a href="https://serega40in.github.io/QUN/publisher/">Publisher</a><a class="community" href="https://t.me/quncommunity">Обсудить QUN ↗</a></nav></div></header>
+<main class="wrap">
+<section class="hero"><div><div class="kicker">Технологии ближе. Люди важнее.</div><h1>Идеи, которые<br>соединяют.</h1><p>Новости QUN, новые сервисы и открытые бета-тесты. Просто рассказываем, что создаём, и приглашаем вас стать частью этого пути.</p></div><div class="heroart" aria-label="Абстрактный кристалл QUN"><div class="orb"></div><div class="hero-caption">Всё начинается с доброго шага.</div></div></section>
+<section id="latest"><div class="sectionhead"><div><div class="kicker">Журнал QUN</div><h2>Свежие публикации</h2></div><input id="search" class="search" type="search" placeholder="Найти публикацию…" aria-label="Поиск публикаций"></div>
+<div id="featured"></div><div id="grid" class="grid"><p class="empty">Загружаем публикации…</p></div></section>
+<section class="principles"><h2>Технологии —<br>на стороне человека.</h2><p>Мы верим в простые и полезные инструменты, открытый диалог и развитие без лишнего шума. Здесь мы делимся тем, что уже можно попробовать, честно отмечаем то, что ещё создаётся, и учимся вместе с сообществом.</p></section>
+</main><footer class="wrap footer"><span>© QUN News · Редакционные материалы и открытая разработка</span><span><a href="https://serega40in.github.io/QUN/">Экосистема QUN</a> · <a href="https://t.me/qunnews">Telegram</a> · <a href="https://t.me/quncommunity">Сообщество</a></span></footer>
+<script>
+const $=s=>document.querySelector(s);let articles=[];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const prettyDate=s=>{try{return new Intl.DateTimeFormat("ru-RU",{day:"numeric",month:"long",year:"numeric"}).format(new Date(s+"T12:00:00"))}catch{return s}};
+function card(a,i){return `<article class="card"><div class="number">0${i+1} / ${esc(a.category||"QUN")}</div><h3>${esc(a.title)}</h3><p>${esc(a.lead)}</p><a class="linkline" href="article.html?id=${encodeURIComponent(a.id)}">Читать публикацию <span>↗</span></a></article>`}
+function render(){const q=$("#search").value.trim().toLowerCase();const list=articles.filter(a=>a.status==="published"&&[a.title,a.lead,a.category].join(" ").toLowerCase().includes(q));const f=list[0];$("#featured").innerHTML=f?`<article class="feature"><div class="featurevisual"><div class="orb"></div></div><div class="featurecopy"><div class="meta">${esc(f.category||"QUN")} <span>·</span> ${esc(prettyDate(f.date))}</div><h3>${esc(f.title)}</h3><p>${esc(f.lead)}</p><a class="linkline" href="article.html?id=${encodeURIComponent(f.id)}">Читать материал <span>↗</span></a></div></article>`:"";$("#grid").innerHTML=list.length>1?list.slice(1).map((a,i)=>card(a,i+1)).join(""):list.length===1?"":'<p class="empty">Пока нет публикаций по этому запросу.</p>'}
+$("#search").addEventListener("input",render);
+fetch("./posts.json").then(r=>{if(!r.ok)throw Error("posts.json");return r.json()}).then(d=>{articles=d;render()}).catch(()=>{$("#featured").innerHTML="";$("#grid").innerHTML='<p class="empty">Публикации временно недоступны. Попробуйте обновить страницу позже.</p>'});
+</script></body></html>
