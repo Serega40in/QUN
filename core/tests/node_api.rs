@@ -34,6 +34,8 @@ impl TestNode {
             .env("QUN_BIND", &address)
             .env("QUN_DATA_FILE", &data_file)
             .env("QUN_ENABLE_DEV_FUNDING", "true")
+            .env_remove("QUN_ENABLE_UNSIGNED_DEV_MINE")
+            .env_remove("QUN_ALLOW_NON_LOOPBACK")
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()
@@ -86,6 +88,8 @@ impl TestNode {
             .env("QUN_BIND", &self.address)
             .env("QUN_DATA_FILE", &self.data_file)
             .env("QUN_ENABLE_DEV_FUNDING", "true")
+            .env_remove("QUN_ENABLE_UNSIGNED_DEV_MINE")
+            .env_remove("QUN_ALLOW_NON_LOOPBACK")
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()
@@ -208,6 +212,8 @@ fn unsigned_dev_mine_is_disabled_by_default() {
         &json!({"transactions": [{"from": "alice-demo", "to": "mallory", "amount": 50, "nonce": 1}]}),
     );
     assert_eq!(status, 403, "unsigned transfers must be refused unless explicitly enabled");
+    let (status, _) = node.request("POST", "/dev/mine", Some(&json!("not a mine request")));
+    assert_eq!(status, 403, "a disabled route answers 403 before parsing the body");
     assert_eq!(node.get("/chain").unwrap(), chain_before);
     assert_eq!(node.get("/accounts").unwrap(), accounts_before);
 
