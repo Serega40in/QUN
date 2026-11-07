@@ -278,15 +278,18 @@ async fn dev_mine_signed(
 
 async fn dev_mine(
     State(state): State<AppState>,
-    Json(request): Json<MineRequest>,
+    body: axum::body::Bytes,
 ) -> Result<(StatusCode, Json<qun_core::Block>), ApiFailure> {
     // Unsigned transfers let anyone move anyone's balance. Off unless explicitly enabled.
+    // Checked before the body is parsed, so a disabled route always answers 403.
     if !state.unsigned_dev_mine_enabled {
         return Err(api_error(
             StatusCode::FORBIDDEN,
             "unsigned /dev/mine is disabled; use /dev/mine-signed (set QUN_ENABLE_UNSIGNED_DEV_MINE=true for local legacy tests only)",
         ));
     }
+    let request: MineRequest = serde_json::from_slice(&body)
+        .map_err(|error| api_error(StatusCode::BAD_REQUEST, format!("invalid /dev/mine request: {error}")))?;
     if request.transactions.len() > MAX_TRANSACTIONS_PER_BLOCK {
         return Err(api_error(
             StatusCode::PAYLOAD_TOO_LARGE,
@@ -309,11 +312,26 @@ async fn dev_mine(
     Ok((StatusCode::CREATED, Json(block)))
 }
 
-/// Dev routes mint balances or skip signatures, so they may only run on a loopback address.
-fn check_dev_routes_are_local(bind: SocketAddr, dev_funding: bool, unsigned_mine: bool) -> Result<(), String> {
-    if (dev_funding || unsigned_mine) && !bind.ip().is_loopback() {
+/// The whole HTTP API is unauthenticated (including /dev/mine-signed, which lets anyone
+/// append blocks). A non-loopback bind therefore needs an explicit opt-in, and the
+/// dev routes that mint balances or skip signatures are never allowed off loopback.
+fn check_bind(
+    bind: SocketAddr,
+    allow_non_loopback: bool,
+    dev_funding: bool,
+    unsigned_mine: bool,
+) -> Result<(), String> {
+    if bind.ip().is_loopback() {
+        return Ok(());
+    }
+    if dev_funding || unsigned_mine {
         return Err(format!(
             "refusing to start: development routes (QUN_ENABLE_DEV_FUNDING / QUN_ENABLE_UNSIGNED_DEV_MINE) are enabled on non-loopback address {bind}"
+        ));
+    }
+    if !allow_non_loopback {
+        return Err(format!(
+            "refusing to start: {bind} is not a loopback address and this API has no authentication; set QUN_ALLOW_NON_LOOPBACK=true only on a trusted private network"
         ));
     }
     Ok(())
@@ -333,7 +351,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let flag = |name: &str| env::var(name).map(|v| v == "true" || v == "1").unwrap_or(false);
     let dev_funding_enabled = flag("QUN_ENABLE_DEV_FUNDING");
     let unsigned_dev_mine_enabled = flag("QUN_ENABLE_UNSIGNED_DEV_MINE");
-    check_dev_routes_are_local(bind, dev_funding_enabled, unsigned_dev_mine_enabled)?;
+    check_bind(bind, flag("QUN_ALLOW_NON_LOOPBACK"), dev_funding_enabled, unsigned_dev_mine_enabled)?;
     let state = AppState {
         snapshot: Arc::new(Mutex::new(snapshot)),
         data_file: Arc::new(data_file.clone()),
@@ -370,13 +388,18 @@ mod persistence_tests {
     use ed25519_dalek::{Signer, SigningKey};
 
     #[test]
-    fn dev_routes_require_loopback_bind() {
-        let public: SocketAddr = "0.0.0.0:8787".parse().unwrap();
-        let local: SocketAddr = "127.0.0.1:8787".parse().unwrap();
-        assert!(check_dev_routes_are_local(public, true, false).is_err());
-        assert!(check_dev_routes_are_local(public, false, true).is_err());
-        assert!(check_dev_routes_are_local(public, false, false).is_ok());
-        assert!(check_dev_routes_are_local(local, true, true).is_ok());
+    fn non_loopback_bind_requires_opt_in_and_never_allows_dev_routes() {
+        for public in ["0.0.0.0:8787", "192.168.1.10:8787", "[::]:8787", "[::ffff:127.0.0.1]:8787"] {
+            let public: SocketAddr = public.parse().unwrap();
+            assert!(check_bind(public, false, false, false).is_err(), "{public}: needs opt-in");
+            assert!(check_bind(public, true, false, false).is_ok(), "{public}: opt-in allows plain API");
+            assert!(check_bind(public, true, true, false).is_err(), "{public}: never dev funding");
+            assert!(check_bind(public, true, false, true).is_err(), "{public}: never unsigned mine");
+        }
+        for local in ["127.0.0.1:8787", "[::1]:8787"] {
+            let local: SocketAddr = local.parse().unwrap();
+            assert!(check_bind(local, false, true, true).is_ok(), "{local}: loopback may use dev routes");
+        }
     }
 
     #[test]
