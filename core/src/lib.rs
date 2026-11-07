@@ -50,6 +50,13 @@ pub mod encoding {
     }
 }
 
+/// True when `value` is exactly `len` lowercase hexadecimal characters.
+/// Keys and signatures must use this single spelling so that one signature
+/// cannot be written several ways (which would change block hashes).
+fn is_canonical_hex(value: &str, len: usize) -> bool {
+    value.len() == len && value.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+}
+
 fn hex_digest(payload: &[u8]) -> String {
     hex::encode(Sha256::digest(payload))
 }
@@ -103,6 +110,12 @@ impl SignedTransaction {
     pub fn verify(&self) -> Result<(), SignatureError> {
         use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 
+        if !is_canonical_hex(&self.public_key, 64) {
+            return Err(SignatureError::InvalidPublicKeyEncoding);
+        }
+        if !is_canonical_hex(&self.signature, 128) {
+            return Err(SignatureError::InvalidSignatureEncoding);
+        }
         let public_key_bytes = hex::decode(&self.public_key)
             .map_err(|_| SignatureError::InvalidPublicKeyEncoding)?;
         let public_key_array: [u8; 32] = public_key_bytes
@@ -654,5 +667,38 @@ mod tests {
             signature: hex::encode(foreign.to_bytes()),
         };
         assert_eq!(signed.verify(), Err(SignatureError::InvalidSignature));
+    }
+
+    #[test]
+    fn non_canonical_hex_key_or_signature_is_rejected() {
+        use ed25519_dalek::{Signer, SigningKey};
+
+        let signing_key = SigningKey::from_bytes(&[7_u8; 32]);
+        let public_key = hex::encode(signing_key.verifying_key().as_bytes());
+        let transaction = Transaction { from: public_key.clone(), to: "bob".into(), amount: 1, nonce: 1 };
+        let signature = signing_key.sign(&SignedTransaction::signing_payload(&transaction));
+        let canonical = SignedTransaction {
+            transaction,
+            public_key,
+            signature: hex::encode(signature.to_bytes()),
+        };
+        assert_eq!(canonical.verify(), Ok(()));
+
+        // Same signature bytes, different spelling: must not verify (block-hash malleability).
+        let upper_signature = SignedTransaction { signature: canonical.signature.to_uppercase(), ..canonical.clone() };
+        assert_eq!(upper_signature.verify(), Err(SignatureError::InvalidSignatureEncoding));
+        let prefixed_signature = SignedTransaction { signature: format!("0x{}", canonical.signature), ..canonical.clone() };
+        assert_eq!(prefixed_signature.verify(), Err(SignatureError::InvalidSignatureEncoding));
+
+        let mut upper_key = canonical.clone();
+        upper_key.public_key = canonical.public_key.to_uppercase();
+        upper_key.transaction.from = upper_key.public_key.clone();
+        assert_eq!(upper_key.verify(), Err(SignatureError::InvalidPublicKeyEncoding));
+    }
+
+    #[test]
+    fn genesis_hash_matches_published_test_vector() {
+        // QUN_BLOCK_V3 over (chain_id, index 0, timestamp 0, "QUN_GENESIS_V1", no transactions).
+        assert_eq!(Chain::new().blocks[0].hash, "c60dd12197b1d7f289dca4288965558a0cf717055e944c32d26be7c82bcd64d1");
     }
 }
