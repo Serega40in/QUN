@@ -15,7 +15,7 @@ Open `http://127.0.0.1:8787/` for the interactive local explorer. It displays bl
 
 The node binds to `127.0.0.1:8787` by default and stores the snapshot in `core/data/qun-chain.json` when launched from the repository's `core` directory. Override these with `QUN_BIND` and `QUN_DATA_FILE`. The API has no authentication: do not expose it to a public interface or the internet.
 
-For local testing only, enable demo funding with `QUN_ENABLE_DEV_FUNDING=true`. The legacy unsigned `/dev/mine` route is off unless `QUN_ENABLE_UNSIGNED_DEV_MINE=true`. The node refuses to start if either development flag is enabled on a non-loopback `QUN_BIND` address.
+For local testing only, enable demo funding with `QUN_ENABLE_DEV_FUNDING=true`. The legacy unsigned `/dev/mine` route is off unless `QUN_ENABLE_UNSIGNED_DEV_MINE=true`. The whole API is unauthenticated (including `/dev/mine-signed`, which lets any caller append blocks), so the node refuses a non-loopback `QUN_BIND` unless `QUN_ALLOW_NON_LOOPBACK=true` is set, and it never starts with a development flag enabled on a non-loopback address.
 
 ## Endpoints
 
@@ -73,7 +73,7 @@ where `u64(x)` is 8 bytes big-endian and `str(s)` is `u64(len(utf8(s)))` followe
 0000000000000003626f6200000000000000190000000000000001
 ```
 
-The dashboard builds the same bytes in JavaScript before signing. The sender must equal the public key hex. Block hashes use the same encoding with the `QUN_BLOCK_V3` / `QUN_SIGNED_BLOCK_V3` domains and the chain ID; signed blocks include the public keys and signatures.
+The dashboard builds the same bytes in JavaScript before signing. `public_key` must be exactly 64 and `signature` exactly 128 **lowercase** hex characters (no `0x`, no uppercase); any other spelling is rejected so one signature cannot appear in several forms with different block hashes. The sender must equal the public key hex. Block hashes use the same encoding with the `QUN_BLOCK_V3` / `QUN_SIGNED_BLOCK_V3` domains and the chain ID; signed blocks include the public keys and signatures.
 
 **Breaking change:** snapshots written before `QUN_TX_V2` / `QUN_BLOCK_V3` fail validation on load. For this development prototype, delete the old `QUN_DATA_FILE` (default `data/qun-chain.json`) and start a fresh local chain. The `Chain::validate` path re-verifies signatures on signed blocks after loading persisted data. Fund the sender's public-key address only through the local development funding mechanism when testing.
 
