@@ -49,3 +49,30 @@ jobs:
       - name: Run tests
         working-directory: services/agent-bridge
         run: npm test
+
+  powershell-validation:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Parse PowerShell setup scripts
+        shell: pwsh
+        run: |
+          $files = @(
+            "services/agent-bridge/Setup-Windows.ps1",
+            "services/agent-bridge/scripts/Run-Mcp.ps1"
+          )
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Join-Path $PWD $file),
+              [ref]$tokens,
+              [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error $_ }
+              exit 1
+            }
+          }
