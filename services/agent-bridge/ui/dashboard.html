@@ -51,6 +51,10 @@
       <span class="pill" id="browser">Проверка…</span>
     </div>
     <div class="status">
+      <div><div class="value">Облачный QUN Agent Core</div><div class="label">HTTPS · очередь команд</div></div>
+      <span class="pill" id="cloud">Ожидает запуска</span>
+    </div>
+    <div class="status">
       <div><div class="value">Версия</div><div class="label">QUN Agent Bridge</div></div>
       <span class="value">0.1.0</span>
     </div>
@@ -58,7 +62,7 @@
       <button id="refresh">Проверить соединение</button>
       <a class="button" href="https://github.com/Serega40in/QUN/tree/feature/qun-agent-bridge-v0.1/services/agent-bridge" target="_blank" rel="noreferrer">Исходный код</a>
     </div>
-    <p class="note">Эта панель показывает состояние локального сервера и соединения с браузером. Для управления браузером MCP-клиент должен быть подключён отдельно. Разрешения на чтение сайтов выдаются в расширении.</p>
+    <p class="note">Панель показывает локальное соединение с браузером и исходящий канал к облачному QUN Agent Core. Для чтения страниц выдавай разрешения в расширении. Команды браузера проходят через ограниченную очередь; произвольные команды Windows не поддерживаются.</p>
     <div class="small" id="updated">Ожидание проверки…</div>
   </section>
 
@@ -71,6 +75,7 @@
 </main>
 <script>
   const browser = document.getElementById("browser");
+  const cloud = document.getElementById("cloud");
   const updated = document.getElementById("updated");
   async function refresh() {
     try {
@@ -79,7 +84,11 @@
       const data = await response.json();
       browser.textContent = data.browserConnected ? "Подключено" : "Ожидает подключения";
       browser.className = data.browserConnected ? "pill ok" : "pill";
-      updated.textContent = "Последняя проверка: " + new Date().toLocaleTimeString();
+      cloud.textContent = data.cloudConnected ? "Подключено" : (data.cloudError ? "Ошибка связи" : "Ожидает запуска");
+      cloud.className = data.cloudConnected ? "pill ok" : "pill";
+      updated.textContent = "Последняя проверка: " + new Date().toLocaleTimeString()
+        + (data.cloudLastSeenAt ? " · облако: " + new Date(data.cloudLastSeenAt).toLocaleTimeString() : "")
+        + (data.cloudError ? " · " + data.cloudError : "");
     } catch (error) {
       browser.textContent = "Нет связи";
       browser.className = "pill";
