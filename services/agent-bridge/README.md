@@ -76,7 +76,7 @@ The local worker makes outbound HTTPS requests; do not forward ports on your rou
 
 `https://qdxjltqlnphvzafapncm.supabase.co/functions/v1/qun-agent-core/mcp`
 
-Configure an MCP client with Streamable HTTP and API-key authentication using the `Authorization: Bearer` scheme and the local secret `QUN_AGENT_MCP_KEY`. The key itself is entered in the client's credential field and is not stored in this repository.
+Configure an MCP client with Streamable HTTP using two headers: `apikey: sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L` and `x-qun-agent-key: <your QUN_AGENT_MCP_KEY>`. The publishable key is a public project identifier; only the second header is secret. The secret is stored in the MCP client's credential settings, never in this repository.
 
 The current ChatGPT Free plan cannot connect custom MCP servers directly from ChatGPT Web. The assistant in this session can still use the already-connected QUN Supabase integration to create an allow-listed command row and read its result, once the local worker is online. On plans/surfaces that support custom MCP, the remote endpoint provides the same tools directly.
 
