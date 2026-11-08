@@ -98,6 +98,7 @@ async function main() {
   let stopping = false;
   let lastHeartbeat = 0;
   let backoff = 1000;
+  bridge.deviceId = DEVICE_ID;
 
   const shutdown = async () => {
     if (stopping) return;
@@ -123,9 +124,15 @@ async function main() {
           capabilities: ["browser.list_tabs", "browser.read_active_page", "browser.open_url"],
         });
         lastHeartbeat = Date.now();
+        bridge.cloudConnected = true;
+        bridge.cloudLastSeenAt = new Date().toISOString();
+        bridge.cloudError = null;
       }
 
       const next = await cloudRequest("/agent/next", { deviceId: DEVICE_ID });
+      bridge.cloudConnected = true;
+      bridge.cloudLastSeenAt = new Date().toISOString();
+      bridge.cloudError = null;
       backoff = 1000;
       const command = next?.command;
 
@@ -148,6 +155,8 @@ async function main() {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      bridge.cloudConnected = false;
+      bridge.cloudError = message.slice(0, 240);
       log("Cloud connection issue: " + message);
       await pause(backoff);
       backoff = Math.min(backoff * 2, MAX_BACKOFF_MS);
