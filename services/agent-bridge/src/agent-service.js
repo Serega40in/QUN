@@ -5,6 +5,8 @@ const DEVICE_ID = process.env.QUN_AGENT_DEVICE_ID || "windows-main";
 const DEVICE_NAME = process.env.QUN_AGENT_DEVICE_NAME || "QUN Windows";
 const CLOUD_URL = (process.env.QUN_AGENT_CLOUD_URL || "").replace(/\/+$/, "");
 const DEVICE_KEY = process.env.QUN_AGENT_DEVICE_KEY || "";
+// Supabase publishable key (public client identifier; protected tables still require the separate device key).
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L";
 const BROWSER_TOKEN = process.env.QUN_AGENT_TOKEN || "";
 const HEARTBEAT_INTERVAL_MS = 10_000;
 const POLL_INTERVAL_MS = 1_500;
@@ -30,7 +32,8 @@ async function cloudRequest(route, body) {
   const response = await fetch(CLOUD_URL + route, {
     method: "POST",
     headers: {
-      "authorization": "Bearer " + DEVICE_KEY,
+      "apikey": SUPABASE_PUBLISHABLE_KEY,
+      "x-qun-agent-key": DEVICE_KEY,
       "content-type": "application/json",
       "accept": "application/json",
     },
