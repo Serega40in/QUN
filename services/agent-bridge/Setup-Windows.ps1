@@ -13,9 +13,9 @@ function Get-PlainTextFromSecureString([System.Security.SecureString]$SecureValu
 try {
     Write-Host ""
     Write-Host "QUN Agent Bridge - Windows setup" -ForegroundColor Cyan
-    Write-Host "The setup stores your bridge token encrypted for this Windows user (DPAPI)."
+    Write-Host "This setup stores your bridge token encrypted for this Windows user (DPAPI)."
     Write-Host "Enter the SAME 64-character token already saved in the Chrome extension."
-    Write-Host "Do not paste the token into chat or commit it to GitHub."
+    Write-Host "The token will not be written to Git, config.toml, or printed to screen."
     Write-Host ""
 
     $secureToken = Read-Host "Bridge token" -AsSecureString
@@ -31,69 +31,30 @@ try {
     $encryptedToken = ConvertFrom-SecureString -SecureString $secureToken
     [System.IO.File]::WriteAllText($tokenPath, $encryptedToken, [System.Text.UTF8Encoding]::new($false))
 
-    $codexDir = Join-Path $HOME ".codex"
-    New-Item -ItemType Directory -Path $codexDir -Force | Out-Null
-    $configPath = Join-Path $codexDir "config.toml"
     $runScript = Join-Path $PSScriptRoot "scripts\Run-Mcp.ps1"
-    $tomlRunScript = $runScript.Replace("\", "\\").Replace('"', '\"')
-
-    $section = @(
-        "[mcp_servers.qun_agent_bridge]",
-        'command = "powershell.exe"',
-        'args = ["-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "' + $tomlRunScript + '"]',
-        "startup_timeout_sec = 30",
-        "enabled = true"
-    )
-
-    [string[]]$existingLines = @()
-    if (Test-Path -LiteralPath $configPath) {
-        $existingLines = [System.IO.File]::ReadAllLines($configPath)
-        $backupPath = $configPath + ".backup-" + (Get-Date -Format "yyyyMMdd-HHmmss")
-        Copy-Item -LiteralPath $configPath -Destination $backupPath -Force
-    }
-
-    $startIndex = -1
-    for ($i = 0; $i -lt $existingLines.Length; $i++) {
-        if ($existingLines[$i] -match '^\s*\[mcp_servers\.qun_agent_bridge\]\s*$') {
-            $startIndex = $i
-            break
-        }
-    }
-
-    $before = @()
-    $after = @()
-    if ($startIndex -ge 0) {
-        $endIndex = $existingLines.Length
-        for ($i = $startIndex + 1; $i -lt $existingLines.Length; $i++) {
-            if ($existingLines[$i] -match '^\s*\[') {
-                $endIndex = $i
-                break
-            }
-        }
-        if ($startIndex -gt 0) { $before = $existingLines[0..($startIndex - 1)] }
-        if ($endIndex -lt $existingLines.Length) { $after = $existingLines[$endIndex..($existingLines.Length - 1)] }
-    }
-    else {
-        $before = $existingLines
-    }
-
-    $newLines = @($before) + @("") + $section + @($after)
-    $newConfig = [string]::Join([Environment]::NewLine, $newLines).Trim() + [Environment]::NewLine
-    [System.IO.File]::WriteAllText($configPath, $newConfig, [System.Text.UTF8Encoding]::new($false))
+    $absoluteRunScript = [System.IO.Path]::GetFullPath($runScript)
 
     Write-Host ""
     Write-Host "Setup complete." -ForegroundColor Green
-    Write-Host "Encrypted token: $tokenPath"
-    Write-Host "ChatGPT/Codex MCP config: $configPath"
+    Write-Host "Encrypted token saved for this Windows user:"
+    Write-Host $tokenPath
     Write-Host ""
-    Write-Host "Next:"
-    Write-Host "1. Close and reopen ChatGPT Desktop."
-    Write-Host "2. Open Settings > MCP servers."
-    Write-Host "3. Confirm that qun_agent_bridge is enabled."
-    Write-Host "4. In a chat, use /mcp to inspect connected servers (where supported)."
-    Write-Host "5. Open the QUN Agent Bridge extension and press Connect if it is not already connected."
+    Write-Host "No Codex or ChatGPT configuration file was modified."
     Write-Host ""
-    Write-Host "The token was not written to Git or to config.toml."
+    Write-Host "Add the MCP server in ChatGPT Desktop:"
+    Write-Host "  Settings > MCP servers > Add server"
+    Write-Host ""
+    Write-Host "Name: QUN Agent Bridge"
+    Write-Host "Transport: STDIO"
+    Write-Host "Command: powershell.exe"
+    Write-Host "Arguments (paste as one argument string if the UI asks for it):"
+    Write-Host ('-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $absoluteRunScript + '"')
+    Write-Host ""
+    Write-Host "Save the server and select Restart. Then reopen the QUN Agent Bridge extension and press Connect."
+    Write-Host "You can open the local dashboard after the MCP server starts:"
+    Write-Host "  http://127.0.0.1:43127/"
+    Write-Host ""
+    Write-Host "The MCP server will read the encrypted token at startup. Do not share it."
 }
 catch {
     Write-Host ""
@@ -104,4 +65,3 @@ finally {
     if ($secureToken) { $secureToken.Dispose() }
     $plainToken = $null
 }
-
