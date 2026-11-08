@@ -12,6 +12,8 @@ on:
   pull_request:
     paths:
       - "services/agent-bridge/**"
+      - "supabase/functions/qun-agent-core/**"
+      - "supabase/migrations/*qun_agent_core*"
       - ".github/workflows/qun-agent-bridge-ci.yml"
   workflow_dispatch:
 
