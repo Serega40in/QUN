@@ -44,7 +44,7 @@ function safeTokenEqual(candidate, expected) {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
-class BrowserBridge {
+export class BrowserBridge {
   constructor({ token, host = DEFAULT_HOST, port = DEFAULT_PORT }) {
     if (!/^[a-f0-9]{64}$/i.test(token)) {
       throw new Error("QUN_AGENT_TOKEN must be a 64-character hexadecimal token. Run npm run token to generate one.");
