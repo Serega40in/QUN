@@ -40,6 +40,7 @@
 
 - **Русская база знаний QUN AI:** [главный источник фактов](docs/qun-ai/knowledge/00-glavnaya-baza-znaniy.md), [руководство пользователя](docs/qun-ai/knowledge/01-rukovodstvo-polzovatelya.md), [каталог проектов](docs/qun-ai/knowledge/03-katalog-proektov-qun.md), [правила ответов](docs/qun-ai/knowledge/02-pravila-otvetov-i-testy.md).
 - **QUN Node:** [страница проекта](https://serega40in.github.io/QUN/node/), [веб-панель локального узла](https://serega40in.github.io/QUN/node/dashboard/), [спецификация](docs/qun-ai/knowledge/04-qun-node-storage-01.md), [исходный код и инструкции](services/qun-node/README.md). Windows EXE/установщик и Android APK собираются отдельными workflow GitHub Actions; до проверки артефактов и выпуска подписанных релизов считать их тестовыми сборками.
+- **QUN Agent Bridge (прототип 0.1):** [README и установка](services/agent-bridge/README.md) — локальный MCP-мост для чтения разрешённых вкладок Chrome/Chromium и открытия ссылок.
 - **Распределённая архитектура:** [документ v0.1](docs/architecture/distributed-backend.md).
 - **Важно:** наличие документации не означает автоматическое обучение QUN AI. Подключение runtime-инструкции к Supabase Edge Function требует успешного развёртывания и проверки.
 
