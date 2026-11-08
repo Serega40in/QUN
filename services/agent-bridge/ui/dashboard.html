@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QUN Agent Desktop</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; color: #14233b; background: #f4f7fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px 18px; }
+    main { max-width: 720px; margin: 0 auto; }
+    header { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; }
+    .mark { width: 48px; height: 48px; display: grid; place-items: center; color: #fff; background: linear-gradient(145deg,#184f91,#178b78); border-radius: 15px; font-size: 23px; font-weight: 700; }
+    h1 { margin: 0; font-size: 25px; letter-spacing: -.5px; }
+    .subtitle { margin-top: 4px; color: #63748b; font-size: 13px; }
+    .panel { background: #fff; border: 1px solid #e0e8f1; border-radius: 16px; padding: 20px; box-shadow: 0 8px 28px #173b6410; }
+    .status { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid #edf1f6; }
+    .status:last-of-type { border-bottom: 0; }
+    .label { color: #607188; font-size: 13px; }
+    .value { font-weight: 650; font-size: 14px; }
+    .pill { display: inline-flex; align-items: center; border-radius: 99px; padding: 6px 10px; font-size: 12px; font-weight: 650; background: #fff3da; color: #885b00; }
+    .pill.ok { background: #e4f6ed; color: #147246; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    button, a.button { border: 0; border-radius: 9px; padding: 10px 14px; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; text-decoration: none; }
+    button { background: #174d8f; color: #fff; }
+    a.button { background: #eaf0f7; color: #234364; }
+    .note { color: #69798e; font-size: 12px; line-height: 1.55; margin-top: 20px; }
+    code { background: #f1f4f8; padding: 2px 5px; border-radius: 5px; }
+    .section-title { margin: 24px 0 10px; font-size: 14px; }
+    .small { color: #7a8899; font-size: 11px; }
+    @media(max-width:520px) { body { padding: 18px 12px; } h1 { font-size: 21px; } .panel { padding: 15px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="mark">Q</div>
+    <div>
+      <h1>QUN Agent Desktop</h1>
+      <div class="subtitle">Локальный центр управления ИИ-инструментами</div>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="status">
+      <div><div class="value">Локальный сервер</div><div class="label">127.0.0.1:43127</div></div>
+      <span class="pill ok" id="server">Запущен</span>
+    </div>
+    <div class="status">
+      <div><div class="value">Браузерное расширение</div><div class="label">Chrome / Chromium</div></div>
+      <span class="pill" id="browser">Проверка…</span>
+    </div>
+    <div class="status">
+      <div><div class="value">Версия</div><div class="label">QUN Agent Bridge</div></div>
+      <span class="value">0.1.0</span>
+    </div>
+    <div class="actions">
+      <button id="refresh">Проверить соединение</button>
+      <a class="button" href="https://github.com/Serega40in/QUN/tree/feature/qun-agent-bridge-v0.1/services/agent-bridge" target="_blank" rel="noreferrer">Исходный код</a>
+    </div>
+    <p class="note">Эта панель показывает состояние локального сервера и соединения с браузером. Для управления браузером MCP-клиент должен быть подключён отдельно. Разрешения на чтение сайтов выдаются в расширении.</p>
+    <div class="small" id="updated">Ожидание проверки…</div>
+  </section>
+
+  <h2 class="section-title">Подключённые возможности</h2>
+  <section class="panel">
+    <div class="status"><div><div class="value">Чтение разрешённой страницы</div><div class="label">browser_read_active_page</div></div><span class="pill">По разрешению</span></div>
+    <div class="status"><div><div class="value">Список вкладок</div><div class="label">browser_list_tabs</div></div><span class="pill">По разрешению</span></div>
+    <div class="status"><div><div class="value">Открытие ссылок</div><div class="label">browser_open_url</div></div><span class="pill ok">Доступно</span></div>
+  </section>
+</main>
+<script>
+  const browser = document.getElementById("browser");
+  const updated = document.getElementById("updated");
+  async function refresh() {
+    try {
+      const response = await fetch("/health", { cache: "no-store" });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const data = await response.json();
+      browser.textContent = data.browserConnected ? "Подключено" : "Ожидает подключения";
+      browser.className = data.browserConnected ? "pill ok" : "pill";
+      updated.textContent = "Последняя проверка: " + new Date().toLocaleTimeString();
+    } catch (error) {
+      browser.textContent = "Нет связи";
+      browser.className = "pill";
+      updated.textContent = "Не удалось проверить состояние: " + error.message;
+    }
+  }
+  document.getElementById("refresh").addEventListener("click", refresh);
+  refresh();
+  setInterval(refresh, 5000);
+</script>
+</body>
+</html>
