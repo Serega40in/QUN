@@ -94,6 +94,16 @@ API сначала будет bind-иться только на loopback. Выз
 ### Этап 6 — QUN ecosystem integration
 Подключать продукты через versioned manifests и scopes, не связывать внутренние бизнес-правила отдельных приложений с браузерным расширением.
 
+
+## Реальное состояние на 9 ноября 2026
+
+- Edge Function `qun-agent-core` развернута в существующем Supabase проекте QUN; версия 2. Публичная функция не принимает команды без отдельного `QUN_AGENT_MCP_KEY` или `QUN_AGENT_DEVICE_KEY`; при отсутствии секретов запросы к этим маршрутам завершаются отказом.
+- `public.qun_agent_devices` и `public.qun_agent_commands` созданы в базе QUN. RLS включён, а доступ для `public`, `anon` и `authenticated` отозван; сервисный ключ используется только внутри Edge Function.
+- Локальный Windows worker и одноразовый DPAPI setup wizard добавлены в ветку `feature/qun-agent-bridge-v0.1`. Они ещё не запущены на компьютере пользователя.
+- Для первого соединения пользователь должен однократно внести созданные на его Windows-компьютере `QUN_AGENT_DEVICE_KEY` и `QUN_AGENT_MCP_KEY` в Supabase Edge Function Secrets. Ни один из этих секретов не находится в Git.
+- Реально поддерживаемые действия первого среза: список вкладок, чтение активной страницы с разрешением расширения и открытие HTTP(S)-ссылки. Click/type, управление произвольными программами Windows и Android пока не реализованы.
+- CI: JavaScript/JSON checks, базовые URL-тесты, PowerShell parsing и Deno type-check запускаются через GitHub Actions.
+
 ## Ограничения текущего MVP
 
 - Сейчас это ранний прототип, не Windows Service и не постоянный фоновый daemon.
