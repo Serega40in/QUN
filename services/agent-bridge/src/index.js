@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { pathToFileURL } from "node:url";
+import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import * as z from "zod/v4";
@@ -10,6 +11,7 @@ const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 43127;
 const COMMAND_TIMEOUT_MS = 15_000;
 const MAX_PENDING_COMMANDS = 20;
+const DASHBOARD_HTML = readFileSync(new URL("../ui/dashboard.html", import.meta.url), "utf8");
 
 export function assertHttpUrl(value) {
   let parsed;
@@ -56,8 +58,22 @@ class BrowserBridge {
     this.pending = new Map();
 
     this.httpServer = createServer((request, response) => {
+      if (request.method === "GET" && request.url === "/") {
+        response.writeHead(200, {
+          "content-type": "text/html; charset=utf-8",
+          "cache-control": "no-store",
+          "x-content-type-options": "nosniff"
+        });
+        response.end(DASHBOARD_HTML);
+        return;
+      }
+
       if (request.method === "GET" && request.url === "/health") {
-        response.writeHead(200, { "content-type": "application/json; charset=utf-8" });
+        response.writeHead(200, {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-store",
+          "x-content-type-options": "nosniff"
+        });
         response.end(JSON.stringify({
           name: "QUN Agent Bridge",
           version: "0.1.0",
@@ -66,7 +82,10 @@ class BrowserBridge {
         return;
       }
 
-      response.writeHead(404, { "content-type": "application/json; charset=utf-8" });
+      response.writeHead(404, {
+        "content-type": "application/json; charset=utf-8",
+        "x-content-type-options": "nosniff"
+      });
       response.end(JSON.stringify({ error: "Not found" }));
     });
 
