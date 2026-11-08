@@ -1,0 +1,51 @@
+name: QUN Agent Bridge CI
+
+on:
+  push:
+    branches:
+      - feature/qun-agent-bridge-v0.1
+    paths:
+      - "services/agent-bridge/**"
+      - ".github/workflows/qun-agent-bridge-ci.yml"
+  pull_request:
+    paths:
+      - "services/agent-bridge/**"
+      - ".github/workflows/qun-agent-bridge-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: services/agent-bridge
+        run: npm install --no-audit --no-fund
+
+      - name: Check JavaScript syntax
+        working-directory: services/agent-bridge
+        run: |
+          node --check src/index.js
+          node --check scripts/generate-token.js
+          node --check extension/service-worker.js
+          node --check extension/popup.js
+
+      - name: Validate JSON manifests
+        working-directory: services/agent-bridge
+        run: |
+          node -e "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8'))"
+          node -e "JSON.parse(require('node:fs').readFileSync('extension/manifest.json', 'utf8'))"
+
+      - name: Run tests
+        working-directory: services/agent-bridge
+        run: npm test
