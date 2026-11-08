@@ -6,6 +6,8 @@ on:
       - feature/qun-agent-bridge-v0.1
     paths:
       - "services/agent-bridge/**"
+      - "supabase/functions/qun-agent-core/**"
+      - "supabase/migrations/*qun_agent_core*"
       - ".github/workflows/qun-agent-bridge-ci.yml"
   pull_request:
     paths:
@@ -36,6 +38,7 @@ jobs:
         working-directory: services/agent-bridge
         run: |
           node --check src/index.js
+          node --check src/agent-service.js
           node --check claude-mcpb/server/index.js
           node --check scripts/generate-token.js
           node --check extension/service-worker.js
@@ -51,6 +54,21 @@ jobs:
       - name: Run tests
         working-directory: services/agent-bridge
         run: npm test
+
+
+  edge-function-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Type-check QUN Agent Core Edge Function
+        run: deno check supabase/functions/qun-agent-core/index.ts
 
   powershell-validation:
     runs-on: windows-latest
