@@ -42,6 +42,7 @@
 - **QUN Node:** [страница проекта](https://serega40in.github.io/QUN/node/), [веб-панель локального узла](https://serega40in.github.io/QUN/node/dashboard/), [спецификация](docs/qun-ai/knowledge/04-qun-node-storage-01.md), [исходный код и инструкции](services/qun-node/README.md). Windows EXE/установщик и Android APK собираются отдельными workflow GitHub Actions; до проверки артефактов и выпуска подписанных релизов считать их тестовыми сборками.
 - **QUN Agent Bridge (прототип 0.1):** [README и установка](services/agent-bridge/README.md) — локальный MCP-мост для чтения разрешённых вкладок Chrome/Chromium и открытия ссылок.
 - **Распределённая архитектура:** [документ v0.1](docs/architecture/distributed-backend.md).
+- **QUN Agent Core:** [архитектура v0.1](docs/architecture/qun-agent-core-v0.1.md) — единый локальный API, MCP-адаптер, web dashboard и агенты Windows / Browser / Android для всех проектов QUN.
 - **Важно:** наличие документации не означает автоматическое обучение QUN AI. Подключение runtime-инструкции к Supabase Edge Function требует успешного развёртывания и проверки.
 
 ## QUN Wallet и распределённая сеть
