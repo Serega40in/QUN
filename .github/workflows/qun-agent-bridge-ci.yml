@@ -84,7 +84,9 @@ jobs:
           $files = @(
             "services/agent-bridge/Setup-Windows.ps1",
             "services/agent-bridge/scripts/Run-Mcp.ps1",
-            "services/agent-bridge/scripts/Copy-Token-To-Clipboard.ps1"
+            "services/agent-bridge/scripts/Copy-Token-To-Clipboard.ps1",
+            "services/agent-bridge/scripts/Configure-Cloud-Agent.ps1",
+            "services/agent-bridge/scripts/Run-AgentService.ps1"
           )
           foreach ($file in $files) {
             $tokens = $null
