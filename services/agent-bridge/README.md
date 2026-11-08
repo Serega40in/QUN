@@ -55,6 +55,49 @@ https://github.com/Serega40in/QUN/archive/refs/heads/feature/qun-agent-bridge-v0
 
 5. Дальше следуй разделу «Установка расширения».
 
+## QUN Agent Core: cloud API + local Windows worker
+
+This is the first cloud-control-plane slice. It lets an authenticated QUN local worker poll a strict allow-listed browser command queue; it does not expose an arbitrary shell.
+
+### One-time setup
+
+1. Ensure the Chrome/Chromium QUN Agent Bridge extension is installed. The token for the extension must match the encrypted local token at `%APPDATA%\QUNAgentBridge\bridge-token.dpapi`. If the file is missing, the setup script will prompt for the original token once.
+2. Run `Configure-Cloud-Agent.cmd` by double-clicking it.
+3. The wizard creates independent random keys and stores them with Windows DPAPI. It copies `QUN_AGENT_DEVICE_KEY` to the clipboard; paste it into the project's [Supabase Edge Function secrets](https://supabase.com/dashboard/project/qdxjltqlnphvzafapncm/functions/secrets) as a secret named `QUN_AGENT_DEVICE_KEY`. Then the wizard copies `QUN_AGENT_MCP_KEY`; save it under that exact name too.
+4. Double-click `Start-QUN-AGENT-CORE.cmd`. Keep the window open for the first verification. It starts the local WebSocket bridge and polls the cloud API using outbound HTTPS.
+5. In the browser extension popup, click Connect if needed. Open `http://127.0.0.1:43127/` and verify that the browser status is connected.
+6. Verify the cloud endpoint in a browser:
+   `https://qdxjltqlnphvzafapncm.supabase.co/functions/v1/qun-agent-core/health`
+   Both `authenticationConfigured.mcp` and `authenticationConfigured.device` should be `true`.
+
+The local worker makes outbound HTTPS requests; do not forward ports on your router. Secrets are stored encrypted for the Windows user and are never committed to Git.
+
+### Cloud MCP endpoint
+
+`https://qdxjltqlnphvzafapncm.supabase.co/functions/v1/qun-agent-core/mcp`
+
+Configure an MCP client with Streamable HTTP and API-key authentication using the `Authorization: Bearer` scheme and the local secret `QUN_AGENT_MCP_KEY`. The key itself is entered in the client's credential field and is not stored in this repository.
+
+The current ChatGPT Free plan cannot connect custom MCP servers directly from ChatGPT Web. The assistant in this session can still use the already-connected QUN Supabase integration to create an allow-listed command row and read its result, once the local worker is online. On plans/surfaces that support custom MCP, the remote endpoint provides the same tools directly.
+
+### Cloud API endpoints
+
+- `GET /health` — public, non-sensitive service health and boolean secret-configuration status.
+- `POST /agent/heartbeat` — authenticated local worker publishes device status.
+- `POST /agent/next` — authenticated worker claims one queued allow-listed command.
+- `POST /agent/result` — authenticated worker posts the command result.
+- `POST /mcp` — authenticated MCP Streamable HTTP endpoint.
+
+MCP tools currently exposed: `qun_agent_status`, `qun_browser_list_tabs`, `qun_browser_read_active_page`, `qun_browser_open_url`, and `qun_agent_get_command_result`.
+
+### Safety scope
+
+- The cloud queue accepts only `browser.list_tabs`, `browser.read_active_page`, and `browser.open_url`.
+- There is no arbitrary command, shell, file deletion, payment, or form-submission API.
+- The browser extension still enforces site-specific read permission and optional permission for listing tabs.
+- Device and MCP keys are separate. The Edge Function checks authentication before any state-changing operation.
+- This is a first working slice, not yet a Windows service or an Android control agent.
+
 ## Установка в Claude Desktop (рекомендуемый путь для локальной проверки)
 
 Для Claude Desktop подготовлен self-contained пакет MCPB, который не требует npm-зависимостей и ручного редактирования конфигурационного JSON:
