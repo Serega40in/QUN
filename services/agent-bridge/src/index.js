@@ -56,6 +56,9 @@ export class BrowserBridge {
     this.socket = null;
     this.authenticated = false;
     this.pending = new Map();
+    this.cloudConnected = false;
+    this.cloudLastSeenAt = null;
+    this.cloudError = null;
 
     this.httpServer = createServer((request, response) => {
       if (request.method === "GET" && request.url === "/") {
@@ -77,7 +80,10 @@ export class BrowserBridge {
         response.end(JSON.stringify({
           name: "QUN Agent Bridge",
           version: "0.1.0",
-          browserConnected: this.connected
+          browserConnected: Boolean(this.connected),
+          cloudConnected: Boolean(this.cloudConnected),
+          cloudLastSeenAt: this.cloudLastSeenAt,
+          cloudError: this.cloudError
         }));
         return;
       }
