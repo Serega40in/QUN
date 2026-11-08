@@ -24,6 +24,37 @@
 
 Пакеты MCP SDK, Zod и ws устанавливаются из npm. Сам проект и локальный режим не требуют платного API или облачного аккаунта.
 
+## Установка без Git (самый простой способ для Windows)
+
+Git устанавливать необязательно. Скачай ZIP-архив этой ветки:
+
+https://github.com/Serega40in/QUN/archive/refs/heads/feature/qun-agent-bridge-v0.1.zip
+
+1. Распакуй архив. Внутри появится папка `QUN-feature-qun-agent-bridge-v0.1`.
+2. Открой PowerShell и перейди в папку проекта (если архив распакован в Downloads):
+
+    ```powershell
+    cd "$HOME\Downloads\QUN-feature-qun-agent-bridge-v0.1\services\agent-bridge"
+    ```
+
+   Если Windows распаковала архив в другое место, замени путь на фактический.
+3. Проверь, установлен ли Node.js:
+
+    ```powershell
+    node --version
+    npm --version
+    ```
+
+   Нужен Node.js версии 20 или новее. Если команда `node` не распознана, установи актуальный Node.js LTS с официального сайта https://nodejs.org/ и заново открой PowerShell.
+4. Установи зависимости и создай локальный токен:
+
+    ```powershell
+    npm install
+    npm run token
+    ```
+
+5. Дальше следуй разделу «Установка расширения».
+
 ## Установка локального сервера
 
 Из этой папки выполни:
