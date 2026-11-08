@@ -231,7 +231,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return false;
 });
 
-chrome.alarms.create(RECONNECT_ALARM, { periodInMinutes: 0.5 });
+chrome.alarms.create(RECONNECT_ALARM, { periodInMinutes: 1 });
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === RECONNECT_ALARM) connectToBridge();
 });
