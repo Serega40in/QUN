@@ -63,9 +63,13 @@ https://github.com/Serega40in/QUN/archive/refs/heads/feature/qun-agent-bridge-v0
 2. Закрой тестовый Node.js сервер, если он запущен в отдельном PowerShell окне (Ctrl+C).
 3. Дважды щёлкни `SETUP-QUN-AGENT-BRIDGE.cmd` в этой папке.
 4. Введи тот же токен, который уже сохранён в расширении. Поле ввода скрыто.
-5. Установщик сохранит токен в Windows DPAPI-хранилище текущего пользователя (`%APPDATA%\QUNAgentBridge\bridge-token.dpapi`) и добавит MCP-сервер в `%USERPROFILE%\.codex\config.toml`. Токен не записывается в Git или в файл конфигурации.
-6. Перезапусти ChatGPT Desktop. Открой Settings → MCP servers и проверь, что `qun_agent_bridge` включён.
-7. Открой расширение Chrome и нажми Connect, если оно ещё не подключилось.
+5. Установщик сохранит токен в Windows DPAPI-хранилище текущего пользователя (`%APPDATA%\QUNAgentBridge\bridge-token.dpapi`). Он намеренно не меняет `config.toml`.
+6. В ChatGPT Desktop открой Settings → MCP servers → Add server. Укажи:
+   - Name: `QUN Agent Bridge`
+   - Transport: `STDIO`
+   - Command: `powershell.exe`
+   - Arguments: строку, которую установщик покажет в конце (начинается с `-NoLogo -NoProfile`).
+7. Сохрани сервер и нажми Restart. Открой расширение Chrome и нажми Connect, если оно ещё не подключилось.
 
 ChatGPT Desktop, Codex CLI и расширение Codex используют общий MCP-конфиг Codex host. В нём поддерживаются локальные STDIO MCP-серверы. В чате ChatGPT Web локальный MCP-процесс напрямую не виден; для веб-подключения нужен удалённый MCP endpoint или Secure MCP Tunnel на поддерживаемом тарифе/поверхности.
 
