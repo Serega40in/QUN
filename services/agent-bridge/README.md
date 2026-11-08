@@ -55,6 +55,21 @@ https://github.com/Serega40in/QUN/archive/refs/heads/feature/qun-agent-bridge-v0
 
 5. Дальше следуй разделу «Установка расширения».
 
+## Установка в Claude Desktop (рекомендуемый путь для локальной проверки)
+
+Для Claude Desktop подготовлен self-contained пакет MCPB, который не требует npm-зависимостей и ручного редактирования конфигурационного JSON:
+
+- Исходник MCPB: [claude-mcpb](claude-mcpb/README.md)
+- Манифест: [manifest.json](claude-mcpb/manifest.json)
+- Сервер без внешних runtime-зависимостей: [server/index.js](claude-mcpb/server/index.js)
+- Помощник копирования токена: [scripts/Copy-Token-To-Clipboard.cmd](scripts/Copy-Token-To-Clipboard.cmd)
+
+Чтобы собрать установочный пакет из исходников, в каталоге `services/agent-bridge/claude-mcpb` выполни `npx -y @anthropic-ai/mcpb pack`. Готовый файл `.mcpb` устанавливается в Claude Desktop через Settings → Extensions → Advanced settings → Install Extension.
+
+Перед установкой останови вручную запущенный Node.js сервер, если он слушает порт 43127. В Chrome расширение должно остаться установленным. При конфигурации MCPB вставь тот же токен, который сохранён в расширении; поле чувствительного значения Claude Desktop хранит через ОС.
+
+Текущая реализация предоставляет только чтение разрешённых страниц, список вкладок (с отдельным разрешением) и открытие HTTP(S)-адресов. Клики, ввод текста и управление Windows/Android пока не реализованы.
+
 ## Удобная установка на Windows и подключение к ChatGPT Desktop
 
 После установки Node.js, `npm install` и браузерного расширения можно больше не запускать MCP Inspector вручную.
