@@ -305,7 +305,7 @@ function createMcpServer(bridge) {
 
 async function main() {
   const token = process.env.QUN_AGENT_TOKEN;
-  const port = Number(process.env.QUN_AGENT_PORT ?? DEFAULT_PORT);
+  const port = DEFAULT_PORT;
   const host = process.env.QUN_AGENT_HOST ?? DEFAULT_HOST;
 
   if (!Number.isInteger(port) || port < 1024 || port > 65535) {
