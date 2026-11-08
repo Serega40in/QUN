@@ -67,4 +67,3 @@ finally {
     $browserToken = $null
     $deviceKey = $null
 }
-
