@@ -50,7 +50,6 @@ jobs:
           for required in (
               "QUN_COMFYUI_WORKFLOW_IMAGE",
               "QUN_NODE_REGISTRY_FILE",
-              "qun-compute",
               "comfyui_worker",
               "127.0.0.1",
               "register_gpu_worker",
