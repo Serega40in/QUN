@@ -2,7 +2,7 @@
 <html lang="ru" data-qun-theme="light">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0B765D"><meta name="description" content="КЮН — пространство общения и добрых дел."><meta name="qun-build" content="2026.11.09-mobile.1"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0B765D"><meta name="description" content="КЮН — пространство общения и добрых дел."><meta name="qun-build" content="2026.11.09-mobile.2-emoji"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="mobile-web-app-capable" content="yes">
 <title>QUN Messenger — общение</title>
 <link rel="icon" type="image/svg+xml" href="../assets/qun-favicon.svg?v=16"><link rel="alternate icon" type="image/jpeg" href="../assets/qun-icon.jpg?v=16"><link rel="apple-touch-icon" href="../assets/qun-icon.jpg?v=16"><link rel="manifest" href="./manifest.webmanifest">
 <style>
@@ -826,12 +826,12 @@ function toggleEmojiPicker(force){
  const picker=$('emojiPicker'),button=$('emojiButton');
  const shouldOpen=typeof force==='boolean'?force:picker.classList.contains('hidden');
  picker.classList.toggle('hidden',!shouldOpen);button.setAttribute('aria-expanded',String(shouldOpen));
- if(shouldOpen){renderEmojiPicker();$('emojiSearch').focus()}else button.focus();
+ if(shouldOpen){renderEmojiPicker();$('emojiSearch').focus()}
 }
 $('emojiButton').addEventListener('click',()=>toggleEmojiPicker());
-$('closeEmojiPicker').addEventListener('click',()=>toggleEmojiPicker(false));
+$('closeEmojiPicker').addEventListener('click',()=>{toggleEmojiPicker(false);$('emojiButton').focus()});
 $('emojiSearch').addEventListener('input',renderEmojiPicker);
-document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('emojiPicker').classList.contains('hidden'))toggleEmojiPicker(false)});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('emojiPicker').classList.contains('hidden')){toggleEmojiPicker(false);$('emojiButton').focus()}});
 document.addEventListener('click',event=>{if($('emojiPicker').classList.contains('hidden'))return;if(event.target.closest('#emojiPicker,#emojiButton'))return;toggleEmojiPicker(false)});
 
 $('stickerInput').addEventListener('change',async()=>{const file=$('stickerInput').files?.[0];$('stickerInput').value='';if(!file)return;try{await uploadMedia(file,'sticker')}catch(e){mediaNotice('Не удалось добавить стикер: '+(e.message||e))}});
