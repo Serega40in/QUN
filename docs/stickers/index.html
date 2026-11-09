@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f4f8fc">
+<title>QUN Sticker Artist Portal</title>
+<style>
+:root{color-scheme:light;--ink:#17324d;--muted:#60768b;--blue:#2464a5;--blue2:#dcecff;--green:#16866c;--gold:#c59a43;--line:#dce5ee;--paper:#fff;--bg:#f4f8fc;--red:#b43d4b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,Segoe UI,Arial,sans-serif}a{color:var(--blue)}.shell{max-width:1060px;margin:0 auto;padding:28px 20px 60px}.hero{padding:28px 30px;border-radius:24px;background:linear-gradient(120deg,#e7f1ff,#f4fbf8 65%,#fff8e9);border:1px solid var(--line)}.eyebrow{text-transform:uppercase;letter-spacing:.15em;font-size:11px;font-weight:800;color:var(--green)}h1{font-size:clamp(28px,5vw,42px);line-height:1.1;margin:10px 0 12px;letter-spacing:-.03em}.hero p{max-width:730px;color:#49647d;margin:0}.pill{display:inline-block;border-radius:99px;padding:5px 10px;background:#e4f4ee;color:#176d5a;font-size:12px;font-weight:700;margin-bottom:9px}.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;margin-top:20px}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 8px 24px #24405c0a}.card h2{font-size:18px;margin:0 0 14px}.sub{color:var(--muted);font-size:13px;margin:-7px 0 16px}.field{margin:0 0 14px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;border:1px solid #cbd8e5;background:#fff;color:var(--ink);padding:11px 12px;border-radius:10px;font:inherit;outline:none}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #2464a51b}.field textarea{min-height:76px;resize:vertical}.upload{border:1.5px dashed #9db6cb;background:#f8fbff;border-radius:14px;padding:20px;text-align:center}.upload input{max-width:100%}.upload strong{display:block;margin-bottom:5px}.upload small{display:block;color:var(--muted)}.checks{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#405a72;margin:12px 0}.checks input{margin-top:4px;accent-color:var(--green)}.btn{border:0;border-radius:11px;padding:12px 16px;font:inherit;font-weight:750;cursor:pointer;background:var(--blue);color:white}.btn.secondary{background:#e7eff8;color:var(--ink)}.btn:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.note{background:#f0f6fc;border-left:3px solid var(--blue);padding:12px 14px;border-radius:8px;color:#425d76;font-size:13px}.warning{background:#fff8eb;border-left-color:var(--gold)}.status{font-size:13px;color:var(--muted);margin-top:12px;min-height:20px}.status.error{color:var(--red)}.items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.item{border:1px solid var(--line);border-radius:13px;padding:10px;min-width:0}.preview{height:130px;display:grid;place-items:center;border-radius:9px;background-color:#f7f9fc;background-image:linear-gradient(45deg,#e9eef4 25%,transparent 25%),linear-gradient(-45deg,#e9eef4 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e9eef4 75%),linear-gradient(-45deg,transparent 75%,#e9eef4 75%);background-size:18px 18px;background-position:0 0,0 9px,9px -9px,-9px 0;overflow:hidden}.preview img{max-width:100%;max-height:100%;object-fit:contain}.item-title{font-size:12px;font-weight:700;overflow-wrap:anywhere;margin:8px 0 5px}.meta{font-size:11px;color:var(--muted)}.item input{width:100%;margin-top:7px;border:1px solid var(--line);border-radius:8px;padding:8px}.item button{border:0;background:none;color:var(--red);font-size:12px;cursor:pointer;padding:6px 0}.empty{border:1px dashed var(--line);border-radius:12px;padding:24px;text-align:center;color:var(--muted);font-size:13px;grid-column:1/-1}.footer{font-size:12px;color:var(--muted);margin-top:24px;text-align:center}.full{grid-column:1/-1}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.shell{padding:14px 12px 40px}.hero{padding:22px 20px}.card{padding:17px}.items{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="hero">
+    <span class="pill">QUN COMMUNITY · ARTIST SUBMISSIONS</span>
+    <div class="eyebrow">QUN Sticker Artist Portal</div>
+    <h1>Добавь свой стикерпак в QUN</h1>
+    <p>Подготовь набор, проверь файлы, собери архив и отправь его команде QUN на рассмотрение. Автор сохраняет права на свои работы. Публикация происходит только после проверки и согласования.</p>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <h2>1. Информация о наборе</h2>
+      <p class="sub">Эти данные попадут в манифест пакета.</p>
+      <div class="field"><label for="packTitle">Название набора *</label><input id="packTitle" maxlength="64" placeholder="Например, Лесные друзья"></div>
+      <div class="field"><label for="packSlug">Короткий ID *</label><input id="packSlug" maxlength="40" value="artist_pack_01" placeholder="artist_pack_01"></div>
+      <div class="field"><label for="artist">Имя автора / подпись *</label><input id="artist" maxlength="80" placeholder="Как вас указать в credits"></div>
+      <div class="field"><label for="contact">Портфолио или контакт (необязательно)</label><input id="contact" maxlength="180" placeholder="Ссылка на портфолио или публичный профиль"></div>
+      <div class="field"><label for="model">AI-инструменты и модель (если применялись)</label><input id="model" maxlength="180" placeholder="Например: ComfyUI + Stable Diffusion 1.5; ручная доработка"></div>
+      <div class="field"><label for="license">Права и разрешение *</label><select id="license"><option value="qun_non_exclusive">Я сохраняю авторские права и даю QUN неисключительное разрешение на использование принятого набора в сервисах QUN</option></select></div>
+      <label class="checks"><input id="rights" type="checkbox"><span>Я создал(а) эти изображения сам(а) или имею все необходимые права на их передачу. В наборе нет чужих персонажей, логотипов и материалов без разрешения.</span></label>
+      <label class="checks"><input id="permission" type="checkbox"><span>Я разрешаю QUN хранить и проверять отправленный пакет, а в случае принятия — показывать и распространять набор внутри сервисов QUN. Авторство будет указано согласно моему имени автора.</span></label>
+      <div class="note warning">Отправка не означает автоматическую публикацию. Команда QUN проверит права, качество и соответствие правилам. Перед открытым коммерческим использованием условия будут дополнительно оформлены.</div>
+    </section>
+
+    <section class="card">
+      <h2>2. Добавь изображения</h2>
+      <p class="sub">Статичные стикеры для первого этапа: PNG/WebP, прозрачный фон, до 512 КБ каждый.</p>
+      <div class="upload">
+        <strong>Выбери файлы стикеров</strong>
+        <small>Можно выбрать сразу несколько файлов. Файлы останутся в этом браузере до скачивания ZIP.</small>
+        <input id="files" type="file" accept="image/png,image/webp,.png,.webp" multiple>
+      </div>
+      <div class="status" id="fileStatus">Пока нет добавленных изображений.</div>
+      <div class="note">Telegram: одна сторона изображения должна быть ровно 512 px, другая — не больше 512 px; статичный файл должен быть PNG или WebP с прозрачностью. Максимальный размер — 512 КБ.</div>
+      <div class="actions"><button class="btn secondary" id="clearBtn" type="button">Очистить список</button></div>
+    </section>
+
+    <section class="card full">
+      <h2>3. Предпросмотр и проверка</h2>
+      <p class="sub">Укажи emoji для каждого стикера. Не отправляй коллажи — каждый файл должен содержать один отдельный стикер.</p>
+      <div class="items" id="items"><div class="empty">Здесь появятся добавленные стикеры.</div></div>
+      <div class="status" id="validationStatus"></div>
+      <div class="actions">
+        <button class="btn" id="downloadBtn" type="button" disabled>Собрать ZIP-пакет</button>
+        <button class="btn secondary" id="issueBtn" type="button" disabled>Открыть заявку в GitHub</button>
+      </div>
+      <div class="status" id="packageStatus">Сначала заполни сведения об авторе и добавь хотя бы один подходящий файл.</div>
+    </section>
+  </div>
+  <div class="footer">QUN · Sticker Portal 0.1 · Локальная подготовка пакета, без автоматической загрузки файлов</div>
+</div>
+<script>
+const items=[];
+const $=id=>document.getElementById(id);
+const githubIssue='https://github.com/Serega40in/QUN/issues/new?template=sticker-submission.md';
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function slugOK(s){return /^[a-z][a-z0-9_]{2,39}$/.test(s);}
+function fileNameOK(s){return /^[a-zA-Z0-9._-]+$/.test(s);}
+function render(){
+  const host=$('items');
+  if(!items.length){host.innerHTML='<div class="empty">Здесь появятся добавленные стикеры.</div>';}
+  else host.innerHTML=items.map((x,i)=>`<article class="item"><div class="preview"><img src="${x.url}" alt=""></div><div class="item-title">${esc(x.file.name)}</div><div class="meta">${x.width}×${x.height} · ${(x.file.size/1024).toFixed(1)} КБ · ${x.alpha?'есть прозрачность':'нет прозрачности'}</div><input aria-label="Emoji стикера" maxlength="12" value="${esc(x.emoji)}" data-emoji="${i}" placeholder="🙂"><button type="button" data-remove="${i}">Убрать файл</button><div class="meta">${esc(x.check)}</div></article>`).join('');
+  host.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{const i=Number(b.dataset.remove);URL.revokeObjectURL(items[i].url);items.splice(i,1);render();validate();}));
+  host.querySelectorAll('[data-emoji]').forEach(inp=>inp.addEventListener('input',()=>{items[Number(inp.dataset.emoji)].emoji=inp.value;validate();}));
+}
+async function inspect(file){
+  if(file.size>12*1024*1024)throw new Error('Файл слишком большой для предпросмотра (лимит портала 12 МБ)');
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+  const loaded=new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url;});
+  try{await loaded;}catch(e){URL.revokeObjectURL(url);throw new Error('Браузер не смог прочитать изображение');}
+  let alpha=false;
+  const w=img.naturalWidth,h=img.naturalHeight;
+  if(w<=512&&h<=512){try{const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0);const data=ctx.getImageData(0,0,c.width,c.height).data;for(let p=3;p<data.length;p+=4){if(data[p]<250){alpha=true;break;}}}catch(e){}}
+  const ext=file.name.toLowerCase().endsWith('.png')?'png':file.name.toLowerCase().endsWith('.webp')?'webp':'';
+  let problems=[];
+  if(!ext)problems.push('нужен PNG или WebP');
+  if(file.size>512*1024)problems.push('больше 512 КБ');
+  if(w>512||h>512||!(w===512||h===512))problems.push('размер: одна сторона должна быть 512 px, другая ≤512 px');
+  if(!alpha)problems.push('не обнаружена прозрачность');
+  return {file,url,width:w,height:h,alpha,ok:problems.length===0,check:problems.length?problems.join('; '):'Файл прошёл базовую проверку',emoji:'🙂'};
+}
+$('files').addEventListener('change',async e=>{
+  const chosen=[...e.target.files];
+  $('fileStatus').textContent='Проверяю файлы…';
+  for(const f of chosen){
+    if(items.some(x=>x.file.name===f.name)){continue;}
+    try{items.push(await inspect(f));}catch(err){$('fileStatus').textContent=`Ошибка ${f.name}: ${err.message}`;}
+  }
+  e.target.value='';render();validate();
+  $('fileStatus').textContent=`Добавлено файлов: ${items.length}. Зелёный статус означает прохождение базовой проверки.`;
+});
+$('clearBtn').addEventListener('click',()=>{items.forEach(x=>URL.revokeObjectURL(x.url));items.length=0;render();validate();$('fileStatus').textContent='Список очищен.';});
+function validate(){
+  const issues=[];
+  $('issueBtn').dataset.ready='0';
+  if(!$('packTitle').value.trim())issues.push('укажи название набора');
+  if(!slugOK($('packSlug').value.trim()))issues.push('ID должен начинаться с латинской буквы и содержать 3–40 символов a-z, 0-9 или _');
+  if(!$('artist').value.trim())issues.push('укажи имя автора');
+  if(!$('rights').checked)issues.push('подтверди авторство или необходимые права');
+  if(!$('permission').checked)issues.push('подтверди разрешение на проверку и возможное использование в QUN');
+  if(!items.length)issues.push('добавь хотя бы один стикер');
+  if(items.some(x=>!x.ok) )issues.push('исправь файлы, у которых есть ошибки');
+  if(items.some(x=>!x.emoji.trim()))issues.push('укажи emoji для каждого стикера');
+  $('validationStatus').textContent=items.length?`${items.filter(x=>x.ok).length} из ${items.length} файлов прошли базовую проверку.`:'';
+  $('validationStatus').className='status'+(issues.length?' error':'');
+  $('packageStatus').textContent=issues.length?'Для подготовки пакета: '+issues.join('; ')+'.':'Всё готово к сборке ZIP. Файлы ещё не отправлены в QUN.';
+  $('downloadBtn').disabled=issues.length>0;
+  $('issueBtn').disabled=issues.length>0;
+  return issues;
+}
+['packTitle','packSlug','artist','contact','model','rights','permission'].forEach(id=>$(id).addEventListener('input',validate));
+$('license').addEventListener('change',validate);
+
+// Minimal ZIP writer (STORE method, no external library or upload service required).
+const encoder=new TextEncoder();
+const crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t;})();
+function crc32(buf){let c=0xffffffff;for(const b of buf)c=crcTable[(c^b)&255]^(c>>>8);return (c^0xffffffff)>>>0;}
+function u16(v){return [v&255,(v>>>8)&255];}function u32(v){return [v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255];}
+function concat(parts){let n=parts.reduce((s,a)=>s+a.length,0),out=new Uint8Array(n),p=0;for(const a of parts){out.set(a,p);p+=a.length;}return out;}
+function makeZip(entries){
+  const locals=[],centrals=[];let offset=0;
+  for(const entry of entries){
+    const name=encoder.encode(entry.name),data=entry.data instanceof Uint8Array?entry.data:new Uint8Array(entry.data),crc=crc32(data);
+    const local=concat([new Uint8Array([0x50,0x4b,0x03,0x04]),new Uint8Array(u16(20)),new Uint8Array(u16(0x0800)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0x0021)),new Uint8Array(u32(crc)),new Uint8Array(u32(data.length)),new Uint8Array(u32(data.length)),new Uint8Array(u16(name.length)),new Uint8Array(u16(0)),name,data]);
+    const central=concat([new Uint8Array([0x50,0x4b,0x01,0x02]),new Uint8Array(u16(20)),new Uint8Array(u16(20)),new Uint8Array(u16(0x0800)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0x0021)),new Uint8Array(u32(crc)),new Uint8Array(u32(data.length)),new Uint8Array(u32(data.length)),new Uint8Array(u16(name.length)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(0)),new Uint8Array(u32(offset)),name]);
+    locals.push(local);centrals.push(central);offset+=local.length;
+  }
+  const centralBytes=concat(centrals),centralOffset=offset;
+  const end=concat([new Uint8Array([0x50,0x4b,0x05,0x06]),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(entries.length)),new Uint8Array(u16(entries.length)),new Uint8Array(u32(centralBytes.length)),new Uint8Array(u32(centralOffset)),new Uint8Array(u16(0))]);
+  return new Blob([...locals,centralBytes,end],{type:'application/zip'});
+}
+async function buildPackage(){
+  if(validate().length)return;
+  $('downloadBtn').disabled=true;$('packageStatus').textContent='Собираю ZIP в браузере…';
+  try{
+    const slug=$('packSlug').value.trim();
+    const manifest={schema_version:'1.0',platform:'QUN',pack:{id:slug,title:$('packTitle').value.trim(),artist:$('artist').value.trim(),contact:$('contact').value.trim()||null,ai_tools:$('model').value.trim()||null,license:$('license').value,created_at:new Date().toISOString()},stickers:[]};
+    const entries=[];
+    for(let i=0;i<items.length;i++){
+      const x=items[i],ext=x.file.name.toLowerCase().endsWith('.webp')?'webp':'png';
+      const name=String(i+1).padStart(2,'0')+'-'+slug.replace(/[^a-z0-9_]/g,'_')+'-'+(i+1)+'.'+ext;
+      entries.push({name:'stickers/'+name,data:new Uint8Array(await x.file.arrayBuffer())});
+      manifest.stickers.push({id:i+1,file:'stickers/'+name,emoji:x.emoji.trim(),width:x.width,height:x.height,bytes:x.file.size,has_alpha:x.alpha});
+    }
+    entries.push({name:'manifest.json',data:encoder.encode(JSON.stringify(manifest,null,2))});
+    const declaration=`QUN STICKER SUBMISSION\n\nPack: ${manifest.pack.title}\nPack ID: ${slug}\nArtist: ${manifest.pack.artist}\n\nThe artist confirms that they created these images or hold sufficient rights to submit them. The artist retains copyright and grants QUN the non-exclusive permission selected in the portal to review, store and, if accepted, display and distribute the pack inside QUN services. Submission does not guarantee acceptance or publication.\n\nAI tools/model: ${manifest.pack.ai_tools||'Not specified'}\nLicense declaration: ${manifest.pack.license}\n\nThe QUN team must review the rights and technical quality before publication.\n`;
+    entries.push({name:'SUBMISSION.txt',data:encoder.encode(declaration)});
+    entries.push({name:'README.txt',data:encoder.encode('QUN Sticker Pack submission\n\nContents: manifest.json, SUBMISSION.txt, stickers/\nPlease attach this ZIP to a QUN sticker pack submission issue. Do not publish it automatically.\n')});
+    const blob=makeZip(entries),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=slug+'.zip';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+    $('packageStatus').textContent='ZIP собран и скачан. Следующий шаг — открыть GitHub-заявку и прикрепить к ней скачанный архив.';
+    $('issueBtn').dataset.ready='1';$('issueBtn').disabled=false;
+  }catch(err){$('packageStatus').textContent='Не удалось собрать архив: '+err.message;$('packageStatus').className='status error';}
+  finally{$('downloadBtn').disabled=false;}
+}
+$('downloadBtn').addEventListener('click',buildPackage);
+$('issueBtn').addEventListener('click',()=>{if($('issueBtn').dataset.ready==='1')window.open(githubIssue,'_blank','noopener');});
+render();validate();
+</script>
+</body>
+</html>
