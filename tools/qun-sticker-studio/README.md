@@ -4,8 +4,8 @@ A small local web app for preparing sticker packs and sending text-to-image jobs
 
 ## Start
 
-1. Install Python 3.10 or newer (Python 3.12 is a good default).
-2. Double-click `start_windows.bat`.
+1. Recommended: double-click `setup_and_start_windows.bat`. It checks for Python and offers to install Python 3.12 via winget if needed.
+2. If Python 3.10+ is already installed, you can double-click `start_windows.bat` directly.
 3. The browser opens at `http://127.0.0.1:8791`.
 4. Import existing PNG/WebP files or connect ComfyUI to generate new candidates.
 5. Select approved images and export a ZIP with a manifest.
