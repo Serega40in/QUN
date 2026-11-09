@@ -13,6 +13,18 @@
   "categories": ["communication", "social"],
   "icons": [
     {
+      "src": "./icons/qun-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/qun-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
       "src": "../assets/qun-icon.jpg",
       "sizes": "2048x2048",
       "type": "image/jpeg",
