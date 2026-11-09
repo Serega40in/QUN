@@ -599,7 +599,7 @@ async function uploadMedia(file,kind='file',duration=0){
  if(!user||!activeId)throw new Error('Сначала откройте диалог.');
  if(!file)throw new Error('Выберите файл.');
  if(file.size>MAX_MEDIA_BYTES)throw new Error('Максимальный размер файла — 8 МБ.');
- const originalName=String(file.name||(kind==='voice'?'voice.m4a':kind==='sticker'?'sticker.png':'file')).slice(0,180);
+ const originalName=String(file.name||(kind==='voice'?'voice.m4a':kind==='sticker'?'sticker.png':'file')).replace(/[\r\n/\\]/g,'_').slice(0,180);
  const rawExt=originalName.includes('.')?originalName.split('.').pop().toLowerCase():'';
  const ext=rawExt.replace(/[^a-z0-9]/g,'').slice(0,8);
  const blockedExt=new Set(['html','htm','xhtml','svg','js','mjs','exe','dll','msi','bat','cmd','sh','ps1','apk','dmg','app','com','scr','jar']);
