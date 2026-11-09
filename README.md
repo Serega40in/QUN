@@ -56,6 +56,8 @@
 
 - **Руководство, технический стандарт и публикация:** [docs/stickers/README.md](docs/stickers/README.md).
 - **Первый авторский набор Omnii — 24 промта:** [PROMPTS_OMNII_01.md](docs/stickers/PROMPTS_OMNII_01.md).
+- **Kaggle Notebook для генерации:** [скачать ipynb](tools/qun-sticker-studio/kaggle_omnii_stickers.ipynb) · [инструкция](docs/stickers/KAGGLE_NOTEBOOK.md).
+- **Черновик новости для QUN News:** [NEWS_DRAFT_RU.md](docs/stickers/NEWS_DRAFT_RU.md) — пока не опубликован.
 - **Форма художника:** [QUN Sticker Artist Portal](https://serega40in.github.io/QUN/stickers/).
 - **Локальная браузерная студия:** [инструкция](tools/qun-sticker-studio/README.md) · [запустить/установить одной кнопкой для Windows](tools/qun-sticker-studio/setup_and_start_windows.bat).
 
