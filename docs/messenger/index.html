@@ -303,6 +303,57 @@ html[data-qun-theme="light"] .bubble.mine .voice-wave span{background:#70AA8C}
 }
 @media(prefers-reduced-motion:reduce){.install-link,.voice-timeline span{transition:none!important}}
 </style>
+<style id="qun-auth-contrast">
+html[data-qun-theme="light"] #authView .authbox{
+ width:min(440px,calc(100% - 24px))!important;max-width:440px!important;
+ margin:clamp(28px,7vh,72px) auto!important;padding:clamp(24px,5vw,42px)!important;
+ background:#fff!important;color:#173447!important;border:1px solid #c3d0c9!important;
+ border-radius:24px!important;box-shadow:0 22px 70px rgba(23,52,71,.14)!important;
+}
+html[data-qun-theme="light"] #authView .h1{color:#12354a!important;text-wrap:balance}
+html[data-qun-theme="light"] #authView .sub{color:#4e666b!important;line-height:1.65}
+html[data-qun-theme="light"] #authView .eyebrow{color:#087a63!important}
+html[data-qun-theme="light"] #authView .field label{color:#385a60!important;font-weight:800;letter-spacing:.035em}
+html[data-qun-theme="light"] #authView .field input{
+ background:#fff!important;color:#173447!important;border:1px solid #b9cbc3!important;
+ box-shadow:none!important;min-height:48px;
+}
+html[data-qun-theme="light"] #authView .field input::placeholder{color:#6d817e!important;opacity:1}
+html[data-qun-theme="light"] #authView .field input:focus{
+ border-color:#0b765d!important;box-shadow:0 0 0 3px rgba(11,118,93,.15)!important;outline:none;
+}
+html[data-qun-theme="light"] #authView .legal{color:#4e666b!important;font-size:12px;line-height:1.55}
+html[data-qun-theme="light"] #authNotice{color:#385a60!important}
+html[data-qun-theme="light"] #authNotice.error{color:#a52837!important}
+html[data-qun-theme="light"] #authNotice.ok{color:#087a63!important}
+html[data-qun-theme="light"] #showLogin{background:#0b765d!important;color:#fff!important}
+html[data-qun-theme="light"] #showRegister{background:#eaf3ee!important;color:#173447!important;border:1px solid #bfd3c8!important}
+html[data-qun-theme="light"] #authView .btn:focus-visible{outline:3px solid #c6a15b;outline-offset:3px}
+html[data-qun-theme="light"] .foot{color:#4e666b!important}
+.emoji-picker{margin:0 10px 8px;padding:12px;border:1px solid #c3d0c9;border-radius:18px;background:#f7faf8;color:#173447;box-shadow:0 12px 32px rgba(23,52,71,.12);max-height:min(320px,42dvh);overflow:auto}
+.emoji-picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.emoji-picker-head strong{font-size:14px}
+.emoji-close{display:grid;place-items:center;width:32px;height:32px;border:1px solid #c3d0c9;border-radius:50%;background:#fff;color:#173447}
+.emoji-search{width:100%;min-height:40px;padding:9px 12px;border:1px solid #c3d0c9;border-radius:12px;background:#fff;color:#173447;outline:none;margin-bottom:9px}
+.emoji-search::placeholder{color:#6d817e;opacity:1}
+.emoji-search:focus{border-color:#0b765d;box-shadow:0 0 0 3px rgba(11,118,93,.12)}
+.emoji-categories{display:flex;gap:6px;overflow-x:auto;padding:0 0 9px;margin-bottom:7px}
+.emoji-category{flex:0 0 auto;padding:7px 10px;border:1px solid #c3d0c9;border-radius:999px;background:#fff;color:#385a60;font-size:11px;font-weight:750}
+.emoji-category[aria-pressed="true"]{background:#dcece4;border-color:#83bca1;color:#075b49}
+.emoji-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:3px}
+.emoji-option{display:grid;place-items:center;min-width:0;aspect-ratio:1;border:0;border-radius:10px;background:transparent;font-size:24px;line-height:1.1}
+.emoji-option:hover,.emoji-option:focus-visible{background:#dcece4;outline:2px solid #9fcdb6;outline-offset:-2px}
+.emoji-empty{grid-column:1/-1;padding:18px 6px;text-align:center;color:#50656c;font-size:12px}
+.emoji-credit{margin-top:9px;color:#627773;font-size:10px;line-height:1.4}
+html[data-qun-theme="light"] #emojiButton{display:inline-grid;place-items:center;flex:0 0 42px;width:42px;height:42px;padding:0!important;font-size:19px}
+@media(max-width:720px){
+ html[data-qun-theme="light"] #authView .authbox{width:calc(100% - 8px)!important;margin:20px auto!important;padding:24px 18px!important}
+ .emoji-picker{margin-inline:7px;padding:10px}
+ .emoji-grid{grid-template-columns:repeat(7,minmax(0,1fr))}
+ .emoji-option{font-size:23px}
+}
+@media(max-width:360px){.emoji-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+</style>
 </head>
 <body>
 <div class="shell">
@@ -321,7 +372,7 @@ html[data-qun-theme="light"] .bubble.mine .voice-wave span{background:#70AA8C}
 <div class="sectionlabel" id="listLabel">Люди и диалоги</div><div id="peopleList" class="list"><div class="empty">Загрузка профиля…</div></div>
 <div style="padding:14px;border-top:1px solid var(--line)"><div class="profilebar"><div class="avatar" id="myAvatar">К</div><div style="min-width:0;flex:1"><div id="myName" class="name">Мой профиль</div><div id="myHandle" class="handle"></div></div><button id="editProfile" class="btn light" style="padding:8px 10px;font-size:11px">Изменить</button></div><div id="profileEditor" class="hidden" style="margin-top:12px"><div class="field"><label for="displayName">ИМЯ</label><input id="displayName" maxlength="60" placeholder="Как вас называть"></div><div class="field"><label for="username">USERNAME (БЕЗ @)</label><input id="username" maxlength="24" placeholder="например, qun_user"></div><button id="saveProfile" class="btn green full">Сохранить профиль</button></div></div>
 </aside>
-<section id="chatPanel" class="panel chatpanel"><div class="chat"><div id="chatHeader" class="chathead"><div class="empty" style="padding:0;text-align:left"><div class="eyebrow">ДОБРО ПОЖАЛОВАТЬ</div><h2 style="font-size:22px;margin:8px 0">КЮН — рядом</h2><div class="muted">Выберите человека, чтобы начать диалог.</div></div></div><div id="callStage" class="panel hidden" style="margin:12px;padding:12px;border:1px solid var(--line);border-radius:16px"><div id="callStatus" role="status" aria-live="polite" style="font-weight:750;margin-bottom:10px">Звонок</div><div id="incomingCallActions" class="hidden" style="display:flex;gap:8px;margin-top:10px"><button id="answerCall" class="btn green" type="button">Принять</button><button id="rejectCall" class="btn light" type="button">Отклонить</button></div><div id="activeCallActions" class="hidden" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button id="muteCall" class="btn light" type="button">Выключить микрофон</button><button id="cameraCall" class="btn light" type="button">Выключить камеру</button><button id="switchCameraCall" class="btn light" type="button">Сменить камеру</button><button id="hangupCall" class="btn" style="background:#b4233b;color:white" type="button">Завершить звонок</button></div><div id="callVideos" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px"><video id="remoteVideo" autoplay playsinline style="display:none;width:100%;max-height:260px;background:#071b2a;border-radius:12px"></video><video id="localVideo" autoplay muted playsinline style="display:none;width:100%;max-height:180px;background:#071b2a;border-radius:12px"></video></div></div><div id="chatBody" class="chatbody"><div class="empty"><div class="mark" style="margin:0 auto 16px">К</div><strong style="color:var(--navy)">Ваши разговоры начинаются здесь</strong><p>Найдите человека по имени или username и напишите первое сообщение.</p></div></div><form id="composer" class="composer hidden"><button id="attachFile" class="btn" type="button" title="Прикрепить файл" aria-label="Прикрепить файл">＋</button><input id="fileInput" type="file" hidden><button id="addSticker" class="btn" type="button" title="Создать или загрузить стикер" aria-label="Создать или загрузить стикер">☺</button><input id="stickerInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden><button id="recordVoice" class="btn" type="button" title="Записать голосовое" aria-label="Записать голосовое">🎙</button><input id="messageInput" maxlength="4000" autocomplete="off" placeholder="Напишите сообщение…" aria-label="Сообщение"><button id="sendMessage" class="btn green" type="submit">Отправить</button></form><div id="mediaStatus" class="tiny muted" style="padding:0 16px 8px" aria-live="polite"></div><div id="chatNotice" class="notice" style="padding:0 16px 10px"></div></div></section>
+<section id="chatPanel" class="panel chatpanel"><div class="chat"><div id="chatHeader" class="chathead"><div class="empty" style="padding:0;text-align:left"><div class="eyebrow">ДОБРО ПОЖАЛОВАТЬ</div><h2 style="font-size:22px;margin:8px 0">КЮН — рядом</h2><div class="muted">Выберите человека, чтобы начать диалог.</div></div></div><div id="callStage" class="panel hidden" style="margin:12px;padding:12px;border:1px solid var(--line);border-radius:16px"><div id="callStatus" role="status" aria-live="polite" style="font-weight:750;margin-bottom:10px">Звонок</div><div id="incomingCallActions" class="hidden" style="display:flex;gap:8px;margin-top:10px"><button id="answerCall" class="btn green" type="button">Принять</button><button id="rejectCall" class="btn light" type="button">Отклонить</button></div><div id="activeCallActions" class="hidden" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button id="muteCall" class="btn light" type="button">Выключить микрофон</button><button id="cameraCall" class="btn light" type="button">Выключить камеру</button><button id="switchCameraCall" class="btn light" type="button">Сменить камеру</button><button id="hangupCall" class="btn" style="background:#b4233b;color:white" type="button">Завершить звонок</button></div><div id="callVideos" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px"><video id="remoteVideo" autoplay playsinline style="display:none;width:100%;max-height:260px;background:#071b2a;border-radius:12px"></video><video id="localVideo" autoplay muted playsinline style="display:none;width:100%;max-height:180px;background:#071b2a;border-radius:12px"></video></div></div><div id="chatBody" class="chatbody"><div class="empty"><div class="mark" style="margin:0 auto 16px">К</div><strong style="color:var(--navy)">Ваши разговоры начинаются здесь</strong><p>Найдите человека по имени или username и напишите первое сообщение.</p></div></div><div id="emojiPicker" class="emoji-picker hidden" role="dialog" aria-label="Выбор эмодзи"><div class="emoji-picker-head"><strong>Эмодзи для сообщения</strong><button id="closeEmojiPicker" class="emoji-close" type="button" aria-label="Закрыть выбор эмодзи">✕</button></div><input id="emojiSearch" class="emoji-search" type="search" autocomplete="off" placeholder="Найти эмодзи…" aria-label="Поиск эмодзи"><div id="emojiCategories" class="emoji-categories" aria-label="Категории эмодзи"></div><div id="emojiGrid" class="emoji-grid"></div><div class="emoji-credit">Базовые эмодзи отображаются средствами вашего устройства. Выберите смайлик, чтобы вставить его в текст сообщения.</div></div><form id="composer" class="composer hidden"><button id="attachFile" class="btn" type="button" title="Прикрепить файл" aria-label="Прикрепить файл">＋</button><input id="fileInput" type="file" hidden><button id="emojiButton" class="btn" type="button" title="Вставить смайлик" aria-label="Вставить смайлик" aria-expanded="false" aria-controls="emojiPicker">😊</button><button id="addSticker" class="btn" type="button" title="Загрузить стикер" aria-label="Загрузить стикер">☺</button><input id="stickerInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden><button id="recordVoice" class="btn" type="button" title="Записать голосовое" aria-label="Записать голосовое">🎙</button><input id="messageInput" maxlength="4000" autocomplete="off" placeholder="Напишите сообщение…" aria-label="Сообщение"><button id="sendMessage" class="btn green" type="submit">Отправить</button></form><div id="mediaStatus" class="tiny muted" style="padding:0 16px 8px" aria-live="polite"></div><div id="chatNotice" class="notice" style="padding:0 16px 10px"></div></div></section>
 </div>
 </main>
 <footer class="foot">КЮН · Создаём пространство для связи и сотрудничества</footer>
@@ -745,6 +796,44 @@ async function uploadMedia(file,kind='file',duration=0){
 $('attachFile').addEventListener('click',()=>$('fileInput').click());
 $('fileInput').addEventListener('change',async()=>{const file=$('fileInput').files?.[0];$('fileInput').value='';if(!file)return;try{await uploadMedia(file)}catch(e){mediaNotice('Не удалось отправить файл: '+(e.message||e))}});
 $('addSticker').addEventListener('click',()=>{if(!activeId){mediaNotice('Сначала откройте диалог.');return}$('stickerInput').click()});
+const EMOJI_CATEGORIES=[
+ {id:'faces',label:'Лица',items:[['😀','улыбка'],['😃','радость'],['😄','счастье'],['😁','широкая улыбка'],['😆','смех'],['😅','с облегчением'],['😂','слёзы смеха'],['🤣','ржу'],['🙂','улыбка'],['🙃','перевёрнутый смайл'],['😉','подмигивание'],['😊','довольный'],['😇','ангел'],['🥰','любовь'],['😍','влюблён'],['😘','поцелуй'],['😋','вкусно'],['😎','круто'],['🤗','объятия'],['🥳','праздник'],['🤔','думаю'],['🫡','уважение'],['🫠','таю'],['😴','сон'],['🥹','растроган'],['😭','плачу'],['😤','фыркаю'],['😡','злость'],['🤯','взрыв мозга'],['😱','испуг'],['🤩','восхищение'],['🙏','спасибо'],['😌','спокойствие'],['🤝','договорились']]},
+ {id:'hands',label:'Жесты',items:[['👋','привет'],['🤚','ладонь'],['✋','стоп'],['🖐️','пять пальцев'],['🫶','сердце руками'],['🤲','ладони'],['🙌','ура'],['👏','аплодисменты'],['👍','лайк'],['👎','дизлайк'],['👌','ок'],['🤌','итальянский жест'],['✌️','победа'],['🤞','держу кулачки'],['🫰','мини сердце'],['🤟','люблю жестом'],['🤘','рок'],['🤙','позвони'],['💪','сила'],['🫂','объятия'],['🫱','правая рука'],['🫲','левая рука'],['☝️','внимание'],['👇','вниз'],['👀','смотрю'],['💅','маникюр']]},
+ {id:'hearts',label:'Сердца',items:[['❤️','красное сердце'],['🧡','оранжевое сердце'],['💛','жёлтое сердце'],['💚','зелёное сердце'],['🩵','голубое сердце'],['💙','синее сердце'],['💜','фиолетовое сердце'],['🤎','коричневое сердце'],['🖤','чёрное сердце'],['🤍','белое сердце'],['💔','разбитое сердце'],['❤️‍🔥','горящее сердце'],['❤️‍🩹','лечу сердце'],['💕','два сердца'],['💞','вращающиеся сердца'],['💓','бьющееся сердце'],['💗','растущее сердце'],['💖','сияющее сердце'],['💘','стрела купидона'],['💝','сердце с лентой'],['💟','декоративное сердце'],['💋','поцелуй'],['💌','любовное письмо'],['💐','букет']]},
+ {id:'nature',label:'Природа',items:[['🌱','росток'],['🌿','зелень'],['☘️','клевер'],['🍀','удача'],['🌳','дерево'],['🌲','ель'],['🌻','подсолнух'],['🌼','ромашка'],['🌸','цветок'],['🌷','тюльпан'],['🪷','лотос'],['🌺','гибискус'],['🌞','солнце с лицом'],['🌈','радуга'],['⭐','звезда'],['✨','искры'],['💫','головокружение'],['🌟','сияющая звезда'],['🔥','огонь'],['💧','капля'],['🌊','волна'],['☁️','облако'],['🌙','луна'],['☀️','солнце'],['🦋','бабочка'],['🐝','пчела'],['🐦','птица'],['🐈','кошка'],['🐕','собака'],['🕊️','голубь'],['🌍','земля'],['🌌','галактика']]},
+ {id:'food',label:'Еда',items:[['🍎','яблоко'],['🍊','апельсин'],['🍋','лимон'],['🍉','арбуз'],['🍇','виноград'],['🍓','клубника'],['🍒','вишня'],['🍑','персик'],['🥭','манго'],['🍍','ананас'],['🥑','авокадо'],['🥕','морковь'],['🍕','пицца'],['🍔','бургер'],['🌮','тако'],['🍜','лапша'],['🍣','суши'],['🥗','салат'],['🍰','торт'],['🎂','день рождения'],['🍪','печенье'],['🍫','шоколад'],['☕','кофе'],['🫖','чайник'],['🍵','чай'],['🥤','напиток']]},
+ {id:'symbols',label:'Символы',items:[['✅','готово'],['✔️','галочка'],['❌','крестик'],['⚡','энергия'],['💡','идея'],['🔔','колокольчик'],['🎉','праздник'],['🎊','конфетти'],['🎁','подарок'],['💎','кристалл'],['🟢','зелёный круг'],['🔵','синий круг'],['🟡','жёлтый круг'],['♻️','переработка'],['♾️','бесконечность'],['☮️','мир'],['🧘','медитация'],['🏡','дом'],['🎵','музыка'],['🚀','ракета'],['🌐','мир'],['🪄','магия'],['🧿','оберег'],['🔑','ключ'],['📌','закрепить'],['💬','сообщение']]}
+];
+let activeEmojiCategory='faces';
+function renderEmojiPicker(){
+ const query=$('emojiSearch').value.trim().toLocaleLowerCase('ru');
+ const categories=$('emojiCategories'),grid=$('emojiGrid');
+ categories.innerHTML=EMOJI_CATEGORIES.map(c=>'<button type="button" class="emoji-category" data-category="'+c.id+'" aria-pressed="'+(c.id===activeEmojiCategory?'true':'false')+'">'+c.label+'</button>').join('');
+ categories.querySelectorAll('[data-category]').forEach(button=>button.addEventListener('click',()=>{activeEmojiCategory=button.dataset.category;renderEmojiPicker()}));
+ let items=EMOJI_CATEGORIES.filter(c=>query||activeEmojiCategory==='all'||c.id===activeEmojiCategory).flatMap(c=>c.items.map(([emoji,name])=>({emoji,name,category:c.id})));
+ if(query)items=items.filter(item=>item.name.toLocaleLowerCase('ru').includes(query)||item.emoji.includes(query));
+ grid.innerHTML=items.length?items.map(item=>'<button type="button" class="emoji-option" data-emoji="'+esc(item.emoji)+'" title="'+esc(item.name)+'" aria-label="'+esc(item.name)+'">'+esc(item.emoji)+'</button>').join(''):'<div class="emoji-empty">Ничего не найдено. Попробуйте другое слово.</div>';
+ grid.querySelectorAll('[data-emoji]').forEach(button=>button.addEventListener('click',()=>insertEmoji(button.dataset.emoji)));
+}
+function insertEmoji(emoji){
+ const input=$('messageInput');if(!input)return;
+ const start=input.selectionStart??input.value.length,end=input.selectionEnd??input.value.length;
+ input.setRangeText(emoji,start,end,'end');input.focus();
+ input.dispatchEvent(new Event('input',{bubbles:true}));
+ $('emojiPicker').classList.add('hidden');$('emojiButton').setAttribute('aria-expanded','false');
+}
+function toggleEmojiPicker(force){
+ const picker=$('emojiPicker'),button=$('emojiButton');
+ const shouldOpen=typeof force==='boolean'?force:picker.classList.contains('hidden');
+ picker.classList.toggle('hidden',!shouldOpen);button.setAttribute('aria-expanded',String(shouldOpen));
+ if(shouldOpen){renderEmojiPicker();$('emojiSearch').focus()}else button.focus();
+}
+$('emojiButton').addEventListener('click',()=>toggleEmojiPicker());
+$('closeEmojiPicker').addEventListener('click',()=>toggleEmojiPicker(false));
+$('emojiSearch').addEventListener('input',renderEmojiPicker);
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('emojiPicker').classList.contains('hidden'))toggleEmojiPicker(false)});
+document.addEventListener('click',event=>{if($('emojiPicker').classList.contains('hidden'))return;if(event.target.closest('#emojiPicker,#emojiButton'))return;toggleEmojiPicker(false)});
+
 $('stickerInput').addEventListener('change',async()=>{const file=$('stickerInput').files?.[0];$('stickerInput').value='';if(!file)return;try{await uploadMedia(file,'sticker')}catch(e){mediaNotice('Не удалось добавить стикер: '+(e.message||e))}});
 let recorder=null,recordedChunks=[],recordStarted=0,recordStream=null;
 $('recordVoice').addEventListener('click',async()=>{
