@@ -1,0 +1,6 @@
+output/
+backend/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
