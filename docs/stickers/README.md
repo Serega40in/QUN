@@ -103,6 +103,8 @@
 
 Папка: [tools/qun-sticker-studio](../../tools/qun-sticker-studio/README.md).
 
+Для первого бесплатного GPU-эксперимента рекомендуем [Kaggle Notebook](../../tools/qun-sticker-studio/kaggle_omnii_stickers.ipynb) и [пошаговую инструкцию](KAGGLE_NOTEBOOK.md). Этот вариант использует Diffusers + SD 1.5 + IP-Adapter и не требует локального Python 3.12.
+
 - Установить Python 3.10+.
 - Запустить start_windows.bat двойным щелчком.
 - Браузер откроет http://127.0.0.1:8791.
