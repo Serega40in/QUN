@@ -406,7 +406,7 @@ function setCallActions(active=false,incoming=false){$('activeCallActions')?.cla
 function revealCallOnMobile(){if(window.matchMedia&&window.matchMedia('(max-width:720px)').matches){$('sidebar')?.classList.add('hide-mobile');$('chatPanel')?.classList.remove('hide-mobile')}}
 function restoreCallChannelState(){const preferredId=currentCallConversationId||activeId;callChannel=preferredId?callChannels.get(preferredId)||null:null;callChannelReady=Boolean(activeId&&callChannels.get(activeId));updateCallButtons()}
 async function closeAllCallChannels(){stopRingTone();const channels=[...new Set(callChannels.values())];callChannels.clear();callChannelPromises.clear();callChannel=null;callChannelReady=false;currentCallConversationId=null;for(const channel of channels)retiredCallChannels.add(channel);await Promise.all(channels.map(channel=>sb.removeChannel(channel).catch(()=>{})));updateCallButtons()}
-function sendCallSignal(payload){const conversationId=currentCallConversationId||activeId;const channel=callChannels.get(conversationId)||(conversationId===activeId?callChannel:null);if(!channel)return Promise.reject(new Error('Канал сигнализации не подключён'));return channel.send({type:'broadcast',event:'signal',payload:{...payload,from:user.id,to:currentCallTarget,conversationId}})}
+function sendCallSignal(payload){const conversationId=currentCallConversationId||activeId;const channel=callChannels.get(conversationId)||(conversationId===activeId?callChannel:null);if(!channel)return Promise.reject(new Error('Канал сигнализации не подключён'));return channel.send({type:'broadcast',event:'signal',payload:{...payload,from:user.id,to:currentCallTarget,conversationId,inviteId:currentCallInviteId||undefined}})}
 async function setupCallChannel(chatId){
  if(!chatId||!user)return;
  const activate=()=>{if(chatId===activeId){callChannel=callChannels.get(chatId)||null;callChannelReady=Boolean(callChannel);updateCallButtons()}};
@@ -435,7 +435,7 @@ async function setupCallChannel(chatId){
      const incomingPerson=chatRows.find(c=>c.id===chatId)?.person||knownPeople.find(p=>p.id===payload.from);
      callStatus((callMode==='video'?'Входящий видеозвонок':'Входящий аудиозвонок')+' от '+(incomingPerson?publicName(incomingPerson):'собеседника'));
      notice('chatNotice','Входящий звонок. Нажмите «Принять» в панели звонка.','ok');
-    }else if(payload.conversationId!==currentCallConversationId)return;
+    }else if(payload.conversationId!==currentCallConversationId||(payload.inviteId&&currentCallInviteId&&payload.inviteId!==currentCallInviteId))return;
     else if(payload.type==='answer'&&peerConnection){
      stopRingTone();
      try{await peerConnection.setRemoteDescription(payload.description);for(const c of queuedIce.splice(0)){try{await peerConnection.addIceCandidate(c)}catch{}}callState='connected';callStatus('Соединение устанавливается…')}
