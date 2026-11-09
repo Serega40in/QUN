@@ -81,7 +81,7 @@ echo.
 echo ComfyUI CPU backend installed.
 echo Next: download a compatible checkpoint and place it in:
 echo backend\ComfyUI\models\checkpoints\
-echo Then run start_comfyui_cpu.bat and start_windows.bat.
+echo Then run start_windows.bat. It will open ComfyUI and the Studio when the model is present.
 echo.
 pause
 endlocal
