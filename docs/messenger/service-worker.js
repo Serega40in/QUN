@@ -1,4 +1,4 @@
-const CACHE_NAME = "qun-messenger-shell-v1";
+const CACHE_NAME = "qun-messenger-shell-v2";
 const SHELL_URLS = ["./", "./manifest.webmanifest"];
 
 self.addEventListener("install", event => {
