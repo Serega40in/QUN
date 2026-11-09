@@ -1,6 +1,6 @@
 # QUN Kaggle Render Worker — инструкция
 
-**Статус:** личный тестовый GPU-узел, первая версия — только text-to-image.  
+**Статус:** личный тестовый GPU-узел, первая версия — только text-to-image.
 **Ноутбук:** [скачать .ipynb](https://raw.githubusercontent.com/Serega40in/QUN/main/tools/qun-node-worker/kaggle_qun_render_worker.ipynb) · [открыть исходник](https://github.com/Serega40in/QUN/blob/main/tools/qun-node-worker/kaggle_qun_render_worker.ipynb)
 
 ## Что делает Worker
