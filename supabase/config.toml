@@ -1,0 +1,2 @@
+[functions.qun-webpush]
+verify_jwt = false
