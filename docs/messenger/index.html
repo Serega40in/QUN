@@ -334,8 +334,8 @@ const SUPABASE_KEY='sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L';
 const sb=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);let activeVoiceAudio=null,activeVoiceButton=null;
 let user=null,profile=null,activeId=null,activePerson=null,pollTimer=null,searchTimer=null,knownPeople=[],chatRows=[],unreadCounts={},lastNotificationCheck=null;
-let callChannel=null,callChannels=new Map(),callChannelPromises=new Map(),currentCallConversationId=null,callChannelSyncRunning=false,peerConnection=null,localCallStream=null,remoteCallStream=null,callMode=null,callState="idle",pendingOffer=null,queuedIce=[],currentCallTarget=null,callMuted=false,cameraEnabled=true,videoFacingMode="user";const retiredCallChannels=new WeakSet();
- let ringAudioContext=null,ringInterval=null,ringGeneration=0;
+let callChannel=null,callChannels=new Map(),callChannelPromises=new Map(),currentCallConversationId=null,currentCallInviteId=null,callChannelSyncRunning=false,peerConnection=null,localCallStream=null,remoteCallStream=null,callMode=null,callState="idle",pendingOffer=null,queuedIce=[],currentCallTarget=null,callMuted=false,cameraEnabled=true,videoFacingMode="user";const retiredCallChannels=new WeakSet();
+ let ringAudioContext=null,ringInterval=null,ringGeneration=0,pushSubscriptionReady=false;
  let callChannelReady=false;
  function updateCallButtons(){const busy=callState!=='idle';for(const id of ['audioCall','videoCall']){const b=$(id);if(b){b.disabled=busy||!callChannelReady;b.setAttribute('aria-disabled',String(b.disabled));b.title=busy?'Сначала завершите текущий звонок':(!callChannelReady?'Подключаем защищённый канал звонка…':'')}}}
  async function unlockCallAudio(){const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return null;if(!ringAudioContext)ringAudioContext=new AudioCtx();if(ringAudioContext.state==='suspended')await ringAudioContext.resume();return ringAudioContext}
@@ -541,8 +541,109 @@ $('muteCall')?.addEventListener('click',()=>{if(!localCallStream)return;callMute
 $('cameraCall')?.addEventListener('click',()=>{if(!localCallStream)return;cameraEnabled=!cameraEnabled;localCallStream.getVideoTracks().forEach(t=>t.enabled=cameraEnabled);$('cameraCall').textContent=cameraEnabled?'Выключить камеру':'Включить камеру'});
 $('switchCameraCall')?.addEventListener('click',async()=>{if(!localCallStream||callMode!=='video')return;const oldTrack=localCallStream.getVideoTracks()[0];if(!oldTrack)return;videoFacingMode=videoFacingMode==='user'?'environment':'user';try{const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:videoFacingMode},audio:false});const next=stream.getVideoTracks()[0];const sender=peerConnection?.getSenders().find(x=>x.track?.kind==='video');if(sender)await sender.replaceTrack(next);localCallStream.removeTrack(oldTrack);oldTrack.stop();localCallStream.addTrack(next);$('localVideo').srcObject=localCallStream}catch(e){videoFacingMode=videoFacingMode==='user'?'environment':'user';callStatus('Не удалось переключить камеру: '+e.message)}});
 
-function updateNotificationButton(){const b=$('enableNotifications');if(!b)return;if(!('Notification' in window)){b.textContent='Уведомления недоступны';b.disabled=true;return}if(Notification.permission==='granted'){b.textContent='Уведомления включены';b.classList.add('green');b.classList.remove('light')}else if(Notification.permission==='denied'){b.textContent='Разрешите в браузере';b.classList.remove('green');b.classList.add('light')}else{b.textContent='Включить уведомления';b.classList.remove('green');b.classList.add('light')}}
-$('enableNotifications').addEventListener('click',async()=>{if(!('Notification' in window)){notice('chatNotice','Этот браузер не поддерживает системные уведомления.','error');return}try{const permission=await Notification.requestPermission();updateNotificationButton();if(permission==='granted')notice('chatNotice','Уведомления включены. Новые сообщения будут показываться, пока КЮН работает в браузере.','ok');else notice('chatNotice','Разрешение не выдано. Включите уведомления для сайта в настройках браузера.','error')}catch(e){notice('chatNotice','Не удалось включить уведомления. Проверьте настройки браузера.','error')}});
+function base64UrlToUint8Array(value){
+ const normalized=String(value||'').replace(/-/g,'+').replace(/_/g,'/');
+ const binary=atob(normalized+'='.repeat((4-normalized.length%4)%4));
+ return Uint8Array.from(binary,char=>char.charCodeAt(0));
+}
+async function registerPushSubscription(){
+ if(!user)throw new Error('Войдите в QUN перед настройкой уведомлений.');
+ if(!('Notification' in window)||Notification.permission!=='granted')throw new Error('Разрешите системные уведомления для QUN.');
+ if(!('serviceWorker' in navigator)||!('PushManager' in window))throw new Error('Этот браузер не поддерживает push-звонки. На iPhone добавьте QUN на экран Домой и откройте его оттуда.');
+ const registration=await navigator.serviceWorker.ready;
+ const {data:keyData,error:keyError}=await sb.functions.invoke('qun-webpush',{body:{action:'public_key'}});
+ if(keyError||!keyData?.publicKey)throw new Error(keyError?.message||'Не удалось подготовить безопасные push-уведомления.');
+ const applicationServerKey=base64UrlToUint8Array(keyData.publicKey);
+ let subscription=await registration.pushManager.getSubscription();
+ const existingKey=subscription?.options?.applicationServerKey;
+ if(subscription&&existingKey){
+  const currentKey=new Uint8Array(existingKey);
+  if(currentKey.length!==applicationServerKey.length||currentKey.some((value,index)=>value!==applicationServerKey[index])){
+   await subscription.unsubscribe();subscription=null;
+  }
+ }
+ if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey});
+ const {error}=await sb.functions.invoke('qun-webpush',{body:{action:'subscribe',subscription:subscription.toJSON()}});
+ if(error)throw new Error(error.message||'Не удалось сохранить push-подписку этого устройства.');
+ pushSubscriptionReady=true;updateNotificationButton();return subscription;
+}
+async function syncExistingPushSubscription(){
+ if(!user||!('Notification' in window)||Notification.permission!=='granted'||!('serviceWorker' in navigator)||!('PushManager' in window))return;
+ try{
+  const registration=await navigator.serviceWorker.ready;
+  const subscription=await registration.pushManager.getSubscription();
+  if(!subscription)return;
+  const {error}=await sb.functions.invoke('qun-webpush',{body:{action:'subscribe',subscription:subscription.toJSON()}});
+  if(!error)pushSubscriptionReady=true;
+  updateNotificationButton();
+ }catch(error){console.warn('QUN push subscription sync failed:',error)}
+}
+async function updateCallInviteStatus(status,callId=currentCallInviteId){
+ if(!user||!callId)return;
+ try{
+  const {error}=await sb.functions.invoke('qun-webpush',{body:{action:'update_call',callId,status}});
+  if(error)console.warn('QUN call invite status update failed:',error.message||error);
+ }catch(error){console.warn('QUN call invite status update failed:',error)}
+}
+function waitForIceGathering(pc,timeoutMs=1500){
+ return new Promise(resolve=>{
+  let settled=false,timer=null;
+  const done=()=>{if(settled)return;settled=true;if(timer!==null)clearTimeout(timer);pc.removeEventListener('icegatheringstatechange',check);resolve()};
+  const check=()=>{if(pc.iceGatheringState==='complete')done()};
+  pc.addEventListener('icegatheringstatechange',check);
+  timer=setTimeout(done,timeoutMs);check();
+ });
+}
+async function loadIncomingCall(callId){
+ if(!user||!callId)return;
+ const {data,error}=await sb.functions.invoke('qun-webpush',{body:{action:'get_incoming_calls',callId}});
+ if(error){notice('chatNotice','Не удалось открыть входящий вызов: '+(error.message||'проверьте соединение'),'error');return}
+ const invite=(data?.calls||[]).find(item=>item.id===callId);
+ if(!invite){notice('chatNotice','Этот вызов уже завершён или время приглашения истекло.','error');return}
+ if(callState!=='idle'){
+  if(currentCallInviteId===invite.id)return;
+  notice('chatNotice','Уже есть активный вызов. Сначала завершите его.','error');return;
+ }
+ await openPerson(invite.from_user_id,invite.conversation_id);
+ if(activeId!==invite.conversation_id||!activePerson)return;
+ if(callState!=='idle'){
+  if(currentCallInviteId===invite.id)return;
+  return;
+ }
+ currentCallInviteId=invite.id;currentCallConversationId=invite.conversation_id;
+ callChannel=callChannels.get(invite.conversation_id)||callChannel;
+ callChannelReady=Boolean(callChannel);pendingOffer=invite.offer;currentCallTarget=invite.from_user_id;
+ callMode=invite.mode==='video'?'video':'audio';callState='ringing';
+ $('callStage').classList.toggle('video-call',callMode==='video');updateCallButtons();
+ revealCallOnMobile();showCallStage(true);setCallActions(false,true);startRingTone();
+ callStatus((callMode==='video'?'Входящий видеозвонок от ':'Входящий аудиозвонок от ')+publicName(activePerson));
+ notice('chatNotice','Входящий звонок. Нажмите «Принять» в панели звонка.','ok');
+}
+function updateNotificationButton(){
+ const b=$('enableNotifications');if(!b)return;
+ if(!('Notification' in window)){b.textContent='Уведомления недоступны';b.disabled=true;return}
+ b.disabled=false;
+ if(Notification.permission==='granted'){
+  b.textContent=pushSubscriptionReady?'Звонки и уведомления включены':'Включить звонки и уведомления';
+  b.classList.toggle('green',pushSubscriptionReady);b.classList.toggle('light',!pushSubscriptionReady);
+ }else if(Notification.permission==='denied'){
+  b.textContent='Разрешите в браузере';b.classList.remove('green');b.classList.add('light');
+ }else{
+  b.textContent='Включить уведомления';b.classList.remove('green');b.classList.add('light');
+ }
+}
+$('enableNotifications').addEventListener('click',async()=>{
+ if(!('Notification' in window)){notice('chatNotice','Этот браузер не поддерживает системные уведомления.','error');return}
+ try{
+  const permission=await Notification.requestPermission();updateNotificationButton();
+  if(permission!=='granted'){notice('chatNotice','Разрешение не выдано. Включите уведомления для сайта в настройках браузера.','error');return}
+  await registerPushSubscription();
+  notice('chatNotice','Push-уведомления и входящие звонки настроены на этом устройстве. Для работы в фоне оставьте системные уведомления разрешёнными.','ok');
+ }catch(error){
+  updateNotificationButton();
+  notice('chatNotice','Обычные уведомления могут работать только в открытом браузере; push-звонки на этом устройстве не удалось настроить: '+(error?.message||'проверьте поддержку браузера'),'error');
+ }
+});
 function readMarkerKey(chatId){return 'qun:last-read:'+user.id+':'+chatId}
 function markConversationRead(chatId){if(!user||!chatId)return;localStorage.setItem(readMarkerKey(chatId),new Date().toISOString());unreadCounts[chatId]=0}
 async function restoreUnreadCounts(){if(!user)return;const now=new Date().toISOString();const chats=chatRows.slice();await Promise.all(chats.map(async chat=>{const key=readMarkerKey(chat.id);let lastRead=localStorage.getItem(key);if(!lastRead){localStorage.setItem(key,now);unreadCounts[chat.id]=0;return}const {count,error}=await sb.from('messages').select('id',{count:'exact',head:true}).eq('conversation_id',chat.id).neq('sender_id',user.id).gt('created_at',lastRead);if(!error)unreadCounts[chat.id]=count||0}));renderPeople()}
