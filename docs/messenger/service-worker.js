@@ -54,9 +54,19 @@ self.addEventListener("push", event => {
     renotify: true,
     requireInteraction: isCall,
     vibrate: isCall ? [250, 100, 250, 100, 400] : [180, 80, 180],
-    data: { url: payload.url || "./", type: payload.type || "message" }
+    data: { url: payload.url || "./", type: payload.type || "message", callId: payload.callId || null, conversationId: payload.conversationId || null }
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil((async () => {
+    // Realtime already rings in a visible QUN tab; avoid a second system notification.
+    if (isCall) {
+      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const appIsVisible = clients.some(client =>
+        client.url.startsWith(self.registration.scope) && client.visibilityState === "visible"
+      );
+      if (appIsVisible) return;
+    }
+    await self.registration.showNotification(title, options);
+  })());
 });
 
 self.addEventListener("notificationclick", event => {
