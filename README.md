@@ -57,7 +57,7 @@
 - **Руководство, технический стандарт и публикация:** [docs/stickers/README.md](docs/stickers/README.md).
 - **Первый авторский набор Omnii — 24 промта:** [PROMPTS_OMNII_01.md](docs/stickers/PROMPTS_OMNII_01.md).
 - **Форма художника:** [QUN Sticker Artist Portal](https://serega40in.github.io/QUN/stickers/).
-- **Локальная браузерная студия и запуск Windows:** [tools/qun-sticker-studio](tools/qun-sticker-studio/README.md).
+- **Локальная браузерная студия:** [инструкция](tools/qun-sticker-studio/README.md) · [запустить/установить одной кнопкой для Windows](tools/qun-sticker-studio/setup_and_start_windows.bat).
 
 > Первая версия готовит пакеты и отправляет задания в локальный ComfyUI; она не публикует стикеры автоматически. Приём файлов пока идёт через ZIP и GitHub-заявку с ручной модерацией.
 
