@@ -1,0 +1,64 @@
+name: Validate QUN Sticker Kaggle Notebook
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tools/qun-sticker-studio/kaggle_omnii_stickers.ipynb"
+      - ".github/workflows/validate-sticker-notebook.yml"
+  pull_request:
+    paths:
+      - "tools/qun-sticker-studio/kaggle_omnii_stickers.ipynb"
+      - ".github/workflows/validate-sticker-notebook.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-notebook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate notebook JSON and Python syntax
+        run: |
+          python - <<'PY'
+          import ast
+          import json
+          from pathlib import Path
+
+          path = Path("tools/qun-sticker-studio/kaggle_omnii_stickers.ipynb")
+          notebook = json.loads(path.read_text(encoding="utf-8"))
+          assert notebook.get("nbformat") == 4, "Expected notebook format version 4"
+          cells = notebook.get("cells", [])
+          code_cells = [cell for cell in cells if cell.get("cell_type") == "code"]
+          assert len(code_cells) >= 8, f"Too few code cells: {len(code_cells)}"
+
+          checked = 0
+          for index, cell in enumerate(cells):
+              if cell.get("cell_type") != "code":
+                  continue
+              source = cell.get("source", [])
+              source = "".join(source) if isinstance(source, list) else str(source)
+              # Jupyter magic commands are valid notebook syntax, not Python AST syntax.
+              python_lines = [
+                  line for line in source.splitlines()
+                  if not line.lstrip().startswith("%")
+                  and not line.lstrip().startswith("!")
+              ]
+              code = "\n".join(python_lines)
+              if not code.strip():
+                  continue
+              try:
+                  ast.parse(code, filename=f"{path}:cell-{index + 1}")
+              except SyntaxError as exc:
+                  raise SystemExit(f"Syntax error in cell {index + 1}: {exc}") from exc
+              checked += 1
+
+          print(f"OK: notebook JSON valid; {len(cells)} cells; {checked} Python code cells parsed.")
+          PY
