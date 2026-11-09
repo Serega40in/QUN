@@ -16,7 +16,7 @@ No Python packages are needed for the Studio server itself; it uses the Python s
 
 If you want to test generation on this PC, run `install_comfyui_cpu.bat` once. It installs ComfyUI and CPU-only PyTorch into this folder. This downloads several gigabytes and requires Python 3.12, internet access, and free disk space. The script does **not** download a model.
 
-Then place a compatible checkpoint in `backend/ComfyUI/models/checkpoints/` and run `start_comfyui_cpu.bat`. Keep that console window open. In a second window, run `start_windows.bat`. The Studio should report ComfyUI as connected.
+Then place a compatible checkpoint in `backend/ComfyUI/models/checkpoints/` and double-click `start_windows.bat`. It opens the ComfyUI CPU backend in a separate console window, then opens the Studio in your browser. Keep both console windows open while generating.
 
 For the first experiment, use one 512×512 image and a lightweight SD 1.5 checkpoint. The SD 1.5 model is licensed under CreativeML OpenRAIL-M; review its usage restrictions before any commercial use. The model is not bundled or downloaded automatically. [Model card](https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5).
 
