@@ -10,9 +10,15 @@ echo  and then starts the local browser Studio.
 echo.
 
 where py >nul 2>nul
-if not errorlevel 1 goto launch
+if not errorlevel 1 (
+    py -3 --version >nul 2>nul
+    if not errorlevel 1 goto launch
+)
 where python >nul 2>nul
-if not errorlevel 1 goto launch
+if not errorlevel 1 (
+    python --version >nul 2>nul
+    if not errorlevel 1 goto launch
+)
 
 where winget >nul 2>nul
 if errorlevel 1 goto manual
