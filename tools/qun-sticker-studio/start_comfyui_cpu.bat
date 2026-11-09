@@ -12,7 +12,7 @@ if not exist "backend\ComfyUI\venv\Scripts\python.exe" (
   pause
   exit /b 1
 )
-if not exist "backend\ComfyUI\models\checkpoints\*.safetensors" if not exist "backend\ComfyUI\models\checkdoints\*.ckpt" (
+if not exist "backend\ComfyUI\models\checkpoints\*.safetensors" if not exist "backend\ComfyUI\models\checkpoints\*.ckpt" (
   echo No checkpoint was found in backend\ComfyUI\models\checkpoints.
   echo Download a compatible model first. Read docs\stickers\README.md.
   pause
