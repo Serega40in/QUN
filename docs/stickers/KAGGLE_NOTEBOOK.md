@@ -6,6 +6,8 @@
 
 Открой файл [kaggle_omnii_stickers.ipynb в GitHub](https://github.com/Serega40in/QUN/blob/main/tools/qun-sticker-studio/kaggle_omnii_stickers.ipynb).
 
+[Скачать ноутбук напрямую](https://raw.githubusercontent.com/Serega40in/QUN/main/tools/qun-sticker-studio/kaggle_omnii_stickers.ipynb).
+
 На странице файла нажми **Download raw file**. Если браузер показывает текст JSON, используй кнопку Raw, затем сохрани файл с расширением .ipynb.
 
 Затем открой [Kaggle Notebooks](https://www.kaggle.com/code), создай новый Notebook и выбери импорт/загрузку Notebook из файла. Загрузи только что скачанный .ipynb.
