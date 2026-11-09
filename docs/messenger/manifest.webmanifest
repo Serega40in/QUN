@@ -1,0 +1,28 @@
+{
+  "id": "./",
+  "name": "QUN Messenger",
+  "short_name": "QUN",
+  "description": "Личные сообщения и звонки в пространстве QUN.",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#E8EEEA",
+  "theme_color": "#0B765D",
+  "categories": ["communication", "social"],
+  "icons": [
+    {
+      "src": "../assets/qun-icon.jpg",
+      "sizes": "2048x2048",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "../assets/qun-favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
