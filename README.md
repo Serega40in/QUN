@@ -52,6 +52,15 @@
 
 > QUN Wallet сейчас использует внутренний тестовый ledger в Supabase, а не блокчейн. Тестовые QUN не имеют денежной стоимости. Реальные выплаты, mainnet и публичная сеть из 100+ устройств не запущены; для них нужны отдельные криптографические, нагрузочные и security-аудиты.
 
+## QUN Stickers
+
+- **Руководство, технический стандарт и публикация:** [docs/stickers/README.md](docs/stickers/README.md).
+- **Первый авторский набор Omnii — 24 промта:** [PROMPTS_OMNII_01.md](docs/stickers/PROMPTS_OMNII_01.md).
+- **Форма художника:** [QUN Sticker Artist Portal](https://serega40in.github.io/QUN/docs/stickers/).
+- **Локальная браузерная студия и запуск Windows:** [tools/qun-sticker-studio](tools/qun-sticker-studio/README.md).
+
+> Первая версия готовит пакеты и отправляет задания в локальный ComfyUI; она не публикует стикеры автоматически. Приём файлов пока идёт через ZIP и GitHub-заявку с ручной модерацией.
+
 ## QUN Market
 
 - **Маркетплейс:** https://serega40in.github.io/QUN/market/
