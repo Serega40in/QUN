@@ -8,18 +8,18 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#E8EEEA",
-  "theme_color": "#0B765D",
+  "background_color": "#071F37",
+  "theme_color": "#073956",
   "categories": ["communication", "social"],
   "icons": [
     {
-      "src": "./icons/qun-192.svg",
+      "src": "./icons/qun-192.svg?v=20261110",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "./icons/qun-512.svg",
+      "src": "./icons/qun-512.svg?v=20261110",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
@@ -31,7 +31,7 @@
       "purpose": "any"
     },
     {
-      "src": "../assets/qun-favicon.svg",
+      "src": "../assets/qun-favicon.svg?v=20261110",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
