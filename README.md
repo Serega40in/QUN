@@ -46,6 +46,7 @@
 ## QUN Wallet и распределённая сеть
 
 - **QUN Wallet (testnet MVP):** https://serega40in.github.io/QUN/qun-wallet/
+- **QUN Blockchain:** [план первого рабочего контура](docs/blockchain/README.md) — TON Testnet, TON Connect, подтверждение кошелька через QUN ID, переводы и смарт-контракты. Это план интеграции, не описание уже запущенной сети.
 - **Описание кошелька и ограничения:** [docs/qun-wallet/README.md](docs/qun-wallet/README.md)
 - **QUN Node + Storage:** [проект](https://serega40in.github.io/QUN/node/), [панель](https://serega40in.github.io/QUN/node/dashboard/)
 - **План мощности для 1 млн активных пользователей и пилота 100+ устройств:** [capacity plan v0.1](docs/architecture/qun-network-capacity-plan-v0.1.md)
