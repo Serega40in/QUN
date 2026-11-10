@@ -13,8 +13,8 @@ Worker забирает задания сам через исходящий HTTP
 
 1. Создай Kaggle Notebook и импортируй скачанный файл `.ipynb`.
 2. В Settings включи **Accelerator → GPU** (если выбор доступен, начни с **T4x2**) и **Internet → On**.
-3. В Hugging Face открой [Stable Diffusion 1.5](https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5), прими условия доступа и создай Read token.
-4. В Kaggle добавь секрет **HF_TOKEN** со значением этого токена. Не вставляй токен непосредственно в ячейку или репозиторий.
+3. Первый checkpoint Stable Diffusion 1.5 — публичный файл на [Hugging Face](https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5). Для этого теста токен обычно не требуется.
+4. По желанию можно добавить Kaggle Secret **HF_TOKEN** с Hugging Face Read token — он пригодится для моделей, которые требуют авторизации. Не вставляй токен непосредственно в ячейку или репозиторий.
 5. Выполняй ячейки сверху вниз. Установка ComfyUI и загрузка checkpoint 4,27 ГБ происходят только в Kaggle-сессии.
 
 ## Привязка к QUN ID
