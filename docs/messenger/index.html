@@ -385,7 +385,7 @@ const SUPABASE_KEY='sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L';
 const sb=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);let activeVoiceAudio=null,activeVoiceButton=null;
 let user=null,profile=null,activeId=null,activePerson=null,pollTimer=null,searchTimer=null,knownPeople=[],chatRows=[],unreadCounts={},lastNotificationCheck=null;
-let callChannel=null,callChannels=new Map(),callChannelPromises=new Map(),currentCallConversationId=null,currentCallInviteId=null,callChannelSyncRunning=false,peerConnection=null,localCallStream=null,remoteCallStream=null,callMode=null,callState="idle",pendingOffer=null,queuedIce=[],currentCallTarget=null,callMuted=false,cameraEnabled=true,videoFacingMode="user";const retiredCallChannels=new WeakSet();
+let callChannel=null,callChannels=new Map(),callChannelPromises=new Map(),currentCallConversationId=null,currentCallInviteId=null,callChannelSyncRunning=false,peerConnection=null,localCallStream=null,remoteCallStream=null,callMode=null,callState="idle",pendingOffer=null,queuedIce=[],pendingLocalIce=[],callSignalReady=false,currentCallTarget=null,callMuted=false,cameraEnabled=true,videoFacingMode="user";const retiredCallChannels=new WeakSet();
  let ringAudioContext=null,ringInterval=null,ringGeneration=0,pushSubscriptionReady=false;
  let callChannelReady=false;
  function updateCallButtons(){const busy=callState!=='idle';for(const id of ['audioCall','videoCall']){const b=$(id);if(b){b.disabled=busy||!callChannelReady;b.setAttribute('aria-disabled',String(b.disabled));b.title=busy?'Сначала завершите текущий звонок':(!callChannelReady?'Подключаем защищённый канал звонка…':'')}}}
@@ -457,7 +457,7 @@ function setCallActions(active=false,incoming=false){$('activeCallActions')?.cla
 function revealCallOnMobile(){if(window.matchMedia&&window.matchMedia('(max-width:720px)').matches){$('sidebar')?.classList.add('hide-mobile');$('chatPanel')?.classList.remove('hide-mobile')}}
 function restoreCallChannelState(){const preferredId=currentCallConversationId||activeId;callChannel=preferredId?callChannels.get(preferredId)||null:null;callChannelReady=Boolean(activeId&&callChannels.get(activeId));updateCallButtons()}
 async function closeAllCallChannels(){stopRingTone();const channels=[...new Set(callChannels.values())];callChannels.clear();callChannelPromises.clear();callChannel=null;callChannelReady=false;currentCallConversationId=null;for(const channel of channels)retiredCallChannels.add(channel);await Promise.all(channels.map(channel=>sb.removeChannel(channel).catch(()=>{})));updateCallButtons()}
-function sendCallSignal(payload){const conversationId=currentCallConversationId||activeId;const channel=callChannels.get(conversationId)||(conversationId===activeId?callChannel:null);if(!channel)return Promise.reject(new Error('Канал сигнализации не подключён'));return channel.send({type:'broadcast',event:'signal',payload:{...payload,from:user.id,to:currentCallTarget,conversationId,inviteId:currentCallInviteId||undefined}})}
+async function sendCallSignal(payload){const conversationId=currentCallConversationId||activeId;const channel=callChannels.get(conversationId)||(conversationId===activeId?callChannel:null);if(!channel)throw new Error('Канал сигнализации не подключён');const result=await channel.send({type:'broadcast',event:'signal',payload:{...payload,from:user.id,to:currentCallTarget,conversationId,inviteId:currentCallInviteId||undefined}});if(result!=='ok')throw new Error(result==='timed out'?'Сервер сигнализации не ответил. Проверьте соединение и повторите звонок.':'Сигнал звонка отклонён сервером. Проверьте права канала Realtime.');return result} async function flushLocalIce(){const candidates=pendingLocalIce.splice(0);for(const candidate of candidates){try{await sendCallSignal({type:'ice',candidate})}catch(error){console.warn('QUN ICE signal failed:',error);callStatus('Не удалось передать сетевые параметры звонка: '+(error.message||error))}}}
 async function setupCallChannel(chatId){
  if(!chatId||!user)return;
  const activate=()=>{if(chatId===activeId){callChannel=callChannels.get(chatId)||null;callChannelReady=Boolean(callChannel);updateCallButtons()}};
@@ -469,7 +469,7 @@ async function setupCallChannel(chatId){
   let lastError=null;
   for(let attempt=0;attempt<3;attempt++){
    if(!user)throw new Error('Сессия завершена.');
-   const channel=sb.channel('qun-call-'+chatId,{config:{broadcast:{self:false},private:true}});
+   const channel=sb.channel('qun-call-'+chatId,{config:{broadcast:{self:false,ack:true},private:true}});
    callChannels.set(chatId,channel);
    channel.on('broadcast',{event:'signal'},async({payload})=>{
     if(!payload||payload.to!==user?.id||payload.from===user?.id||payload.conversationId!==chatId)return;
@@ -542,7 +542,7 @@ async function preparePeer(mode){
  peerConnection=new RTCPeerConnection({iceServers,iceCandidatePoolSize:4});
  remoteCallStream=new MediaStream();$('remoteVideo').srcObject=remoteCallStream;
  peerConnection.ontrack=e=>{for(const track of e.streams[0]?.getTracks()||[e.track])if(!remoteCallStream.getTracks().some(t=>t.id===track.id))remoteCallStream.addTrack(track);$('remoteVideo').style.display=mode==='video'?'block':'none';$('remoteVideo').play().catch(()=>{})};
- peerConnection.onicecandidate=e=>{if(e.candidate)sendCallSignal({type:'ice',candidate:e.candidate.toJSON()}).catch(()=>{})};
+ peerConnection.onicecandidate=e=>{if(!e.candidate)return;const candidate=e.candidate.toJSON();if(!callSignalReady){pendingLocalIce.push(candidate);return}sendCallSignal({type:'ice',candidate}).catch(error=>{console.warn('QUN ICE signal failed:',error);callStatus('Проблема передачи сетевых параметров: '+(error.message||error))})};
  peerConnection.onconnectionstatechange=()=>{const st=peerConnection?.connectionState;if(st==='connected'){callState='connected';callStatus(mode==='video'?'Видеозвонок подключён':'Аудиозвонок подключён');setCallActions(true,false)}else if(st==='failed'){callStatus('Не удалось соединиться. Возможно, сети нужен TURN-сервер.');setCallActions(true,false)}else if(st==='disconnected')callStatus('Связь прервана, пытаемся восстановить…');else if(st==='connecting')callStatus('Подключаемся…')};
  for(const track of localCallStream.getTracks())peerConnection.addTrack(track,localCallStream);
 }
@@ -570,7 +570,7 @@ async function startCall(mode){
   }catch(error){console.warn('QUN background-call invite could not be saved:',error?.message||error)}
   if(callState!=='calling'||peerConnection!==connection){if(inviteId)void updateCallInviteStatus('ended',inviteId);return}
   currentCallInviteId=inviteId;
-  await sendCallSignal({type:'offer',mode,description:completeOffer,inviteId});
+  await sendCallSignal({type:'offer',mode,description:completeOffer,inviteId});callSignalReady=true;await flushLocalIce();
   callStatus(mode==='video'?'Видеозвонок: вызов отправлен. Ожидаем ответа…':'Аудиозвонок: вызов отправлен. Ожидаем ответа…');
  }catch(e){callStatus('Не удалось начать звонок: '+(e.message||e));await finishCall(false)}
 }
@@ -583,7 +583,7 @@ async function answerCall(){
   await preparePeer(callMode);await peerConnection.setRemoteDescription(pendingOffer);pendingOffer=null;
   for(const c of queuedIce.splice(0)){try{await peerConnection.addIceCandidate(c)}catch{}}
   const answer=await peerConnection.createAnswer();await peerConnection.setLocalDescription(answer);
-  await sendCallSignal({type:'answer',description:peerConnection.localDescription.toJSON()});
+  await sendCallSignal({type:'answer',description:peerConnection.localDescription.toJSON()});callSignalReady=true;await flushLocalIce();
   await updateCallInviteStatus('accepted');
   callState='connected';callStatus('Ответ отправлен. Подключаем медиа…');
  }catch(e){callStatus('Не удалось принять звонок: '+(e.message||e));await finishCall(true)}
@@ -593,7 +593,7 @@ async function finishCall(notifyPeer=true){
  if(notifyPeer&&currentCallTarget&&callState!=='idle'){try{await sendCallSignal({type:'hangup'})}catch{}}
  if(peerConnection){peerConnection.ontrack=null;peerConnection.onicecandidate=null;peerConnection.close();peerConnection=null}
  if(localCallStream){localCallStream.getTracks().forEach(t=>t.stop());localCallStream=null}
- const inviteToClose=currentCallInviteId;if(inviteToClose)void updateCallInviteStatus('ended',inviteToClose);remoteCallStream=null;pendingOffer=null;queuedIce=[];$('callStage')?.classList.remove('video-call');callState='idle';callMode=null;currentCallTarget=null;currentCallConversationId=null;currentCallInviteId=null;callMuted=false;cameraEnabled=true;
+ const inviteToClose=currentCallInviteId;if(inviteToClose)void updateCallInviteStatus('ended',inviteToClose);remoteCallStream=null;pendingOffer=null;queuedIce=[];pendingLocalIce=[];callSignalReady=false;$('callStage')?.classList.remove('video-call');callState='idle';callMode=null;currentCallTarget=null;currentCallConversationId=null;currentCallInviteId=null;callMuted=false;cameraEnabled=true;
  if($('localVideo')){$('localVideo').srcObject=null;$('localVideo').style.display='none'}$('cameraCall').style.display='';$('switchCameraCall').style.display='';
  if($('remoteVideo')){$('remoteVideo').srcObject=null;$('remoteVideo').style.display='none'}
  setCallActions(false,false);showCallStage(false);restoreCallChannelState();if(!activeId&&window.matchMedia&&window.matchMedia('(max-width:720px)').matches){$('chatPanel')?.classList.add('hide-mobile');$('sidebar')?.classList.remove('hide-mobile')}
