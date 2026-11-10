@@ -2,7 +2,7 @@
 <html lang="ru" data-qun-theme="light">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0B765D"><meta name="description" content="КЮН — пространство общения и добрых дел."><meta name="qun-build" content="2026.11.09-mobile.2-emoji"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0B765D"><meta name="description" content="КЮН — пространство общения и добрых дел."><meta name="qun-build" content="2026.11.10-mobile.calls.1"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="mobile-web-app-capable" content="yes">
 <title>QUN Messenger — общение</title>
 <link rel="icon" type="image/svg+xml" href="../assets/qun-favicon.svg?v=16"><link rel="alternate icon" type="image/jpeg" href="../assets/qun-icon.jpg?v=16"><link rel="apple-touch-icon" href="../assets/qun-icon.jpg?v=16"><link rel="manifest" href="./manifest.webmanifest">
 <style>
@@ -932,7 +932,8 @@ sb.auth.onAuthStateChange((_event,session)=>{if(!session){clearInterval(pollTime
   document.getElementById('dismissInstallHelp')?.addEventListener('click', closeHelp);
   installDialog?.addEventListener('click', event => { if (event.target === installDialog) closeHelp(); });
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    navigator.serviceWorker.register('./service-worker.js', { scope: './' })
+    navigator.serviceWorker.register('./service-worker.js', { scope: './', updateViaCache: 'none' })
+      .then(registration => registration.update())
       .catch(error => console.warn('QUN offline shell registration failed:', error));
   }
 })();
