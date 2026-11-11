@@ -1,0 +1,103 @@
+name: QUN Agent Bridge CI
+
+on:
+  push:
+    branches:
+      - feature/qun-agent-bridge-v0.1
+    paths:
+      - "services/agent-bridge/**"
+      - "supabase/functions/qun-agent-core/**"
+      - "supabase/migrations/*qun_agent_core*"
+      - ".github/workflows/qun-agent-bridge-ci.yml"
+  pull_request:
+    paths:
+      - "services/agent-bridge/**"
+      - "supabase/functions/qun-agent-core/**"
+      - "supabase/migrations/*qun_agent_core*"
+      - ".github/workflows/qun-agent-bridge-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: services/agent-bridge
+        run: npm install --no-audit --no-fund
+
+      - name: Check JavaScript syntax
+        working-directory: services/agent-bridge
+        run: |
+          node --check src/index.js
+          node --check src/agent-service.js
+          node --check claude-mcpb/server/index.js
+          node --check scripts/generate-token.js
+          node --check extension/service-worker.js
+          node --check extension/popup.js
+
+      - name: Validate JSON manifests
+        working-directory: services/agent-bridge
+        run: |
+          node -e "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8'))"
+          node -e "JSON.parse(require('node:fs').readFileSync('extension/manifest.json', 'utf8'))"
+          node -e "const m=JSON.parse(require('node:fs').readFileSync('claude-mcpb/manifest.json','utf8')); if(m.manifest_version!=='0.3'||m.server?.type!=='node'||m.tools_generated!==true) process.exit(1)"
+
+      - name: Run tests
+        working-directory: services/agent-bridge
+        run: npm test
+
+
+  edge-function-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Type-check QUN Agent Core Edge Function
+        run: deno check supabase/functions/qun-agent-core/index.ts
+
+  powershell-validation:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Parse PowerShell setup scripts
+        shell: pwsh
+        run: |
+          $files = @(
+            "services/agent-bridge/Setup-Windows.ps1",
+            "services/agent-bridge/scripts/Run-Mcp.ps1",
+            "services/agent-bridge/scripts/Copy-Token-To-Clipboard.ps1",
+            "services/agent-bridge/scripts/Configure-Cloud-Agent.ps1",
+            "services/agent-bridge/scripts/Run-AgentService.ps1"
+          )
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Join-Path $PWD $file),
+              [ref]$tokens,
+              [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error $_ }
+              exit 1
+            }
+          }

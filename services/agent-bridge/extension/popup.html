@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QUN Agent Bridge</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; }
+    body { width: 320px; margin: 0; padding: 16px; color: #17243b; background: #f7f9fc; }
+    h1 { margin: 0 0 6px; font-size: 18px; }
+    p { margin: 0 0 14px; color: #5b687a; font-size: 12px; line-height: 1.45; }
+    label { display: block; margin: 12px 0 6px; font-size: 12px; font-weight: 600; }
+    input { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; }
+    button { width: 100%; margin-top: 9px; padding: 10px; border: 0; border-radius: 8px; background: #174d8f; color: white; font-weight: 600; cursor: pointer; }
+    button.secondary { background: #e5edf7; color: #17385f; }
+    #status { margin-top: 12px; padding: 10px; border-radius: 8px; background: white; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+    .hint { margin-top: 10px; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <h1>QUN Agent Bridge</h1>
+  <p>Локальное соединение ИИ с браузером. Разрешай только те сайты и данные, к которым действительно нужен доступ.</p>
+
+  <label for="token">Секретный токен локального моста</label>
+  <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="64 шестнадцатеричных символа">
+
+  <button id="save">Сохранить токен и подключиться</button>
+  <button id="site" class="secondary">Разрешить чтение текущего сайта</button>
+  <button id="tabs" class="secondary">Разрешить просмотр всех вкладок</button>
+
+  <div id="status" role="status">Проверка соединения…</div>
+  <p class="hint">Токен хранится локально в хранилище расширения. Не отправляй его другим людям и не добавляй в Git.</p>
+
+  <script src="popup.js"></script>
+</body>
+</html>

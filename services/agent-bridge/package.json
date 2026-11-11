@@ -1,0 +1,20 @@
+{
+  "name": "@qun/agent-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local MCP bridge between AI agents and a user-approved browser extension",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "token": "node scripts/generate-token.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
+    "ws": "^8.22.1",
+    "zod": "^4.6.7"
+  }
+}

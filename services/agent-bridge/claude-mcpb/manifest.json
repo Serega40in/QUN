@@ -1,0 +1,45 @@
+{
+  "manifest_version": "0.3",
+  "name": "qun-agent-bridge",
+  "display_name": "QUN Agent Bridge",
+  "version": "0.1.1",
+  "description": "Connect Claude Desktop to browser tabs approved by the user through a local MCP bridge.",
+  "long_description": "QUN Agent Bridge is a local-first browser integration. It can check connection status, list tabs when the user grants the optional tabs permission, read text from a website explicitly approved in the browser extension, and open HTTP or HTTPS URLs. It does not click page controls, submit forms, make purchases, send messages, or run arbitrary shell commands.",
+  "author": {
+    "name": "QUN / Serega40in"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Serega40in/QUN.git"
+  },
+  "license": "MIT",
+  "tools_generated": true,
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
+      "env": {
+        "QUN_AGENT_TOKEN": "${user_config.bridge_token}"
+      }
+    }
+  },
+  "user_config": {
+    "bridge_token": {
+      "type": "string",
+      "title": "Browser bridge token",
+      "description": "Enter the same 64-character token already saved in the QUN Agent Bridge Chrome extension. Sensitive values are stored by Claude Desktop in the operating system's secure credential store.",
+      "required": true,
+      "sensitive": true
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": [
+      "win32"
+    ]
+  }
+}
