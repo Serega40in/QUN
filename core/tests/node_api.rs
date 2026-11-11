@@ -194,3 +194,25 @@ fn valid_signed_transaction_updates_chain_and_ledger() {
     assert_eq!(node.get("/chain").unwrap(), chain_after_transfer, "chain must survive node restart");
     assert_eq!(node.get("/accounts").unwrap(), accounts_after_transfer, "balances and nonces must survive node restart");
 }
+
+#[test]
+fn rejected_multi_transaction_batch_is_atomic() {
+    let mut node = TestNode::start();
+    let key = SigningKey::from_bytes(&[43_u8; 32]);
+    let address = hex::encode(key.verifying_key().as_bytes());
+    let (fund_status, _) = node.post("/dev/fund", &json!({"address": address, "amount": 10}));
+    assert_eq!(fund_status, 200);
+
+    let chain_before = node.get("/chain").unwrap();
+    let accounts_before = node.get("/accounts").unwrap();
+    let first_valid = signed_transaction(&key, "recipient-test", 4, 1);
+    let second_invalid = signed_transaction(&key, "recipient-test", 100, 2);
+
+    let (status, _) = node.post(
+        "/dev/mine-signed",
+        &json!({"signed_transactions": [first_valid, second_invalid]}),
+    );
+    assert_eq!(status, 422, "batch with an invalid transaction must be rejected");
+    assert_eq!(node.get("/chain").unwrap(), chain_before);
+    assert_eq!(node.get("/accounts").unwrap(), accounts_before);
+}
