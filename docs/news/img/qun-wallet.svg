@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200" role="img" aria-labelledby="title desc">
+<title id="title">QUN Wallet — тестовый цифровой кошелёк</title>
+<desc id="desc">Прозрачный стеклянный кошелёк с тремя сияющими кристаллами синего, изумрудного и золотого цвета на белом фоне.</desc>
+<defs>
+ <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff" stop-opacity=".94"/><stop offset=".45" stop-color="#d8f3f6" stop-opacity=".54"/><stop offset="1" stop-color="#b9e6e4" stop-opacity=".25"/></linearGradient>
+ <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d6f1ff"/><stop offset=".45" stop-color="#167eea"/><stop offset="1" stop-color="#083d99"/></linearGradient>
+ <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d5fff0"/><stop offset=".5" stop-color="#19c79b"/><stop offset="1" stop-color="#08745e"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff4bd"/><stop offset=".5" stop-color="#e8b849"/><stop offset="1" stop-color="#a66a14"/></linearGradient>
+ <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".5" stop-color="#8ed8e7"/><stop offset="1" stop-color="#fff"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
+ <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="18"/></filter>
+</defs>
+<rect width="1200" height="1200" fill="#fff"/>
+<ellipse cx="600" cy="1000" rx="330" ry="42" fill="#b9d7d9" opacity=".36" filter="url(#shadow)"/>
+<circle cx="405" cy="400" r="90" fill="#2d8df2" opacity=".10" filter="url(#glow)"/>
+<circle cx="770" cy="390" r="95" fill="#10b88b" opacity=".10" filter="url(#glow)"/>
+<g stroke-linejoin="round">
+ <path d="M365 425 L455 260 L545 425 L455 590 Z" fill="url(#gold)" stroke="#fff" stroke-width="5"/>
+ <path d="M455 260 L455 590 L520 424 Z" fill="#ffdf7b" opacity=".8"/>
+ <path d="M455 260 L545 425 L455 405 Z" fill="#fff7d4" opacity=".72"/>
+ <path d="M520 420 L650 185 L780 420 L650 640 Z" fill="url(#blue)" stroke="#fff" stroke-width="5"/>
+ <path d="M650 185 L650 640 L760 420 Z" fill="#7dcaff" opacity=".65"/>
+ <path d="M650 185 L780 420 L650 395 Z" fill="#e2f8ff" opacity=".75"/>
+ <path d="M670 440 L785 270 L900 440 L785 635 Z" fill="url(#green)" stroke="#fff" stroke-width="5"/>
+ <path d="M785 270 L785 635 L880 440 Z" fill="#a7ffe4" opacity=".65"/>
+ <path d="M785 270 L900 440 L785 405 Z" fill="#effff9" opacity=".7"/>
+ <rect x="275" y="470" width="650" height="425" rx="72" fill="url(#glass)" stroke="url(#rim)" stroke-width="18"/>
+ <rect x="300" y="495" width="600" height="375" rx="54" fill="none" stroke="#fff" stroke-width="5" opacity=".85"/>
+ <path d="M320 555 Q340 510 400 510 L800 510" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" opacity=".85"/>
+ <path d="M300 805 Q330 860 385 860 L810 860" fill="none" stroke="#70cbd5" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+ <rect x="770" y="610" width="205" height="135" rx="34" fill="url(#glass)" stroke="url(#gold)" stroke-width="12"/>
+ <circle cx="850" cy="678" r="31" fill="url(#gold)" stroke="#fff5ce" stroke-width="6"/>
+ <circle cx="850" cy="678" r="10" fill="#fff8d9" opacity=".8"/>
+</g>
+<g fill="#fff"><circle cx="350" cy="360" r="7"/><circle cx="575" cy="300" r="8"/><circle cx="900" cy="350" r="6"/><circle cx="730" cy="230" r="5"/><circle cx="305" cy="730" r="5"/></g>
+<g stroke="#f0c45d" stroke-width="4" stroke-linecap="round" opacity=".8"><path d="M250 330 v28 M236 344 h28"/><path d="M935 490 v22 M924 501 h22"/><path d="M720 735 v24 M708 747 h24"/></g>
+</svg>
