@@ -54,3 +54,9 @@ One desktop shell, pluggable model APIs, a browser, and a task coordinator. Mode
 - [ ] QUN Agent Core integration reviewed against current deployed function.
 - [ ] Compute job is synthetic and verified end-to-end on two independent nodes.
 - [ ] Dependency and security audit completed before public release.
+
+## Local control API
+
+The desktop process exposes a bearer-token-protected development API bound exclusively to `127.0.0.1:47881`. The token is randomly generated and stored under Electron userData, outside the renderer. The API can navigate/read the embedded browser, enumerate visible page controls, click safe controls, type into non-sensitive text fields, and switch the app's Chat/Settings/Network/Browser views. Form submission and likely consequential buttons are blocked. The API rejects non-local browser origins and is not exposed to the LAN.
+
+This is a local development bridge for authorized control; production hardening, explicit approval UX, audit logging, and integration with the existing QUN Agent Core command queue remain follow-up work. It does not create a separate compute network.
