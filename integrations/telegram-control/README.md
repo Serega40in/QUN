@@ -78,3 +78,11 @@ curl -X POST "https://YOUR-WORKER.workers.dev/api/publish" \
 - Add rate limiting, request idempotency, tests, and safer HTML handling before production.
 - Telegram channel views/reach are not supplied by these aggregate Bot API counters.
 - No post should be sent until the exact text and destination have been explicitly approved.
+
+
+## QUN Spark
+
+- Send `/spark` in a private chat with the bot to open the creative mini-game widget.
+- The widget includes four creative islands, random missions, prompt copying, and session-only spark points.
+- Points are currently local to the open widget session; persistent progress is not implemented.
+- The worker change is on `feat/qun-telegram-control-mvp`; it must be deployed to the intended Cloudflare Worker and the existing bot webhook must be verified before live testing. Do not replace an existing webhook until its current destination is understood.
