@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('qun', {
   readPage: () => ipcRenderer.invoke('qun:read-page'),
   chat: prompt => ipcRenderer.invoke('qun:chat', prompt),
   coreHealth: () => ipcRenderer.invoke('qun:core-health'),
+  pairCore: value => ipcRenderer.invoke('qun:pair-core', value),
+  coreDeviceHeartbeat: () => ipcRenderer.invoke('qun:core-device-heartbeat'),
   nodeHealth: () => ipcRenderer.invoke('qun:node-health'),
   setBrowserVisible: visible => ipcRenderer.invoke('qun:set-browser-visible', visible),
   onBrowserNavigated: callback => ipcRenderer.on('qun:browser-navigated', (_event, data) => callback(data))
