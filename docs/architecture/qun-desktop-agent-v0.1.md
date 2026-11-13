@@ -60,3 +60,16 @@ One desktop shell, pluggable model APIs, a browser, and a task coordinator. Mode
 The desktop process exposes a bearer-token-protected development API bound exclusively to `127.0.0.1:47881`. The token is randomly generated and stored under Electron userData, outside the renderer. The API can navigate/read the embedded browser, enumerate visible page controls, click safe controls, type into non-sensitive text fields, and switch the app's Chat/Settings/Network/Browser views. Form submission and likely consequential buttons are blocked. The API rejects non-local browser origins and is not exposed to the LAN.
 
 This is a local development bridge for authorized control; production hardening, explicit approval UX, audit logging, and integration with the existing QUN Agent Core command queue remain follow-up work. It does not create a separate compute network.
+
+
+## Incremental QUN Agent Core pairing (2026-11-13)
+
+The desktop app now pairs through the existing QUN Agent Core PULT protocol rather than creating a new queue or device registry:
+
+1. The user supplies a valid one-time 64-hex pairing code in the QUN Network settings UI.
+2. The desktop app calls `POST /functions/v1/qun-agent-core/pult/pair` with the device ID, name and app version.
+3. The one-time returned device token is encrypted with Electron `safeStorage`; it is never returned to renderer JavaScript or written to the audit log.
+4. A user-triggered heartbeat calls the existing `/pult/heartbeat` endpoint with the token in the Authorization header.
+5. Local audit records are JSONL under the Electron user-data directory and intentionally exclude typed field values, page text, credentials, pairing codes and device tokens.
+
+This slice deliberately does **not** poll `/pult/peek`, claim commands, or execute remote plans. Before queue execution is enabled, implement a visible per-plan approval step in the desktop UI, validate each step against the Core action contract, reject form submissions and consequential actions without explicit confirmation, and report completion/failure through the existing `/pult/claim`, `/pult/reject`, and `/pult/result` contract as appropriate. Do not create a second task queue or duplicate QUN Compute registration.
