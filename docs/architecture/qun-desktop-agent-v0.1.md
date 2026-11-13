@@ -72,3 +72,10 @@ The desktop app now pairs through the existing QUN Agent Core PULT protocol rath
 5. Local audit records are JSONL under the Electron user-data directory and intentionally exclude typed field values, page text, credentials, pairing codes and device tokens.
 
 This slice deliberately does **not** poll `/pult/peek`, claim commands, or execute remote plans. Before queue execution is enabled, implement a visible per-plan approval step in the desktop UI, validate each step against the Core action contract, reject form submissions and consequential actions without explicit confirmation, and report completion/failure through the existing `/pult/claim`, `/pult/reject`, and `/pult/result` contract as appropriate. Do not create a second task queue or duplicate QUN Compute registration.
+
+
+## Browser-action confirmation and current blocker
+
+Selected consequential clicks (for example delete/pay/buy labels) now trigger an OS-native one-time confirmation dialog that shows the current site host and element label. Publishing, sending, and form submission are still hard-blocked, even if a generic confirmation could be shown. Audit logs record outcome/reason without typed values or page contents.
+
+The current production Core endpoint responds healthy, but its health response reports both MCP and device API keys as not configured. The PULT pairing endpoint uses a one-time code, yet the existing `qun_agent_pairing_codes` table currently has zero active unused codes, and no issuance route was found in the deployed `qun-agent-core` function. Do not bypass this by inserting a code directly. Queue polling/claiming remains disabled until the existing secure code-issuance path is found or implemented and the user explicitly pairs the device.
