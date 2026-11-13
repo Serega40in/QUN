@@ -83,12 +83,21 @@ Open **Сеть QUN**, enter the existing one-time pairing code issued by the QU
 Browser actions are logged to the OS user-data directory under `audit/actions.jsonl`. Logs intentionally omit page text, typed values, pairing codes and tokens. Queue polling/claiming and action execution are not enabled in this stage; that requires a visible approval flow before any queued plan is claimed.
 
 
-## Local model quick start
+## Model providers and free-tier routing
 
-1. Install Ollama for Windows from the official download page: https://ollama.com/download/windows.
-2. In PowerShell run `ollama pull qwen2.5:0.5b` (the first download is around a gigabyte; exact size may vary).
-3. Open **Модели и API**, press **Выбрать локальную модель**, then **Проверить Ollama**. The desktop agent uses `http://127.0.0.1:11434/v1/chat/completions` and does not send an API key in local mode.
-4. Small models may be slower and less capable than cloud models; use the provider setting to switch back at any time.
+The app starts with **no provider selected**. This is intentional: a cloud model must not be called until the user configures a provider and understands its quota and billing terms. Local inference is optional and off by default.
+
+The first MVP supports OpenAI-compatible HTTPS chat-completions endpoints. A user may configure a compatible provider such as OpenRouter or another API gateway, or a custom endpoint. Provider-specific model IDs and quotas change over time; verify the current model catalogue and terms at the provider before selecting a model. A model labelled "free" may still have rate limits, availability limits, or separate terms.
+
+Roadmap for the QUN Model Router:
+- Maintain a provider/model catalogue with capability tags, pricing class, context limits, and last-checked metadata.
+- Let users explicitly enable providers and enter their own API keys; store secrets encrypted with OS secure storage.
+- Offer manual model selection plus an opt-in fallback chain across providers the user has configured.
+- On transient rate limits/timeouts, retry only within configured limits and move to an enabled fallback; never silently cross from free to paid.
+- Show the actual provider/model used and the reason for a fallback. Do not promise unlimited free inference or evade provider limits.
+- Keep credentials server-side when using the QUN AI Gateway; never ship shared provider keys in a public client.
+
+To configure the current MVP, enter an OpenAI-compatible HTTPS endpoint, model ID and your own API key in **Модели и API**. No request is sent until a provider is configured. The key is stored encrypted through Electron safeStorage in the OS user-data directory. Never put keys into source files or commit settings files.
 
 ## Files, memory and extensions
 
