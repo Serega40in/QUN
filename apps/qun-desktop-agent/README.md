@@ -10,6 +10,7 @@ Open-source desktop AI assistant with an embedded browser and provider-neutral, 
 - Ask the selected model to analyze the current page text.
 - Back/forward/reload/navigation and page text extraction.
 - Status checks for the deployed QUN Agent Core and local-only QUN Node at 127.0.0.1:8787.
+- Status check for the existing QUN Agent Bridge on 127.0.0.1:43127; this detects whether Chrome is connected without duplicating the bridge or claiming browser-control access through this health endpoint.
 - Optional pairing with the existing QUN Agent Core `/pult/pair` endpoint using a single-use 64-hex pairing code; the returned device token is encrypted with Electron `safeStorage`.
 - Authenticated heartbeat to the existing QUN Core PULT device endpoint; no new queue or database is created.
 - Local JSONL audit log for browser navigation/click/type outcomes and Core pairing/heartbeat results. It records hostnames and outcome metadata, not typed field values, API keys, pairing codes or page text.
