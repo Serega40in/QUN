@@ -1,0 +1,1 @@
+{"name":"QUN Mobile","short_name":"QUN","description":"QUN AI, browser and workspace control","lang":"ru","start_url":"./index.html","scope":"./","display":"standalone","orientation":"portrait","background_color":"#071522","theme_color":"#071b2d","icons":[{"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
