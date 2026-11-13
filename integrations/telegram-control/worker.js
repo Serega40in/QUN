@@ -13,6 +13,10 @@
  *
  * Deploy first, then set Telegram webhook with the webhook secret.
  */
+const WIDGET_PULSE = "<div class=\"wrap\">\n  <div class=\"brand\">QUN PULSE · 01</div>\n  <h3>Чего миру сейчас нужно больше?</h3>\n  <p class=\"sub\">Выбери один ответ. Твой голос можно обработать через QUN-бота.</p>\n  <div class=\"choices\">\n    <button onclick=\"vote('pulse:calm')\">☁️ Спокойствия</button>\n    <button onclick=\"vote('pulse:clarity')\">💎 Ясности</button>\n    <button onclick=\"vote('pulse:kindness')\">🌿 Доброты</button>\n  </div>\n  <p id=\"status\" class=\"hint\">Один выбор — маленький вклад в общее направление.</p>\n</div>\n<style>\n.wrap{font-family:system-ui,sans-serif;color:var(--tg-theme-text-color);padding:4px}\n.brand{font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--tg-theme-accent-text-color);margin-bottom:8px}\nh3{font-size:18px;line-height:1.25;margin:0 0 8px}\n.sub,.hint{font-size:13px;color:var(--tg-theme-hint-color);line-height:1.4}\n.choices{display:grid;gap:7px;margin-top:12px}\nbutton{width:100%;text-align:left;border:1px solid var(--tg-theme-section-separator-color);border-radius:10px;padding:11px;background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color);font-size:14px}\n</style>\n<script>\nfunction vote(data){\n const s=document.getElementById('status');\n if(!window.TelegramWidget){s.textContent='Демо: голос «'+data.split(':')[1]+'» выбран.';return}\n s.textContent='Передаём голос…';\n TelegramWidget.request(data).then(a=>{s.textContent=a.result||'Спасибо! Голос принят.'},e=>{s.textContent='Пока не удалось отправить: '+e.code});\n}\nif(window.TelegramWidget)TelegramWidget.ready();\n</script>\n";
+const WIDGET_INTENTION = "<div class=\"wrap\">\n  <div class=\"brand\">QUN <span>· маленький шаг к ясности</span></div>\n  <h3>Какое качество ты выбираешь сегодня?</h3>\n  <div class=\"choices\">\n    <button onclick=\"choose('Спокойствие')\">☁️ Спокойствие</button>\n    <button onclick=\"choose('Ясность')\">💎 Ясность</button>\n    <button onclick=\"choose('Доброта')\">🌿 Доброта</button>\n    <button onclick=\"choose('Смелость')\">☀️ Смелость</button>\n  </div>\n  <p id=\"result\" class=\"hint\">Выбери намерение — без спешки и давления.</p>\n</div>\n<style>\n.wrap{font-family:system-ui,sans-serif;color:var(--tg-theme-text-color);padding:4px}\n.brand{font-size:12px;font-weight:700;color:var(--tg-theme-accent-text-color);margin-bottom:8px}\n.brand span{font-weight:400;color:var(--tg-theme-hint-color)}\nh3{font-size:18px;line-height:1.25;margin:0 0 12px}\n.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}\nbutton{border:1px solid var(--tg-theme-section-separator-color);border-radius:12px;padding:12px 6px;background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color);font-size:14px}\nbutton:active{opacity:.75}\n.hint{font-size:13px;color:var(--tg-theme-hint-color);margin:12px 0 2px}\n</style>\n<script>\nfunction choose(value){\n  document.getElementById('result').textContent='Твоё намерение на сегодня: '+value+'. Пусть оно проявится в одном простом действии.';\n  if(window.TelegramWidget&&TelegramWidget.HapticFeedback)TelegramWidget.HapticFeedback.selectionChanged();\n}\nif(window.TelegramWidget)TelegramWidget.ready();\n</script>\n";
+const WIDGET_ROADMAP = "<div class=\"wrap\">\n  <div class=\"top\"><span class=\"gem\">◆</span> QUN BUILD TOGETHER</div>\n  <h3>Что развиваем следующим?</h3>\n  <p class=\"sub\">Помоги выбрать направление сообщества.</p>\n  <button onclick=\"vote('roadmap:messenger')\"><b>01</b><span><strong>QUN Messenger</strong><small>Общение и звонки</small></span><i>↗</i></button>\n  <button onclick=\"vote('roadmap:ai')\"><b>02</b><span><strong>QUN AI Studio</strong><small>Творчество и инструменты ИИ</small></span><i>↗</i></button>\n  <button onclick=\"vote('roadmap:market')\"><b>03</b><span><strong>QUN Market</strong><small>Сервисы и полезные продукты</small></span><i>↗</i></button>\n  <p id=\"status\" class=\"hint\">Твой выбор поможет расставить приоритеты.</p>\n</div>\n<style>\n.wrap{font-family:system-ui,sans-serif;color:var(--tg-theme-text-color);padding:4px}\n.top{font-size:11px;letter-spacing:1.2px;font-weight:800;color:var(--tg-theme-accent-text-color);margin-bottom:8px}\n.gem{font-size:16px;margin-right:5px}\nh3{font-size:19px;margin:0 0 5px;line-height:1.25}\n.sub,.hint{font-size:13px;color:var(--tg-theme-hint-color);line-height:1.4}\nbutton{display:flex;align-items:center;gap:10px;width:100%;margin:8px 0;padding:10px;border:1px solid var(--tg-theme-section-separator-color);border-radius:12px;background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color);text-align:left}\nbutton b{font-size:11px;color:var(--tg-theme-accent-text-color)}\nbutton span{display:flex;flex:1;flex-direction:column;gap:3px}\nbutton strong{font-size:14px}\nbutton small{font-size:12px;color:var(--tg-theme-hint-color)}\nbutton i{font-style:normal}\n</style>\n<script>\nfunction vote(data){\n const s=document.getElementById('status');\n if(!window.TelegramWidget){s.textContent='Демо: выбран '+data.split(':')[1]+'.';return}\n s.textContent='Отправляем выбор…';\n TelegramWidget.request(data).then(a=>{s.textContent=a.result||'Спасибо! Выбор принят.'},e=>{s.textContent='Ошибка отправки: '+e.code});\n}\nif(window.TelegramWidget)TelegramWidget.ready();\n</script>\n";
+
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
@@ -51,7 +55,52 @@ async function reply(env, chatId, text) {
   });
 }
 
+
+async function handleWidgetQuery(update, env) {
+  const q = update?.widget_query;
+  if (!q?.id || !q?.from?.id) return;
+  const data = String(q.data || "");
+  const choices = {
+    "pulse:calm": ["pulse", "calm", "спокойствие"],
+    "pulse:clarity": ["pulse", "clarity", "ясность"],
+    "pulse:kindness": ["pulse", "kindness", "доброту"],
+    "roadmap:messenger": ["roadmap", "messenger", "QUN Messenger"],
+    "roadmap:ai": ["roadmap", "ai", "QUN AI Studio"],
+    "roadmap:market": ["roadmap", "market", "QUN Market"],
+  };
+  const choice = choices[data];
+  let answer = "Не удалось распознать выбор. Попробуй ещё раз.";
+  if (choice) {
+    const [poll, option, label] = choice;
+    if (!env.QUN_TELEGRAM_KV) {
+      answer = "Спасибо за выбор: " + label + "! Для подсчёта голосов ещё нужно подключить KV в Cloudflare.";
+    } else {
+      const userKey = `vote:${poll}:user:${q.from.id}`;
+      const old = await env.QUN_TELEGRAM_KV.get(userKey);
+      if (old === option) {
+        answer = "Твой выбор «" + label + "» уже учтён. Спасибо!";
+      } else {
+        if (old) {
+          const oldCountKey = `vote:${poll}:count:${old}`;
+          const oldCount = Math.max(0, Number((await env.QUN_TELEGRAM_KV.get(oldCountKey)) || "0") - 1);
+          await env.QUN_TELEGRAM_KV.put(oldCountKey, String(oldCount));
+        }
+        const countKey = `vote:${poll}:count:${option}`;
+        const count = Number((await env.QUN_TELEGRAM_KV.get(countKey)) || "0") + 1;
+        await env.QUN_TELEGRAM_KV.put(countKey, String(count));
+        await env.QUN_TELEGRAM_KV.put(userKey, option);
+        answer = "Готово! Твой выбор — «" + label + "». Сейчас за это направление " + count + (count === 1 ? " голос" : count < 5 ? " голоса" : " голосов") + ".";
+      }
+    }
+  }
+  await telegram(env, "answerWidgetQuery", { widget_query_id: q.id, data: answer });
+}
+
 async function handleUpdate(update, env) {
+  if (update?.widget_query) {
+    await handleWidgetQuery(update, env);
+    return;
+  }
   const message = update?.message;
   if (!message) return;
   await bump(env, "updates:total");
@@ -63,12 +112,24 @@ async function handleUpdate(update, env) {
 
   if (text.startsWith("/start")) {
     await reply(env, chatId,
-      "Привет! Это QUN Control. Здесь будем рассказывать о платформе QUN, блокчейне и разработке.\n\nКоманды: /help — помощь, /status — статус, /contact — связь с командой.");
+      "Привет! Это QUN Control. Здесь будем рассказывать о платформе QUN, блокчейне и разработке.\n\nКоманды: /help — помощь, /status — статус, /contact — связь с командой.\n\nВиджеты: /pulse — голос сообщества, /intention — намерение дня, /roadmap — выбор следующего направления QUN.");
     return;
   }
   if (text.startsWith("/help")) {
     await reply(env, chatId,
       "QUN Control — бот проекта QUN. Сейчас доступны базовые команды. Публикации в канал выполняются только через защищённый API и авторизованного администратора.\n\n/help — помощь\n/status — статус\n/contact — связь с командой");
+    return;
+  }
+  if (text.startsWith("/pulse")) {
+    await telegram(env, "sendWidget", { chat_id: chatId, html: WIDGET_PULSE, caption: "QUN Pulse — чего миру сейчас нужно больше?", allow_queries: true });
+    return;
+  }
+  if (text.startsWith("/intention")) {
+    await telegram(env, "sendWidget", { chat_id: chatId, html: WIDGET_INTENTION, caption: "QUN — намерение на сегодня" });
+    return;
+  }
+  if (text.startsWith("/roadmap")) {
+    await telegram(env, "sendWidget", { chat_id: chatId, html: WIDGET_ROADMAP, caption: "QUN Build Together — выбираем приоритет", allow_queries: true });
     return;
   }
   if (text.startsWith("/status")) {
