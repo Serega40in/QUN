@@ -10,6 +10,9 @@ Open-source desktop AI assistant with an embedded browser and provider-neutral, 
 - Ask the selected model to analyze the current page text.
 - Back/forward/reload/navigation and page text extraction.
 - Status checks for the deployed QUN Agent Core and local-only QUN Node at 127.0.0.1:8787.
+- Optional pairing with the existing QUN Agent Core `/pult/pair` endpoint using a single-use 64-hex pairing code; the returned device token is encrypted with Electron `safeStorage`.
+- Authenticated heartbeat to the existing QUN Core PULT device endpoint; no new queue or database is created.
+- Local JSONL audit log for browser navigation/click/type outcomes and Core pairing/heartbeat results. It records hostnames and outcome metadata, not typed field values, API keys, pairing codes or page text.
 - Basic URL validation, isolated renderer, no Node.js access in the page/UI renderer.
 - No provider is mandatory. The default endpoint is OpenRouter, but any compatible endpoint can be entered.
 
@@ -32,13 +35,13 @@ Enter an OpenAI-compatible Chat Completions endpoint, model ID and API key. The 
 
 ## Current limitations
 
-This is an early local MVP, not an unrestricted computer-use agent. It does not yet click page elements, submit forms, run shell commands, or claim jobs from QUN Compute. The page text is sent to the selected model only when you submit a chat request. The model cannot execute instructions embedded in page content through this interface.
+This is an early local MVP, not an unrestricted computer-use agent. Risky browser actions and form submissions remain blocked. The Core integration currently supports pairing and heartbeat only; it does not yet claim or execute queued commands. It does not run arbitrary shell commands or claim jobs from QUN Compute. The page text is sent to the selected model only when you submit a chat request. The model cannot execute instructions embedded in page content through this interface.
 
 ## Roadmap
 
 1. Explicit user-approved browser actions with a strict allowlist.
-2. Connect to existing QUN Agent Core and its device/command queue.
-3. Integrate QUN Node / QUN Compute worker registration and job execution.
+2. Complete the existing QUN Agent Core queue worker: show a clear local approval dialog before claiming/executing any queued browser plan, then report result through the existing PULT endpoints.
+3. Integrate with existing QUN Node / QUN Compute interfaces only after verifying their current registration and job contracts; do not create a parallel worker network.
 4. Provider adapters, local model runtimes (e.g. Ollama), cost/usage visibility and fallback routing.
 5. Signed builds, automated tests, releases and security review.
 
@@ -68,3 +71,10 @@ Authenticated endpoints:
 All requests require `Authorization: Bearer <local token>`. The server binds only to IPv4 loopback, rejects browser-origin requests, and has no CORS allowance. Page text is untrusted. This bridge is a development interface, not a production security boundary; keep the token private and do not expose the port to a network.
 
 [executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
+
+
+## QUN Core pairing (incremental integration)
+
+Open **Сеть QUN**, enter the existing one-time pairing code issued by the QUN Agent Core pairing flow, and press **Подключить устройство**. The app posts to the existing `/functions/v1/qun-agent-core/pult/pair` endpoint, stores the returned device token encrypted by the OS, then can send an authenticated heartbeat to `/pult/heartbeat`. The pairing code is single-use; never share it in logs or source code. If a pairing code is not available in the current QUN UI, do not insert a code or token directly into the database as a workaround.
+
+Browser actions are logged to the OS user-data directory under `audit/actions.jsonl`. Logs intentionally omit page text, typed values, pairing codes and tokens. Queue polling/claiming and action execution are not enabled in this stage; that requires a visible approval flow before any queued plan is claimed.
