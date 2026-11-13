@@ -61,7 +61,6 @@ The desktop process exposes a bearer-token-protected development API bound exclu
 
 This is a local development bridge for authorized control; production hardening, explicit approval UX, audit logging, and integration with the existing QUN Agent Core command queue remain follow-up work. It does not create a separate compute network.
 
-
 ## Incremental QUN Agent Core pairing (2026-11-13)
 
 The desktop app now pairs through the existing QUN Agent Core PULT protocol rather than creating a new queue or device registry:
