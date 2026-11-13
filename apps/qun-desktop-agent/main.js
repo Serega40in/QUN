@@ -260,7 +260,3 @@ function startLocalControlApi() {
   controlServer.on('error', error => console.error('QUN local control API:', error.message));
   controlServer.listen(CONTROL_PORT, '127.0.0.1', () => console.log('QUN local control API listening on 127.0.0.1:' + CONTROL_PORT));
 }
-
-[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
-
-[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
