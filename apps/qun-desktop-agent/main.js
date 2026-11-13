@@ -1,4 +1,4 @@
-const { app, BrowserWindow, BrowserView, ipcMain, safeStorage, shell } = require('electron');
+const { app, BrowserWindow, BrowserView, ipcMain, safeStorage, shell, dialog } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const http = require('node:http');
@@ -276,17 +276,45 @@ function startLocalControlApi() {
       if (req.method === 'POST' && url.pathname === '/browser/click') {
         const selector = String(body.selector || '').slice(0, 500);
         if (!selector) return send(400, { ok: false, error: 'A CSS selector is required.' });
-        const result = await browser.webContents.executeJavaScript(`(() => {
+        let result = await browser.webContents.executeJavaScript(`(() => {
           const el = document.querySelector(${JSON.stringify(selector)});
           if (!el) return {ok:false,error:'Element not found.'};
           if (!(el instanceof HTMLElement)) return {ok:false,error:'Target is not an HTML element.'};
           const text = [el.innerText,el.getAttribute('aria-label'),el.getAttribute('title'),el.value].filter(Boolean).join(' ').slice(0,300);
-          if (/publish|post|submit|send|delete|pay|buy|создать объявление|разместить|оплатить|купить|удалить|отправить|опубликовать|подтвердить/i.test(text)) return {ok:false,error:'Blocked potentially consequential action. Ask the user for explicit confirmation first.'};
-          if (el.matches('input[type=submit],button[type=submit],form') || (el.closest('form') && el.tagName==='BUTTON' && (!el.getAttribute('type') || el.type==='submit'))) return {ok:false,error:'Form submission is not allowed through this endpoint.'};
+          if (el.matches('input[type=submit],button[type=submit],form') || (el.closest('form') && el.tagName==='BUTTON' && (!el.getAttribute('type') || el.type==='submit'))) return {ok:false,error:'Form submission is blocked in this MVP and cannot be approved through this endpoint.'};
+          if (/publish|post|submit|send|создать объявление|разместить объявление|опубликовать|отправить/i.test(text)) return {ok:false,error:'Publishing, sending and submission actions are blocked; a separate workflow with content-specific authorization is required.'};
+          if (/delete|pay|buy|купить|оплатить|удалить|перевести|подписать|заказать/i.test(text)) return {ok:false,requiresConfirmation:true,label:text.slice(0,180),tag:el.tagName};
           const rect = el.getBoundingClientRect();
           if (!rect.width || !rect.height || getComputedStyle(el).visibility==='hidden') return {ok:false,error:'Element is not visible.'};
-          el.click(); return {ok:true,tag:el.tagName,text:text.slice(0,100)};
+          el.click(); return {ok:true,tag:el.tagName};
         })()`, true);
+        if (result.requiresConfirmation) {
+          if (!win || win.isDestroyed()) return send(403, { ok:false, error:'A visible desktop confirmation is required, but the app window is unavailable.' });
+          const choice = await dialog.showMessageBox(win, {
+            type: 'warning',
+            title: 'Подтвердить действие в браузере',
+            message: 'Сайт запрашивает потенциально важное действие.',
+            detail: 'Сайт: ' + currentPageHost() + '\nЭлемент: ' + String(result.label || 'без подписи') + '\n\nРазрешить только этот клик? Формы, публикации и отправка данных остаются заблокированы.',
+            buttons: ['Отмена', 'Разрешить один раз'],
+            defaultId: 0,
+            cancelId: 0,
+            noLink: true
+          });
+          if (choice.response !== 1) {
+            auditAction('browser.click', { host: currentPageHost(), result: 'denied', reason: 'user_cancelled_confirmation' });
+            return send(403, { ok:false, error:'Действие отменено пользователем.' });
+          }
+          result = await browser.webContents.executeJavaScript(`(() => {
+            const el = document.querySelector(${JSON.stringify(selector)});
+            if (!el || !(el instanceof HTMLElement)) return {ok:false,error:'Element disappeared before confirmation.'};
+            if (el.matches('input[type=submit],button[type=submit],form') || (el.closest('form') && el.tagName==='BUTTON' && (!el.getAttribute('type') || el.type==='submit'))) return {ok:false,error:'Form submission is blocked.'};
+            const rect = el.getBoundingClientRect();
+            if (!rect.width || !rect.height || getComputedStyle(el).visibility==='hidden') return {ok:false,error:'Element is not visible.'};
+            el.click(); return {ok:true,tag:el.tagName};
+          })()`, true);
+          auditAction('browser.click', { host: currentPageHost(), result: result.ok ? 'confirmed' : 'blocked', reason: result.ok ? undefined : String(result.error || '').slice(0, 160) });
+          return send(result.ok ? 200 : 400, result);
+        }
         auditAction('browser.click', { host: currentPageHost(), result: result.ok ? 'success' : 'blocked', reason: result.ok ? undefined : String(result.error || '').slice(0, 160) });
         return send(result.ok ? 200 : 400, result);
       }
