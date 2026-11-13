@@ -651,6 +651,12 @@ private fun HomeScreen(
         else contactsMessage = "Доступ к контактам не разрешён. Его можно включить в настройках Android."
     }
     var loadingProfile by remember { mutableStateOf(true) }
+    var browserOpen by remember { mutableStateOf(false) }
+
+    if (browserOpen) {
+        BrowserScreen(onBack = { browserOpen = false })
+        return
+    }
 
     LaunchedEffect(session.user.id) {
         loadingProfile = true
@@ -686,6 +692,8 @@ private fun HomeScreen(
             ) {
                 Text("КЮН", color = Navy, fontSize = 23.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
+                TextButton(onClick = { browserOpen = true }) { Text("🌐 Браузер", color = Emerald) }
+                Spacer(Modifier.width(4.dp))
                 UpdateButton(onError, compact = true)
                 Spacer(Modifier.width(4.dp))
                 TextButton(onClick = onLogout) { Text("Выйти", color = Emerald) }
