@@ -103,3 +103,22 @@
 - Worker не должен выполнять произвольные shell-команды из job payload.
 - Не подключать пользовательские/private files к volunteer nodes до шифрования и отдельной модели доступа.
 - Не заявлять о запуске распределённой сети по факту одного Kaggle worker: это одиночный пилотный узел до подтверждения нескольких независимых операторов.
+
+
+## Обнаруженный блокер в исходниках (13.11.2026)
+При проверке локальной копии `QUN-main` обнаружено:
+- `docs/studio/comfyui_worker.py` отправляет все действия в `/functions/v1/qun-compute-node`.
+- `services/qun-node/src/compute.js` также использует `qun-compute-node`.
+- В локальном каталоге `supabase/functions/` присутствуют `qun-node-registry`, `qun-studio-video` и другие функции, но папка `qun-compute-node` не обнаружена.
+- Миграции уже описывают `qun_compute_jobs`, lease/retry и RPC `qun_claim_compute_job`; GPU migration ограничивает media jobs владельцем узла и платформой `linux-gpu`.
+
+**Вывод:** локальный pre-flight и наличие ключа не доказывают, что backend compute endpoint существует, развёрнут и соответствует worker-коду. Возможны два сценария: endpoint существует только в удалённом Supabase без исходника в GitHub либо endpoint действительно не развёрнут/расходится с кодом.
+
+### Следующий шаг до повторного GPU теста
+1. Сверить список Edge Functions в используемом Supabase project и выяснить, развёрнут ли `qun-compute-node`.
+2. Если endpoint есть удалённо — выгрузить/восстановить его исходник в `supabase/functions/qun-compute-node/index.ts` и зафиксировать версию.
+3. Если endpoint отсутствует — сначала реализовать его на основе проверенной схемы таблиц и RPC, провести тесты авторизации, owner-bound claim, heartbeat, lease, complete/fail и только затем deploy.
+4. Не менять токены/ключи вслепую и не печатать их в логах.
+5. После сверки повторить один тестовый `health_check`, затем один media job. Не объявлять end-to-end успешным до подтверждения terminal status и output reference.
+
+Это найденная причина для приоритетной проверки, а не утверждение, что удалённый endpoint точно отсутствует.
