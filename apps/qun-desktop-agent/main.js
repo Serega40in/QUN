@@ -116,3 +116,14 @@ ipcMain.handle('qun:core-health', async () => {
     return { ok: false, error: error.message };
   }
 });
+
+ipcMain.handle('qun:node-health', async () => {
+  try {
+    const response = await fetch('http://127.0.0.1:8787/health', { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(2500) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, status: response.status, error: data.error || ('HTTP ' + response.status) };
+    return { ok: true, data };
+  } catch {
+    return { ok: false, error: 'Локальный QUN Node не отвечает на 127.0.0.1:8787. Запусти QUN Node Local.' };
+  }
+});
