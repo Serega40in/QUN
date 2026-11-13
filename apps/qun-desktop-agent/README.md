@@ -9,6 +9,7 @@ Open-source desktop AI assistant with an embedded browser and provider-neutral, 
 - API key encrypted using the operating system's secure storage (Electron safeStorage); key is never exposed to renderer JavaScript.
 - Ask the selected model to analyze the current page text.
 - Back/forward/reload/navigation and page text extraction.
+- Status checks for the deployed QUN Agent Core and local-only QUN Node at 127.0.0.1:8787.
 - Basic URL validation, isolated renderer, no Node.js access in the page/UI renderer.
 - No provider is mandatory. The default endpoint is OpenRouter, but any compatible endpoint can be entered.
 
@@ -16,7 +17,11 @@ Open-source desktop AI assistant with an embedded browser and provider-neutral, 
 
 Windows 10/11, macOS or Linux; Node.js 20+; network access for dependency installation and remote model APIs.
 
-From this directory run:
+Quick Windows install: run PowerShell with this command from the project directory:
+
+    powershell -ExecutionPolicy Bypass -File scripts/install-windows.ps1
+
+The installer installs dependencies, checks JavaScript syntax and creates a desktop shortcut. To start manually from source:
 
     npm install
     npm start
@@ -41,4 +46,4 @@ This is an early local MVP, not an unrestricted computer-use agent. It does not 
 
 Use only APIs and sites you are authorized to access. Do not submit private page contents to an external provider unless you intend to. Electron security defaults are enabled; the embedded browser is isolated from the app preload bridge. Treat this MVP as experimental until dependency and security audits are complete.
 
-License: MIT (see repository root license; this folder is a prototype).
+License: follow the repository root license; this folder is a prototype.
