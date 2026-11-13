@@ -3,9 +3,14 @@ name: Build QUN Android APK
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - "docs/downloads/**"
-      - "docs/update.json"
+    paths:
+      - "app/**"
+      - "gradle/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - "gradlew"
+      - ".github/workflows/build-apk.yml"
   workflow_dispatch:
 
 permissions:
