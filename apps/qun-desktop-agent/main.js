@@ -1,3 +1,5 @@
+[Reading 104 lines from start (total: 104 lines, 0 remaining)]
+
 const { app, BrowserWindow, BrowserView, ipcMain, safeStorage, shell } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
@@ -101,4 +103,19 @@ ipcMain.handle('qun:chat', async (_event, prompt) => {
     if (typeof answer !== 'string' || !answer.trim()) throw new Error('Провайдер вернул пустой ответ или несовместимый формат.');
     return { ok: true, answer: answer.trim(), model: data.model || config.model };
   } catch (error) { return { ok: false, error: error.message }; }
+});
+
+[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
+ipcMain.handle('qun:core-health', async () => {
+  try {
+    const response = await fetch('https://qdxjltqlnphvzafapncm.supabase.co/functions/v1/qun-agent-core/health', {
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(5000)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, status: response.status, error: data.error || ('HTTP ' + response.status) };
+    return { ok: true, data };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
 });
