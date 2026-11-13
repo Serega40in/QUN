@@ -14,6 +14,7 @@ One desktop shell, pluggable model APIs, a browser, and a task coordinator. Mode
 - Model calls use an OpenAI-compatible Chat Completions request.
 - API key encrypted via Electron safeStorage; renderer only sees whether a key exists.
 - Current page title, URL and bounded text are attached as context only after a user submits a prompt.
+- UI can check the public health endpoint of QUN Agent Core and the local-only QUN Node health endpoint; it does not yet enqueue jobs.
 - The system prompt explicitly treats page text as untrusted content.
 - No automated form submission, arbitrary shell, or unreviewed side effects in this MVP.
 
