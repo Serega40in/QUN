@@ -1,0 +1,46 @@
+{
+  "schema_version": "0.1",
+  "project": "QUN LLM",
+  "updated_at": "2026-11-13",
+  "models": [
+    {
+      "id": "qun-llm-local-baseline-0.1",
+      "display_name": "QUN LLM Local Baseline 0.1",
+      "base_model": "qwen2.5:0.5b",
+      "runtime": "Ollama",
+      "status": "smoke-tested-local",
+      "is_qun_finetuned": false,
+      "weights_location": "local Ollama model store; not committed to GitHub",
+      "artifact_checksum": null,
+      "license_review": "required before redistribution",
+      "evaluation_report": null,
+      "notes": "Confirmed local API response. Not yet tested end-to-end through QUN Desktop Agent UI or public QUN AI website."
+    },
+    {
+      "id": "qun-llm-instruct-0.1",
+      "display_name": "QUN LLM Instruct 0.1",
+      "base_model": null,
+      "runtime": null,
+      "status": "planned",
+      "is_qun_finetuned": false,
+      "weights_location": null,
+      "artifact_checksum": null,
+      "license_review": "not started",
+      "evaluation_report": null,
+      "notes": "Select after quality, license, hardware, and availability benchmarking."
+    },
+    {
+      "id": "qun-llm-adapter-0.1",
+      "display_name": "QUN LLM QUN Adapter 0.1",
+      "base_model": null,
+      "runtime": null,
+      "status": "planned-not-trained",
+      "is_qun_finetuned": true,
+      "weights_location": null,
+      "artifact_checksum": null,
+      "license_review": "not started",
+      "evaluation_report": null,
+      "notes": "No QUN-specific fine-tuning run has been completed or evaluated."
+    }
+  ]
+}
