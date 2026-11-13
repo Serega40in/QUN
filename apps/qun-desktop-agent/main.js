@@ -5,14 +5,13 @@ const http = require('node:http');
 const crypto = require('node:crypto');
 const APP_VERSION = '0.1.0';
 let win, browser, browserVisible = true;
-let config = { endpoint: 'http://127.0.0.1:11434/v1/chat/completions', model: 'qwen2.5:0.5b', encryptedKey: '', coreBaseUrl: 'https://qdxjltqlnphvzafapncm.supabase.co', coreDeviceId: 'qun-desktop-agent', encryptedCoreToken: '' };
+let config = { endpoint: '', model: '', encryptedKey: '', coreBaseUrl: 'https://qdxjltqlnphvzafapncm.supabase.co', coreDeviceId: 'qun-desktop-agent', encryptedCoreToken: '' };
 function configPath() { return path.join(app.getPath('userData'), 'settings.json'); }
 function loadConfig() {
   try { config = { ...config, ...JSON.parse(fs.readFileSync(configPath(), 'utf8')) }; } catch {}
-  if (!config.model && !config.encryptedKey) {
-    config.endpoint = 'http://127.0.0.1:11434/v1/chat/completions';
-    config.model = 'qwen2.5:0.5b';
-    saveConfig();
+  // Clear the retired Ollama default so the UI never points at a removed local model.
+  if (/^https?:\/\/127\.0\.0\.1:11434\/v1\/chat\/completions\/?$/i.test(config.endpoint || '') || /^https?:\/\/localhost:11434\/v1\/chat\/completions\/?$/i.test(config.endpoint || '')) {
+    config.endpoint = ''; config.model = ''; config.encryptedKey = ''; saveConfig();
   }
 }
 function saveConfig() { fs.mkdirSync(app.getPath('userData'), { recursive: true }); fs.writeFileSync(configPath(), JSON.stringify(config, null, 2), { mode: 0o600 }); }
@@ -142,9 +141,9 @@ ipcMain.handle('qun:use-local-model', async (_event, input = {}) => {
 ipcMain.handle('qun:chat', async (_event, prompt) => {
   try {
     const localEndpoint = isLocalModelEndpoint(config.endpoint);
+    if (!config.endpoint || !config.model) throw new Error('Облачная модель не настроена. Открой «Модели и API» и подключи совместимый HTTPS-провайдер. Запрос пока не отправлен.');
     const key = localEndpoint ? '' : decryptKey();
-    if (!localEndpoint && !key) throw new Error('Сначала добавь API-ключ в настройках модели.');
-    if (!config.model) throw new Error('Не выбрана модель.');
+    if (!localEndpoint && !key) throw new Error('Для выбранного облачного провайдера нужен API-ключ. Запрос пока не отправлен.');
     const userPrompt = String(prompt || '').trim().slice(0, 8000); if (!userPrompt) throw new Error('Напиши запрос.');
     let page = { title: '', url: '', text: '' };
     try { page = await browser.webContents.executeJavaScript("({title: document.title, url: location.href, text: (document.body?.innerText || '').slice(0, 10000)})", true); } catch {}
@@ -395,9 +394,17 @@ function startLocalControlApi() {
           if (!el) return {ok:false,error:'Element not found.'};
           if (!(el instanceof HTMLElement)) return {ok:false,error:'Target is not an HTML element.'};
           const text = [el.innerText,el.getAttribute('aria-label'),el.getAttribute('title'),el.value].filter(Boolean).join(' ').slice(0,300);
-          if (el.matches('input[type=submit],button[type=submit],form') || (el.closest('form') && el.tagName==='BUTTON' && (!el.getAttribute('type') || el.type==='submit'))) return {ok:false,error:'Form submission is blocked in this MVP and cannot be approved through this endpoint.'};
-          if (/publish|post|submit|send|создать объявление|разместить объявление|опубликовать|отправить/i.test(text)) return {ok:false,error:'Publishing, sending and submission actions are blocked; a separate workflow with content-specific authorization is required.'};
-          if (/delete|pay|buy|купить|оплатить|удалить|перевести|подписать|заказать/i.test(text)) return {ok:false,requiresConfirmation:true,label:text.slice(0,180),tag:el.tagName};
+          const isSubmitAction = el.matches('input[type=submit],button[type=submit],form') || (el.closest('form') && el.tagName==='BUTTON' && (!el.getAttribute('type') || el.type==='submit'));
+          const isPublishing = /publish|post|submit|send|создать объявление|разместить объявление|опубликовать|отправить/i.test(text);
+          const isAvito = /(^|\\.)avito\\.ru$/i.test(currentPageHost());
+          if (isAvito && (isSubmitAction || isPublishing)) {
+            const rect = el.getBoundingClientRect();
+            if (!rect.width || !rect.height || getComputedStyle(el).visibility==='hidden') return {ok:false,error:'Element is not visible.'};
+            el.click(); auditAction('browser.avito-publish', { host: currentPageHost(), result: 'submitted' });
+            return {ok:true,tag:el.tagName,action:'avito-publish'};
+          }
+          if (isSubmitAction || isPublishing) return {ok:false,error:'Form submission is restricted to the explicitly authorized Avito publishing workflow.'};
+          if (/delete|pay|buy|купить|оплатить|удалить|перевести|подписать|заказать|продвинуть|платные услуги/i.test(text)) return {ok:false,requiresConfirmation:true,label:text.slice(0,180),tag:el.tagName};
           const rect = el.getBoundingClientRect();
           if (!rect.width || !rect.height || getComputedStyle(el).visibility==='hidden') return {ok:false,error:'Element is not visible.'};
           el.click(); return {ok:true,tag:el.tagName};
