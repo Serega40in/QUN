@@ -5,6 +5,8 @@ This is the first implementation slice for the QUN Telegram bot bridge. Source c
 ## Scope
 - Telegram webhook with secret-token verification.
 - Basic `/start`, `/help`, `/status`, and `/contact` commands.
+- Native Telegram HTML widgets: `/pulse`, `/intention`, and `/roadmap`.
+- `widget_query` handling for Pulse and roadmap votes, with optional Cloudflare KV vote storage.
 - Protected API for publishing text and an image from a public HTTPS URL.
 - Protected aggregate counters for received updates and published posts.
 - OpenAPI contract for the future QUN Control ChatGPT plugin.
@@ -33,11 +35,21 @@ The workflow `.github/workflows/deploy-qun-telegram-control.yml` deploys the Wor
 ```bash
 curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
   -d "url=https://YOUR-WORKER.workers.dev/telegram/webhook" \
-  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+  --data-urlencode "secret_token=$TELEGRAM_WEBHOOK_SECRET" \\
+  --data-urlencode 'allowed_updates=["message","widget_query"]'
 ```
 9. Verify `getWebhookInfo` and send `/start` to the bot in a private chat.
 
 The GitHub Actions deployment requires you to add the two Cloudflare GitHub secrets. The Worker will not be deployed until you trigger the workflow. Cloudflare API access is not available directly from this ChatGPT session.
+
+## Widgets
+
+After deploying this branch and setting the webhook, open the bot's private chat and try:
+- `/pulse` — vote for calm, clarity, or kindness.
+- `/intention` — a local-only daily intention picker.
+- `/roadmap` — vote for QUN Messenger, QUN AI Studio, or QUN Market.
+
+The Worker handles `widget_query` and answers each request. Create a Cloudflare KV namespace and bind it as `QUN_TELEGRAM_KV` to persist vote counts and aggregate counters. Without KV, widgets still open and respond, but votes are acknowledged without persistent counting. The poll prototypes are initial versions; the bot backend must be deployed before they work in Telegram. Telegram currently supports production widgets only in private chats with the bot; they cannot be posted directly to channels.
 
 ## Optional aggregate statistics
 
