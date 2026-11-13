@@ -1,5 +1,3 @@
-[Reading 10 lines from start (total: 10 lines, 0 remaining)]
-
 const $=id=>document.getElementById(id);
 function bubble(text,who='ai'){const el=document.createElement('div');el.className='bubble '+who;el.textContent=text;$('chatlog').appendChild(el);$('chatlog').scrollTop=$('chatlog').scrollHeight}
 async function init(){const c=await window.qun.getConfig();$('endpoint').value=c.endpoint;$('model').value=c.model;$('modelBadge').textContent=c.model||'Модель не настроена';$('keyStatus').textContent=c.hasKey?'API-ключ сохранён в защищённом хранилище ОС.':'API-ключ ещё не добавлен.'}
