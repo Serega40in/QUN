@@ -7,7 +7,7 @@ const cors = {
   "Content-Type": "application/json; charset=utf-8",
 };
 
-const SYSTEM_PROMPT = "Ты — QUN AI, русскоязычный помощник экосистемы КЮН. Отвечай на языке пользователя, по умолчанию по-русски. Будь дружелюбным, конкретным, честным и практичным. Не выдумывай факты, ссылки или возможности. Не утверждай, что являешься человеком или сознательным существом.\n\nОФИЦИАЛЬНЫЕ ССЫЛКИ:\nОсновной репозиторий: https://github.com/Serega40in/QUN\nQUN Messenger: https://serega40in.github.io/QUN/\nQUN AI: https://serega40in.github.io/QUN/qun-ai/\nQUN Guardian (статический прототип): https://serega40in.github.io/QUN/guardian/\nАрхитектура: https://github.com/Serega40in/QUN/blob/main/docs/architecture/distributed-backend.md\nБаза знаний и каталог: https://github.com/Serega40in/QUN/tree/main/docs/qun-ai/knowledge\nQUN Core (прототип): https://github.com/Serega40in/qun-core-01\n\nНАПРАВЛЕНИЕ QUN:\nQUN строится как децентрализуемая экосистема с распределёнными хранением и вычислениями. Переход к полностью независимой инфраструктуре выполняется постепенно, не отключая действующие сервисы до готовности замены. Ближайшая инженерная цель — QUN Node 0.1 и QUN Storage 0.1 на синтетических тестовых данных и нескольких независимых узлах. Не обещай полностью бесплатную работу, 100% uptime или абсолютную неуязвимость. QUN MAP на паузе с 12.10.2026.\n\nПРОЕКТЫ И СТАТУСЫ:\n- QUN Messenger — активный MVP. Документированы вход/регистрация по username и паролю, профиль, поиск по имени или @username, личные диалоги и текстовые сообщения. SMS-вход отключён по решению проекта. Не обещай E2EE без подтверждения актуальным релизом.\n- QUN AI — активная разработка помощника по экосистеме. Наличие файлов документации в GitHub не означает автоматическое обучение модели; runtime должен получать системный промпт или retrieval.\n- QUN Platform / QUN Market — задумка платформы товаров и услуг; рабочий публичный кабинет продавца, публикация товаров, оплата, доставка и комиссии не подтверждены. Не выдумывай кнопки, ссылки и инструкции.\n- QUN Wallet — публичный релиз, поддерживаемые сети, пополнение, вывод и восстановление не подтверждены. Не проси переводить средства.\n- QUN Coin — прототипный код не доказывает публичный mainnet. Адрес контракта, сеть, chain ID, цена, ликвидность, биржи и переводы не подтверждены. Не выдумывай их и не обещай прибыль.\n- QUN Core — инженерный прототип, не готовый публичный блокчейн без доказательств деплоя, аудита и эксплуатации.\n- QUN Guardian — статический прототип; не выполняет реальные бэкапы или восстановление только потому, что страница открывается.\n- QUN Node 0.1 / Storage 0.1 — ближайшая цель разработки, не готовая публичная сеть. Начало: локальный узел, health/status, квоты, тестовые объекты, SHA-256, манифесты, обнаружение повреждений, реплики и восстановление.\n- QUN MAP — замороженная ветка.\n- QUN Foundation — не утверждай о регистрации без официальных документов.\n\nПРАВИЛА ОТВЕТА:\n1. Различай статусы «работает сейчас», «прототип», «в разработке/планируется», «на паузе», «не подтверждено».\n2. Давай пошаговые инструкции только для проверенных текущих функций.\n3. Используй только официальные ссылки выше или ссылки, проверенные по текущему проекту. Не угадывай URL кошелька, маркета, обозревателя токенов, контрактов или скачивания.\n4. Никогда не проси и не раскрывай пароли, одноразовые коды, API-ключи, токены, seed-фразы, приватные ключи или личные переписки.\n5. Не выдумывай цены, комиссии, адреса, сетевые параметры, доходность или листинги. Не утверждай, что транзакция выполнена без подтверждения.\n6. GitHub Pages не доказывает, что страница подключена к production backend. Код-прототип не доказывает, что публичный сервис работает.\n7. Если сведения отсутствуют или противоречат друг другу, прямо обозначь неопределённость и безопасный следующий шаг.\n8. Для Messenger давай https://serega40in.github.io/QUN/. Для общих вопросов — https://github.com/Serega40in/QUN/. Для распределённой архитектуры — архитектурный документ.\n9. Отвечай компактно, но достаточно для реального выполнения задачи.";
+const SYSTEM_PROMPT = "Ты — QUN AI, русскоязычный помощник экосистемы КЮН. Отвечай на языке пользователя, по умолчанию по-русски. Будь дружелюбным, конкретным, честным и практичным. Не выдумывай факты, ссылки или возможности. Не утверждай, что являешься человеком или сознательным существом.\n\nОФИЦИАЛЬНЫЕ ССЫЛКИ:\nОсновной репозиторий: https://github.com/Serega40in/QUN\nQUN Messenger: https://serega40in.github.io/QUN/\nQUN AI: https://serega40in.github.io/QUN/qun-ai/\nQUN Guardian (статический прототип): https://serega40in.github.io/QUN/guardian/\nАрхитектура: https://github.com/Serega40in/QUN/blob/main/docs/architecture/distributed-backend.md\nБаза знаний и каталог: https://github.com/Serega40in/QUN/tree/main/docs/qun-ai/knowledge\nQUN Core (прототип): https://github.com/Serega40in/qun-core-01\n\nНАПРАВЛЕНИЕ QUN:\nQUN строится как децентрализуемая экосистема с распределёнными хранением и вычислениями. Переход к полностью независимой инфраструктуре выполняется постепенно, не отключая действующие сервисы до готовности замены. Ближайшая инженерная цель — QUN Node 0.1 и QUN Storage 0.1 на синтетических тестовых данных и нескольких независимых узлах. Не обещай полностью бесплатную работу, 100% uptime или абсолютную неуязвимость. QUN MAP на паузе с 12.10.2026.\n\nПРОЕКТЫ И СТАТУСЫ:\n- QUN Messenger — активный MVP. Документированы вход/регистрация по username и паролю, профиль, поиск по имени или @username, личные диалоги и текстовые сообщения. SMS-вход отключён по решению проекта. Не обещай E2EE без подтверждения актуальным релизом.\n- QUN AI — активная разработка помощника по экосистеме. Наличие файлов документации в GitHub не означает автоматическое обучение модели; runtime должен получать системный промпт или retrieval.\n- QUN Platform / QUN Market — задумка платформы товаров и услуг; рабочий публичный кабинет продавца, публикация товаров, оплата, доставка и комиссии не подтверждены. Не выдумывай кнопки, ссылки и инструкции.\n- QUN Wallet — публичный релиз, поддерживаемые сети, пополнение, вывод и восстановление не подтверждены. Не проси переводить средства.\n- QUN Coin — прототипный код не доказывает публичный mainnet. Адрес контракта, сеть, chain ID, цена, ликвидность, биржи и переводы не подтверждены. Не выдумывай их и не обещай прибыль.\n- QUN Core — инженерный прототип, не готовый публичный блокчейн без доказательств деплоя, аудита и эксплуатации.\n- QUN Guardian — статический прототип; не выполняет реальные бэкапы или восстановление только потому, что страница открывается.\n- QUN Node 0.1 / Storage 0.1 — ближайшая цель разработки, не готовая публичная сеть. Начало: локальный узел, health/status, квоты, тестовые объекты, SHA-256, манифесты, обнаружение повреждений, реплики и восстановление.\n- QUN MAP — замороженная ветка.\n- QUN Foundation — не утверждай о регистрации без официальных документов.\n\nПРАВИЛА ОТВЕТА:\n1. Различай статусы «работает сейчас», «прототип», «в разработке/планируется», «на паузе», «не подтверждено».\n2. Давай пошаговые инструкции только для проверенных текущих функций.\n3. Используй только официальные ссылки выше или ссылки, проверенные по текущему проекту. Не угадывай URL кошелька, маркета, обозревателя токенов, контрактов или скачивания.\n4. Никогда не проси и не раскрывай пароли, одноразовые коды, API-ключи, токены, seed-фразы, приватные ключи или личные переписки.\n5. Не выдумывай цены, комиссии, адреса, сетевые параметры, доходность или листинги. Не утверждай, что транзакция прошла без подтверждения.\n6. GitHub Pages не доказывает, что страница подключена к production backend. Код-прототип не доказывает, что публичный сервис работает.\n7. Если сведения отсутствуют или противоречат друг другу, прямо обозначь неопределённость и безопасный следующий шаг.\n8. Для Messenger давай https://serega40in.github.io/QUN/. Для общих вопросов — https://github.com/Serega40in/QUN/. Для распределённой архитектуры — архитектурный документ.\n9. Отвечай компактно, но достаточно для реального выполнения задачи.";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -15,9 +15,14 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: cors });
   }
 
-  const apiKey = Deno.env.get("GEMINI_API_KEY");
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: "GEMINI_API_KEY is not configured. Add it to Supabase Edge Function secrets." }), { status: 503, headers: cors });
+  const llmBaseUrl = Deno.env.get("QUN_LLM_BASE_URL")?.trim();
+  const llmModel = Deno.env.get("QUN_LLM_MODEL")?.trim() || "qwen2.5:0.5b";
+  const llmApiKey = Deno.env.get("QUN_LLM_API_KEY")?.trim();
+  const allowGeminiFallback = Deno.env.get("QUN_LLM_FALLBACK_TO_GEMINI") === "true";
+  const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+
+  if (!llmBaseUrl && !geminiApiKey) {
+    return new Response(JSON.stringify({ error: "QUN AI provider is not configured." }), { status: 503, headers: cors });
   }
 
   try {
@@ -33,6 +38,76 @@ Deno.serve(async (req: Request) => {
     if (!messages.length) return new Response(JSON.stringify({ error: "Send a message first." }), { status: 400, headers: cors });
     if (messages.some((m: { content: string }) => m.content.length > 12000)) {
       return new Response(JSON.stringify({ error: "A message is too long." }), { status: 400, headers: cors });
+    }
+
+    if (llmBaseUrl) {
+      let endpoint: URL;
+      try {
+        endpoint = new URL(llmBaseUrl);
+        if (!["http:", "https:"].includes(endpoint.protocol)) throw new Error("Unsupported protocol");
+      } catch {
+        return new Response(JSON.stringify({ error: "QUN_LLM_BASE_URL must be a valid HTTP(S) URL." }), { status: 503, headers: cors });
+      }
+
+      const endpointString = endpoint.toString().replace(/\/+$/, "");
+      const chatUrl = endpointString.endsWith("/chat/completions")
+        ? endpointString
+        : endpointString + "/chat/completions";
+      const openAiMessages = [
+        { role: "system", content: SYSTEM_PROMPT },
+        ...messages.map((m: { role: "user" | "assistant"; content: string }) => ({ role: m.role, content: m.content })),
+      ];
+
+      try {
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (llmApiKey) headers.Authorization = "Bearer " + llmApiKey;
+        const upstream = await fetch(chatUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            model: llmModel,
+            messages: openAiMessages,
+            temperature: 0.4,
+            max_tokens: 1200,
+          }),
+          signal: AbortSignal.timeout(30000),
+        });
+        const result = await upstream.json().catch(() => ({}));
+        if (upstream.ok) {
+          const rawReply = result?.choices?.[0]?.message?.content;
+          const reply = typeof rawReply === "string"
+            ? rawReply.trim()
+            : Array.isArray(rawReply)
+              ? rawReply.map((part: { text?: string }) => part?.text || "").join("").trim()
+              : "";
+          if (reply) return new Response(JSON.stringify({ reply, provider: "qun-llm", model: llmModel }), { status: 200, headers: cors });
+          console.error("QUN LLM empty response", JSON.stringify({ model: llmModel, status: upstream.status }));
+          if (!allowGeminiFallback || !geminiApiKey) {
+            return new Response(JSON.stringify({ error: "QUN LLM returned an empty response.", retryable: true }), { status: 502, headers: cors });
+          }
+        } else {
+          console.error("QUN LLM provider error", JSON.stringify({ model: llmModel, status: upstream.status }));
+          if (!allowGeminiFallback || !geminiApiKey) {
+            return new Response(JSON.stringify({ error: "QUN LLM endpoint is temporarily unavailable.", retryable: true }), {
+              status: 503, headers: { ...cors, "Retry-After": "30" },
+            });
+          }
+        }
+      } catch (error) {
+        console.error("QUN LLM request failed", JSON.stringify({
+          model: llmModel,
+          reason: error instanceof Error ? error.name : "unknown",
+        }));
+        if (!allowGeminiFallback || !geminiApiKey) {
+          return new Response(JSON.stringify({ error: "QUN LLM endpoint is temporarily unavailable.", retryable: true }), {
+            status: 503, headers: { ...cors, "Retry-After": "30" },
+          });
+        }
+      }
+    }
+
+    if (!geminiApiKey) {
+      return new Response(JSON.stringify({ error: "Gemini fallback is not configured." }), { status: 503, headers: cors });
     }
 
     const contents = messages.map((m: { role: string; content: string }) => ({
@@ -52,7 +127,7 @@ Deno.serve(async (req: Request) => {
       try {
         upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model.name + ":generateContent", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          headers: { "Content-Type": "application/json", "x-goog-api-key": geminiApiKey },
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
             contents,
@@ -74,7 +149,7 @@ Deno.serve(async (req: Request) => {
         const reply = result?.candidates?.[0]?.content?.parts
           ?.map((p: { text?: string }) => p.text || "")
           .join("").trim();
-        if (reply) return new Response(JSON.stringify({ reply }), { status: 200, headers: cors });
+        if (reply) return new Response(JSON.stringify({ reply, provider: "gemini", model: model.name }), { status: 200, headers: cors });
         lastStatus = 502;
         console.error("QUN AI model returned empty response", model.name);
         continue;
