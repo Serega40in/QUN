@@ -1,3 +1,5 @@
+[Reading 10 lines from start (total: 10 lines, 0 remaining)]
+
 const $=id=>document.getElementById(id);
 function bubble(text,who='ai'){const el=document.createElement('div');el.className='bubble '+who;el.textContent=text;$('chatlog').appendChild(el);$('chatlog').scrollTop=$('chatlog').scrollHeight}
 async function init(){const c=await window.qun.getConfig();$('endpoint').value=c.endpoint;$('model').value=c.model;$('modelBadge').textContent=c.model||'Модель не настроена';$('keyStatus').textContent=c.hasKey?'API-ключ сохранён в защищённом хранилище ОС.':'API-ключ ещё не добавлен.'}
@@ -8,3 +10,6 @@ $('readPage').onclick=async()=>{const r=await window.qun.readPage();$('pageStatu
 $('send').onclick=async()=>{const p=$('prompt').value.trim();if(!p)return;bubble(p,'user');$('prompt').value='';$('send').disabled=true;$('chatStatus').textContent='Запрос отправляется провайдеру…';const r=await window.qun.chat(p);if(r.ok)bubble(r.answer);else bubble('Ошибка: '+r.error);$('chatStatus').textContent=r.ok?'Ответ от '+r.model:'Проверь настройки модели и API-ключ.';$('send').disabled=false};
 $('prompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('send').click()}});$('clear').onclick=()=>{$('chatlog').replaceChildren();$('chatStatus').textContent=''};
 $('openQun').onclick=()=>window.qun.navigate('https://serega40in.github.io/QUN/');$('openGitHub').onclick=()=>window.qun.navigate('https://github.com/Serega40in/QUN/tree/feat/qun-desktop-agent-mvp');init();
+
+[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
+$('checkCore').onclick=async()=>{ $('coreStatus').textContent='Проверяю облачный QUN Agent Core…'; const r=await window.qun.coreHealth(); $('coreStatus').textContent=r.ok?'Связь есть · '+r.data.name+' v'+r.data.version+' · '+r.data.status+' · '+r.data.transports.join(', '):'Недоступно: '+r.error; };
