@@ -289,6 +289,15 @@ ipcMain.handle('qun:core-device-heartbeat', async () => {
   }
 });
 
+ipcMain.handle('qun:bridge-health', async () => {
+  try {
+    const response = await fetch('http://127.0.0.1:43127/health', { signal: AbortSignal.timeout(2500) });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const data = await response.json();
+    return { ok: true, data };
+  } catch (error) { return { ok: false, error: 'QUN Agent Bridge не отвечает на 127.0.0.1:43127. ' + (error.message || '') }; }
+});
+
 ipcMain.handle('qun:node-health', async () => {
   try {
     const response = await fetch('http://127.0.0.1:8787/health', { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(2500) });
