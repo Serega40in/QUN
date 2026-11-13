@@ -13,6 +13,7 @@ Open-source desktop AI assistant with an embedded browser and provider-neutral, 
 - Optional pairing with the existing QUN Agent Core `/pult/pair` endpoint using a single-use 64-hex pairing code; the returned device token is encrypted with Electron `safeStorage`.
 - Authenticated heartbeat to the existing QUN Core PULT device endpoint; no new queue or database is created.
 - Local JSONL audit log for browser navigation/click/type outcomes and Core pairing/heartbeat results. It records hostnames and outcome metadata, not typed field values, API keys, pairing codes or page text.
+- A native desktop confirmation dialog for selected consequential clicks (e.g. delete/pay/buy); publishing, sending and form submission remain hard-blocked.
 - Basic URL validation, isolated renderer, no Node.js access in the page/UI renderer.
 - No provider is mandatory. The default endpoint is OpenRouter, but any compatible endpoint can be entered.
 
@@ -35,7 +36,7 @@ Enter an OpenAI-compatible Chat Completions endpoint, model ID and API key. The 
 
 ## Current limitations
 
-This is an early local MVP, not an unrestricted computer-use agent. Risky browser actions and form submissions remain blocked. The Core integration currently supports pairing and heartbeat only; it does not yet claim or execute queued commands. It does not run arbitrary shell commands or claim jobs from QUN Compute. The page text is sent to the selected model only when you submit a chat request. The model cannot execute instructions embedded in page content through this interface.
+This is an early local MVP, not an unrestricted computer-use agent. Selected consequential clicks require a native one-time confirmation; publishing, sending and form submissions remain blocked. The Core integration currently supports pairing and heartbeat only; it does not yet claim or execute queued commands. It does not run arbitrary shell commands or claim jobs from QUN Compute. The page text is sent to the selected model only when you submit a chat request. The model cannot execute instructions embedded in page content through this interface.
 
 ## Roadmap
 
