@@ -12,6 +12,16 @@
 
 # КЮН / QUN
 
+## QUN Desktop Agent
+
+- **Публичная страница проекта:** https://serega40in.github.io/QUN/apps/qun-desktop-agent/
+- **Исходный код:** [apps/qun-desktop-agent](apps/qun-desktop-agent/)
+- **Туториал на русском:** [TUTORIAL_RU.md](apps/qun-desktop-agent/TUTORIAL_RU.md)
+- **Серия публикаций для QUN News:** [редакционный пакет](docs/publications/qun-desktop-agent-series-2026-11.md)
+- **Статус:** экспериментальный MVP. Не считать очередь команд, полностью автономное управление ПК или все браузерные сценарии готовыми до проверки.
+
+# КЮН / QUN
+
 Единая цифровая экосистема: мессенджер, платформа и будущие сервисы КЮН.
 
 ## Контакты и предложения
