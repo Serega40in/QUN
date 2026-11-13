@@ -16,6 +16,9 @@ function publicConfig() { return { endpoint: config.endpoint, model: config.mode
 function validEndpoint(value) {
   const u = new URL(value);
   if (!['https:', 'http:'].includes(u.protocol)) throw new Error('Разрешены только HTTP/HTTPS API endpoints.');
+  if (u.protocol === 'http:' && !['localhost', '127.0.0.1', '[::1]'].includes(u.hostname)) {
+    throw new Error('Удалённые API должны использовать HTTPS. HTTP разрешён только для локальных моделей.');
+  }
   if (u.username || u.password) throw new Error('Не добавляйте логин или пароль в URL endpoint.');
   return u.toString();
 }
