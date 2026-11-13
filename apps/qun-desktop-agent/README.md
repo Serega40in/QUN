@@ -14,10 +14,10 @@ Open-source desktop AI assistant with an embedded browser and provider-neutral, 
 - Optional pairing with the existing QUN Agent Core `/pult/pair` endpoint using a single-use 64-hex pairing code; the returned device token is encrypted with Electron `safeStorage`.
 - Authenticated heartbeat to the existing QUN Core PULT device endpoint; no new queue or database is created.
 - Local JSONL audit log for browser navigation/click/type outcomes and Core pairing/heartbeat results. It records hostnames and outcome metadata, not typed field values, API keys, pairing codes or page text.
-- A native desktop confirmation dialog for selected consequential clicks (e.g. delete/pay/buy); publishing, sending and form submission remain hard-blocked.
+- A native desktop confirmation dialog for selected consequential clicks (e.g. delete/pay/buy). The development control API is restricted; publishing/submission should only be enabled through a narrowly scoped, site-specific workflow with explicit user authorization, never by globally allowing arbitrary forms.
 - Basic URL validation, isolated renderer, no Node.js access in the page/UI renderer.
-- No provider is mandatory. The default endpoint is OpenRouter, but any compatible endpoint can be entered.
-- Local Ollama mode with no provider API key, using the OpenAI-compatible local endpoint. Suggested starter model: `qwen2.5:0.5b` as the smallest starter on an 8 GB RAM device; `qwen2.5:1.5b` is an optional quality upgrade; the model itself must be downloaded separately.
+- No provider is mandatory. No cloud provider is guaranteed to be free. Choose a compatible HTTPS endpoint and verify its free quota and billing terms before use.
+- The local Ollama integration is optional and is not enabled by default. This project does not bundle model weights or promise that local inference will run well on low-memory computers. For this device, Ollama was removed because it caused heavy load; use a compatible cloud provider only after checking its quota and pricing.
 - Save assistant answers as Markdown, HTML, text, JSON, CSV, or PDF using a native save dialog.
 - Explicit local memory (`memory.md`) for user-authored preferences and project notes; it is injected as context, not used to fine-tune model weights.
 - Local `skills` (`.md`) and `connectors` (`.json`) extension folders. This is only the storage/discovery foundation; extensions do not execute code automatically.
@@ -41,14 +41,14 @@ Enter an OpenAI-compatible Chat Completions endpoint, model ID and API key. The 
 
 ## Current limitations
 
-This is an early local MVP, not an unrestricted computer-use agent. Selected consequential clicks require a native one-time confirmation; publishing, sending and form submissions remain blocked. The Core integration currently supports pairing and heartbeat only; it does not yet claim or execute queued commands. It does not run arbitrary shell commands or claim jobs from QUN Compute. The page text is sent to the selected model only when you submit a chat request. The model cannot execute instructions embedded in page content through this interface.
+This is an early local MVP, not an unrestricted computer-use agent. Selected consequential clicks require a native one-time confirmation; generic form submission remains blocked except for a narrowly scoped, explicitly authorized workflow. The Core integration currently supports pairing and heartbeat only; it does not yet claim or execute queued commands. It does not run arbitrary shell commands or claim jobs from QUN Compute. The page text is sent to the selected model only when you submit a chat request. The model cannot execute instructions embedded in page content through this interface.
 
 ## Roadmap
 
 1. Explicit user-approved browser actions with a strict allowlist.
 2. Complete the existing QUN Agent Core queue worker: show a clear local approval dialog before claiming/executing any queued browser plan, then report result through the existing PULT endpoints.
 3. Integrate with existing QUN Node / QUN Compute interfaces only after verifying their current registration and job contracts; do not create a parallel worker network.
-4. Finish Ollama setup and verify a real local chat; add model download/installation progress and RAM-aware model recommendations.
+4. Add a tested, quota-aware QUN AI/cloud provider adapter; keep local inference optional and off by default.
 5. Define signed skill and connector manifests, permission scopes, review/disable controls, and sandboxed execution before running extensions.
 6. Add artifact generation templates and structured output (HTML/PDF/JSON) with preview and safe path handling.
 7. Complete existing QUN Agent Core queue worker only after secure pairing-code issuance and explicit per-plan approval; reuse QUN Node / QUN Compute.
