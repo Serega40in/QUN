@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b32">
+  <meta name="description" content="S40in AI Income — личная панель заказов, доходов и цели ChatGPT.">
+  <title>S40in AI Income — центр дохода</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <main id="login-screen" class="login-screen">
+    <section class="login-card">
+      <div class="brand-lockup">
+        <div class="brand-mark">S<span>40</span></div>
+        <div><strong>S40in <span>AI Income</span></strong><small>разумная система дохода</small></div>
+      </div>
+      <div class="login-orbit"><div class="orbit-core">✦</div><i></i><b></b><em></em></div>
+      <p class="eyebrow">ЛИЧНОЕ ПРОСТРАНСТВО</p>
+      <h1>Доход начинается<br>с ясного фокуса.</h1>
+      <p class="login-copy">Заказы, клиенты, финансы и путь к оплате твоих AI-инструментов — в одном спокойном рабочем месте.</p>
+      <form id="login-form" class="login-form">
+        <label for="login-name">QUN ID</label>
+        <input id="login-name" name="login" autocomplete="username" placeholder="Твой логин QUN" required>
+        <label for="login-password">Пароль</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Пароль QUN ID" required>
+        <button class="button button-primary button-wide" type="submit"><span>Войти через QUN ID</span><b>→</b></button>
+        <p id="login-error" class="form-error" role="alert"></p>
+      </form>
+      <div class="login-foot"><span class="secure-dot"></span> Единая авторизация QUN · защищённое хранение данных</div>
+    </section>
+    <aside class="login-side">
+      <div class="side-glass">
+        <div class="side-kicker">OUR FIRST MILESTONE</div>
+        <div class="side-target">$25</div>
+        <div class="side-title">Фонд ChatGPT</div>
+        <div class="side-line"><span></span></div>
+        <div class="side-caption">Один заказ за другим.<br>Сначала подписка — затем масштаб.</div>
+        <div class="side-decoration">✧</div>
+      </div>
+      <p class="side-quote">«Создаём ценность. Получаем результат. Развиваем свободу.»</p>
+    </aside>
+  </main>
+
+  <div id="app-shell" class="app-shell hidden">
+    <header class="topbar">
+      <a class="brand-lockup brand-compact" href="./">
+        <div class="brand-mark">S<span>40</span></div>
+        <div><strong>S40in <span>AI Income</span></strong><small>income workspace</small></div>
+      </a>
+      <div class="topbar-right">
+        <div class="live-status"><span></span> Личное пространство</div>
+        <div class="user-pill"><div class="avatar" id="user-avatar">Q</div><div><b id="user-name">QUN ID</b><small>аккаунт QUN</small></div></div>
+        <button id="logout-button" class="icon-button" aria-label="Выйти" title="Выйти">↗</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="sidebar-label">РАБОЧЕЕ ПРОСТРАНСТВО</div>
+        <nav class="main-nav" aria-label="Главное меню">
+          <button class="nav-item active" data-view="dashboard"><span class="nav-icon">◫</span>Обзор</button>
+          <button class="nav-item" data-view="orders"><span class="nav-icon">▤</span>Заказы<span class="nav-count" id="orders-count">0</span></button>
+          <button class="nav-item" data-view="finance"><span class="nav-icon">◈</span>Финансы</button>
+          <button class="nav-item" data-view="tasks"><span class="nav-icon">✓</span>План действий</button>
+          <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span>Настройки</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="focus-card">
+            <div class="focus-icon">✦</div>
+            <b>Фокус недели</b>
+            <p>Получить первый оплаченный заказ на AI-креатив или видео.</p>
+            <button data-view="tasks" class="text-button">Открыть план <span>→</span></button>
+          </div>
+          <div class="sidebar-foot">S40in AI Studio <span>·</span> v0.1</div>
+        </div>
+      </aside>
+
+      <section class="main-area">
+        <div id="view" class="view-content">
+          <div class="loading-state"><div class="spinner"></div><p>Открываем рабочее пространство…</p></div>
+        </div>
+        <footer class="app-footer"><span>Спокойный фокус. Реальные заказы. Честный учёт.</span><span>Powered by QUN ID</span></footer>
+      </section>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast" class="toast" role="status"></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
