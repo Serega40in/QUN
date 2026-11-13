@@ -51,9 +51,6 @@ Use only APIs and sites you are authorized to access. Do not submit private page
 
 License: follow the repository root license; this folder is a prototype.
 
-[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
-
-
 ## ChatGPT / local control bridge
 
 The desktop app exposes a loopback-only control API on `127.0.0.1:47881`. It creates a random 256-bit bearer token in Electron's user-data directory (`control-token.txt`). Never publish this token or place it in renderer JavaScript.
@@ -69,9 +66,6 @@ Authenticated endpoints:
 - `POST /ui/action` — switch between Chat, Settings, QUN Network and Browser
 
 All requests require `Authorization: Bearer <local token>`. The server binds only to IPv4 loopback, rejects browser-origin requests, and has no CORS allowance. Page text is untrusted. This bridge is a development interface, not a production security boundary; keep the token private and do not expose the port to a network.
-
-[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
-
 
 ## QUN Core pairing (incremental integration)
 
