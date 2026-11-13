@@ -122,7 +122,7 @@ ipcMain.handle('qun:local-model-status', async () => {
   } catch (error) { return { ok: false, error: 'Локальная Ollama не отвечает на 127.0.0.1:11434. Установи Ollama и скачай модель. ' + (error.message || '') }; }
 });
 ipcMain.handle('qun:use-local-model', async (_event, input = {}) => {
-  const model = String(input.model || 'qwen2.5:1.5b').trim().slice(0, 100);
+  const model = String(input.model || 'qwen2.5:0.5b').trim().slice(0, 100);
   if (!/^[a-zA-Z0-9._:-]+$/.test(model)) return { ok: false, error: 'Некорректный идентификатор локальной модели.' };
   config.endpoint = 'http://127.0.0.1:11434/v1/chat/completions';
   config.model = model;
