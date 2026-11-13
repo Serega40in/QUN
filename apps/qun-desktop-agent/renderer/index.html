@@ -65,11 +65,11 @@
     <section class="settings-panel" id="settingsPanel">
       <div class="panel-heading"><button class="back-to-chat" id="settingsBack">← Назад к чату</button><p class="eyebrow">НАСТРОЙКИ</p><h2>Модели и API</h2><p>Подключи любую совместимую модель — локальную, бесплатную или платную. QUN не навязывает провайдера.</p></div>
       <div class="settings-card"><div class="settings-card-head"><div><h3>Провайдер модели</h3><p>OpenAI-compatible Chat Completions API</p></div><span class="settings-icon">✳</span></div>
-        <label for="endpoint">API endpoint</label><input id="endpoint" value="https://openrouter.ai/api/v1/chat/completions" placeholder="https://provider.example/v1/chat/completions">
+        <label for="endpoint">API endpoint</label><input id="endpoint" value="" placeholder="https://provider.example/v1/chat/completions">
         <label for="model">Модель / model ID</label><input id="model" placeholder="Например: provider/model">
         <label for="apiKey">API-ключ</label><input id="apiKey" type="password" autocomplete="off" placeholder="Вставь ключ провайдера">
         <div class="settings-actions"><button class="primary-button" id="saveConfig">Сохранить настройки</button><span class="settings-note" id="keyStatus">Ключ хранится в защищённом хранилище ОС.</span></div>
-        <div class="local-model-box"><strong>Бесплатная локальная модель</strong><p>Ollama работает на этом компьютере без API-ключа. Рекомендуемый стартовый вариант для 8 ГБ RAM — Qwen2.5 1.5B; ответы будут медленнее облачных моделей.</p><div class="settings-actions"><button id="useLocalModel">Выбрать локальную модель</button><button id="checkLocalModel">Проверить Ollama</button></div><p class="settings-note" id="localModelStatus">Ollama пока не проверена.</p></div>
+        <p class="settings-note">Облачная модель не выбрана автоматически. Подключай только HTTPS-провайдера, у которого проверены бесплатная квота и условия оплаты. Пока модель не настроена, запросы не отправляются.</p>
       </div>
       <div class="settings-card"><div class="settings-card-head"><div><h3>Навыки и коннекторы</h3><p>Расширяемые локальные папки QUN</p></div><span class="settings-icon">✧</span></div>
         <p class="settings-note">Здесь будут подключаемые навыки и интеграции. На этом этапе создаём безопасную структуру хранения; произвольный код и внешние действия не запускаются автоматически.</p>
