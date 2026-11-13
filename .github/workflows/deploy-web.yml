@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - "docs/**"
+      - "apps/qun-mobile/**"
       - ".github/workflows/deploy-web.yml"
   workflow_dispatch:
 permissions:
@@ -26,6 +27,11 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Include QUN Mobile app in published site
+        run: |
+          mkdir -p docs/apps
+          rm -rf docs/apps/qun-mobile
+          cp -R apps/qun-mobile docs/apps/qun-mobile
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
