@@ -75,6 +75,11 @@
         <p class="settings-note">Здесь будут подключаемые навыки и интеграции. На этом этапе создаём безопасную структуру хранения; произвольный код и внешние действия не запускаются автоматически.</p>
         <div class="settings-actions"><button id="openSkillsFolder">Открыть папку навыков</button><button id="openConnectorsFolder">Открыть папку коннекторов</button></div><p class="settings-note" id="extensionsStatus">Папки будут созданы при первом открытии.</p>
       </div>
+      <div class="settings-card"><div class="settings-card-head"><div><h3>Память агента</h3><p>Локальные заметки и предпочтения</p></div><span class="settings-icon">⌁</span></div>
+        <p class="settings-note">Записывай здесь предпочтения, правила работы и контекст проектов. Это не переобучение весов модели: заметки хранятся локально и добавляются к запросам, пока ты их не изменишь или не очистишь.</p>
+        <label for="agentMemory">Что QUN должен учитывать</label><textarea id="agentMemory" rows="6" maxlength="12000" placeholder="Например: сначала готовь черновики, не отправляй внешние формы без подтверждения…"></textarea>
+        <div class="settings-actions"><button class="primary-button" id="saveMemory">Сохранить память</button><span class="settings-note" id="memoryStatus">Хранится локально на этом компьютере.</span></div>
+      </div>
       <div class="settings-card"><div class="settings-card-head"><div><h3>Сеть QUN</h3><p>Существующие компоненты, без отдельной параллельной сети</p></div><span class="settings-icon">⌘</span></div>
         <div class="network-row"><span class="status-dot" id="coreDot"></span><div><strong>QUN Agent Core</strong><small id="coreStatus">Не проверено</small></div><button id="checkCore">Проверить</button></div>
         <div class="network-row"><span class="status-dot" id="nodeDotSettings"></span><div><strong>Локальный QUN Node</strong><small id="nodeStatus">Не проверено</small></div><button id="checkNode">Проверить</button></div>
