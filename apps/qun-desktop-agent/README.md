@@ -16,6 +16,10 @@ Open-source desktop AI assistant with an embedded browser and provider-neutral, 
 - A native desktop confirmation dialog for selected consequential clicks (e.g. delete/pay/buy); publishing, sending and form submission remain hard-blocked.
 - Basic URL validation, isolated renderer, no Node.js access in the page/UI renderer.
 - No provider is mandatory. The default endpoint is OpenRouter, but any compatible endpoint can be entered.
+- Local Ollama mode with no provider API key, using the OpenAI-compatible local endpoint. Suggested starter model: `qwen2.5:1.5b` for an 8 GB RAM device; the model itself must be downloaded separately.
+- Save assistant answers as Markdown, HTML, text, JSON, CSV, or PDF using a native save dialog.
+- Explicit local memory (`memory.md`) for user-authored preferences and project notes; it is injected as context, not used to fine-tune model weights.
+- Local `skills` (`.md`) and `connectors` (`.json`) extension folders. This is only the storage/discovery foundation; extensions do not execute code automatically.
 
 ## Requirements and run
 
@@ -43,8 +47,11 @@ This is an early local MVP, not an unrestricted computer-use agent. Selected con
 1. Explicit user-approved browser actions with a strict allowlist.
 2. Complete the existing QUN Agent Core queue worker: show a clear local approval dialog before claiming/executing any queued browser plan, then report result through the existing PULT endpoints.
 3. Integrate with existing QUN Node / QUN Compute interfaces only after verifying their current registration and job contracts; do not create a parallel worker network.
-4. Provider adapters, local model runtimes (e.g. Ollama), cost/usage visibility and fallback routing.
-5. Signed builds, automated tests, releases and security review.
+4. Finish Ollama setup and verify a real local chat; add model download/installation progress and RAM-aware model recommendations.
+5. Define signed skill and connector manifests, permission scopes, review/disable controls, and sandboxed execution before running extensions.
+6. Add artifact generation templates and structured output (HTML/PDF/JSON) with preview and safe path handling.
+7. Complete existing QUN Agent Core queue worker only after secure pairing-code issuance and explicit per-plan approval; reuse QUN Node / QUN Compute.
+8. Signed builds, automated tests, releases and security review.
 
 ## Security notes
 
@@ -73,3 +80,15 @@ All requests require `Authorization: Bearer <local token>`. The server binds onl
 Open **Сеть QUN**, enter the existing one-time pairing code issued by the QUN Agent Core pairing flow, and press **Подключить устройство**. The app posts to the existing `/functions/v1/qun-agent-core/pult/pair` endpoint, stores the returned device token encrypted by the OS, then can send an authenticated heartbeat to `/pult/heartbeat`. The pairing code is single-use; never share it in logs or source code. If a pairing code is not available in the current QUN UI, do not insert a code or token directly into the database as a workaround.
 
 Browser actions are logged to the OS user-data directory under `audit/actions.jsonl`. Logs intentionally omit page text, typed values, pairing codes and tokens. Queue polling/claiming and action execution are not enabled in this stage; that requires a visible approval flow before any queued plan is claimed.
+
+
+## Local model quick start
+
+1. Install Ollama for Windows from the official download page: https://ollama.com/download/windows.
+2. In PowerShell run `ollama pull qwen2.5:1.5b` (the first download is around a gigabyte; exact size may vary).
+3. Open **Модели и API**, press **Выбрать локальную модель**, then **Проверить Ollama**. The desktop agent uses `http://127.0.0.1:11434/v1/chat/completions` and does not send an API key in local mode.
+4. Small models may be slower and less capable than cloud models; use the provider setting to switch back at any time.
+
+## Files, memory and extensions
+
+Every assistant answer has **Сохранить как файл**. The native save dialog supports Markdown, HTML, PDF, text, JSON and CSV. HTML/PDF exports escape answer content rather than executing it. Local memory can be edited under **Память агента**; it is user-controlled context and is not model fine-tuning. Skills and connectors can be placed in the user-data folders opened from settings (`skills/*.md`, `connectors/*.json`). They are not executable plugins yet; a signed manifest, explicit permissions, and sandbox are required before execution.
