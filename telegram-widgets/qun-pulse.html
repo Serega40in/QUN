@@ -1,0 +1,28 @@
+<div class="wrap">
+  <div class="brand">QUN PULSE · 01</div>
+  <h3>Чего миру сейчас нужно больше?</h3>
+  <p class="sub">Выбери один ответ. Твой голос можно обработать через QUN-бота.</p>
+  <div class="choices">
+    <button onclick="vote('pulse:calm')">☁️ Спокойствия</button>
+    <button onclick="vote('pulse:clarity')">💎 Ясности</button>
+    <button onclick="vote('pulse:kindness')">🌿 Доброты</button>
+  </div>
+  <p id="status" class="hint">Один выбор — маленький вклад в общее направление.</p>
+</div>
+<style>
+.wrap{font-family:system-ui,sans-serif;color:var(--tg-theme-text-color);padding:4px}
+.brand{font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--tg-theme-accent-text-color);margin-bottom:8px}
+h3{font-size:18px;line-height:1.25;margin:0 0 8px}
+.sub,.hint{font-size:13px;color:var(--tg-theme-hint-color);line-height:1.4}
+.choices{display:grid;gap:7px;margin-top:12px}
+button{width:100%;text-align:left;border:1px solid var(--tg-theme-section-separator-color);border-radius:10px;padding:11px;background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color);font-size:14px}
+</style>
+<script>
+function vote(data){
+ const s=document.getElementById('status');
+ if(!window.TelegramWidget){s.textContent='Демо: голос «'+data.split(':')[1]+'» выбран.';return}
+ s.textContent='Передаём голос…';
+ TelegramWidget.request(data).then(a=>{s.textContent=a.result||'Спасибо! Голос принят.'},e=>{s.textContent='Пока не удалось отправить: '+e.code});
+}
+if(window.TelegramWidget)TelegramWidget.ready();
+</script>
