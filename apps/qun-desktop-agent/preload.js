@@ -6,5 +6,6 @@ contextBridge.exposeInMainWorld('qun', {
   browserAction: action => ipcRenderer.invoke('qun:browser-action', action),
   readPage: () => ipcRenderer.invoke('qun:read-page'),
   chat: prompt => ipcRenderer.invoke('qun:chat', prompt),
-  coreHealth: () => ipcRenderer.invoke('qun:core-health')
+  coreHealth: () => ipcRenderer.invoke('qun:core-health'),
+  nodeHealth: () => ipcRenderer.invoke('qun:node-health')
 });
