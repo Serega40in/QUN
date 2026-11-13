@@ -88,3 +88,11 @@ The current production Core endpoint responds healthy, but its health response r
 - User-authored local memory is stored in `memory.md`, editable in settings, bounded to 12,000 characters, and included as context in later prompts. This is retrieval/context memory, not fine-tuning or autonomous model training.
 - Extension storage roots are under Electron userData: `skills/*.md` and `connectors/*.json`. Current implementation can open these directories and list manifests. Extensions are not executed yet; next step is a versioned manifest schema, permissions, user approval, signature/trust policy and a sandboxed runtime.
 - Model choice and external provider keys remain under user control; no automatic paid provider or cloud storage is enabled.
+
+
+## Model and artifact storage strategy
+
+- Do not upload multi-gigabyte model weights into Supabase tables, GitHub, or a generic user file bucket. Keep the starter model cached on the local device; remote model inference should use existing QUN Compute nodes only after capability, consent, quota and licence checks.
+- Maintain a lightweight model registry (model ID, source URL, licence, checksum, quantization, RAM/storage estimate, supported tasks) in versioned metadata. Fetch weights from their authoritative upstream and verify checksums before use.
+- For user-generated artifacts, use local-first storage by default. Optional cloud sync should be an explicit feature built on the existing QUN Storage/Cloud infrastructure or a configured object store, with per-user access control, encryption, quota, deletion/retention settings and clear indicators when data leaves the device. Never sync secrets or browser credentials.
+- Start with metadata and small deliverables; do not enable cloud uploads until a destination, permissions and retention policy are explicitly configured.
