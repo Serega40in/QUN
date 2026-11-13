@@ -159,6 +159,30 @@ ipcMain.handle('qun:chat', async (_event, prompt) => {
   } catch (error) { auditAction('model.request', { result: 'failed', reason: String(error.message || error).slice(0, 160) }); return { ok: false, error: error.message }; }
 });
 
+function extensionDirectory(kind) {
+  if (kind !== 'skills' && kind !== 'connectors') throw new Error('Unknown extension folder.');
+  return path.join(app.getPath('userData'), kind);
+}
+ipcMain.handle('qun:extension-status', async () => {
+  try {
+    const skillsDir = extensionDirectory('skills'), connectorsDir = extensionDirectory('connectors');
+    fs.mkdirSync(skillsDir, { recursive: true }); fs.mkdirSync(connectorsDir, { recursive: true });
+    const skills = fs.readdirSync(skillsDir, { withFileTypes: true }).filter(x => x.isFile() && x.name.toLowerCase().endsWith('.md')).map(x => x.name).slice(0, 100);
+    const connectors = fs.readdirSync(connectorsDir, { withFileTypes: true }).filter(x => x.isFile() && x.name.toLowerCase().endsWith('.json')).map(x => x.name).slice(0, 100);
+    return { ok: true, skills, connectors, basePath: path.join(app.getPath('userData'), 'extensions') };
+  } catch (error) { return { ok: false, error: error.message }; }
+});
+ipcMain.handle('qun:open-extension-folder', async (_event, kind) => {
+  try {
+    const dir = extensionDirectory(kind);
+    fs.mkdirSync(dir, { recursive: true });
+    const error = await shell.openPath(dir);
+    if (error) throw new Error(error);
+    auditAction('extensions.folder-opened', { kind, result: 'success' });
+    return { ok: true };
+  } catch (error) { return { ok: false, error: error.message }; }
+});
+
 ipcMain.handle('qun:save-artifact', async (_event, input = {}) => {
   try {
     const text = String(input.text || '').slice(0, 1000000);
