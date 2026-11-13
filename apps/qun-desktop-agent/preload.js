@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('qun', {
   localModelStatus: () => ipcRenderer.invoke('qun:local-model-status'),
   useLocalModel: value => ipcRenderer.invoke('qun:use-local-model', value),
   saveArtifact: value => ipcRenderer.invoke('qun:save-artifact', value),
+  getMemory: () => ipcRenderer.invoke('qun:get-memory'),
+  saveMemory: value => ipcRenderer.invoke('qun:save-memory', value),
   extensionStatus: () => ipcRenderer.invoke('qun:extension-status'),
   openExtensionFolder: kind => ipcRenderer.invoke('qun:open-extension-folder', kind),
   coreHealth: () => ipcRenderer.invoke('qun:core-health'),
