@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('qun', {
   pairCore: value => ipcRenderer.invoke('qun:pair-core', value),
   coreDeviceHeartbeat: () => ipcRenderer.invoke('qun:core-device-heartbeat'),
   nodeHealth: () => ipcRenderer.invoke('qun:node-health'),
+  bridgeHealth: () => ipcRenderer.invoke('qun:bridge-health'),
   setBrowserVisible: visible => ipcRenderer.invoke('qun:set-browser-visible', visible),
   onBrowserNavigated: callback => ipcRenderer.on('qun:browser-navigated', (_event, data) => callback(data))
 });
