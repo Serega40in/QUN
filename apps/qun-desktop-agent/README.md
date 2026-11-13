@@ -17,7 +17,7 @@ Open-source desktop AI assistant with an embedded browser and provider-neutral, 
 - A native desktop confirmation dialog for selected consequential clicks (e.g. delete/pay/buy); publishing, sending and form submission remain hard-blocked.
 - Basic URL validation, isolated renderer, no Node.js access in the page/UI renderer.
 - No provider is mandatory. The default endpoint is OpenRouter, but any compatible endpoint can be entered.
-- Local Ollama mode with no provider API key, using the OpenAI-compatible local endpoint. Suggested starter model: `qwen2.5:1.5b` for an 8 GB RAM device; the model itself must be downloaded separately.
+- Local Ollama mode with no provider API key, using the OpenAI-compatible local endpoint. Suggested starter model: `qwen2.5:0.5b` as the smallest starter on an 8 GB RAM device; `qwen2.5:1.5b` is an optional quality upgrade; the model itself must be downloaded separately.
 - Save assistant answers as Markdown, HTML, text, JSON, CSV, or PDF using a native save dialog.
 - Explicit local memory (`memory.md`) for user-authored preferences and project notes; it is injected as context, not used to fine-tune model weights.
 - Local `skills` (`.md`) and `connectors` (`.json`) extension folders. This is only the storage/discovery foundation; extensions do not execute code automatically.
@@ -86,7 +86,7 @@ Browser actions are logged to the OS user-data directory under `audit/actions.js
 ## Local model quick start
 
 1. Install Ollama for Windows from the official download page: https://ollama.com/download/windows.
-2. In PowerShell run `ollama pull qwen2.5:1.5b` (the first download is around a gigabyte; exact size may vary).
+2. In PowerShell run `ollama pull qwen2.5:0.5b` (the first download is around a gigabyte; exact size may vary).
 3. Open **Модели и API**, press **Выбрать локальную модель**, then **Проверить Ollama**. The desktop agent uses `http://127.0.0.1:11434/v1/chat/completions` and does not send an API key in local mode.
 4. Small models may be slower and less capable than cloud models; use the provider setting to switch back at any time.
 
