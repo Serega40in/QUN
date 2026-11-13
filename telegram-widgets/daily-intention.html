@@ -1,0 +1,28 @@
+<div class="wrap">
+  <div class="brand">QUN <span>· маленький шаг к ясности</span></div>
+  <h3>Какое качество ты выбираешь сегодня?</h3>
+  <div class="choices">
+    <button onclick="choose('Спокойствие')">☁️ Спокойствие</button>
+    <button onclick="choose('Ясность')">💎 Ясность</button>
+    <button onclick="choose('Доброта')">🌿 Доброта</button>
+    <button onclick="choose('Смелость')">☀️ Смелость</button>
+  </div>
+  <p id="result" class="hint">Выбери намерение — без спешки и давления.</p>
+</div>
+<style>
+.wrap{font-family:system-ui,sans-serif;color:var(--tg-theme-text-color);padding:4px}
+.brand{font-size:12px;font-weight:700;color:var(--tg-theme-accent-text-color);margin-bottom:8px}
+.brand span{font-weight:400;color:var(--tg-theme-hint-color)}
+h3{font-size:18px;line-height:1.25;margin:0 0 12px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{border:1px solid var(--tg-theme-section-separator-color);border-radius:12px;padding:12px 6px;background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color);font-size:14px}
+button:active{opacity:.75}
+.hint{font-size:13px;color:var(--tg-theme-hint-color);margin:12px 0 2px}
+</style>
+<script>
+function choose(value){
+  document.getElementById('result').textContent='Твоё намерение на сегодня: '+value+'. Пусть оно проявится в одном простом действии.';
+  if(window.TelegramWidget&&TelegramWidget.HapticFeedback)TelegramWidget.HapticFeedback.selectionChanged();
+}
+if(window.TelegramWidget)TelegramWidget.ready();
+</script>
