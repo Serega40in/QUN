@@ -13,5 +13,3 @@ contextBridge.exposeInMainWorld('qun', {
   setBrowserVisible: visible => ipcRenderer.invoke('qun:set-browser-visible', visible),
   onBrowserNavigated: callback => ipcRenderer.on('qun:browser-navigated', (_event, data) => callback(data))
 });
-
-[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
