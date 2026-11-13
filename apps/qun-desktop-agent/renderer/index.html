@@ -1,13 +1,84 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src https: http:; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
-<title>QUN Desktop Agent</title><link rel="stylesheet" href="./styles.css"></head><body>
-<header><div class="logo">Q</div><div><div class="brand">QUN Desktop Agent</div><div class="sub">Открытый ИИ-оператор · preview 0.1.0</div></div><div class="pill" id="modelBadge">Модель не настроена</div></header>
-<aside>
-<section class="card"><div class="title-row"><h2>Модель и API</h2><span class="muted">BYOK</span></div><label for="endpoint">API endpoint</label><input id="endpoint" value="https://openrouter.ai/api/v1/chat/completions" placeholder="https://provider.example/v1/chat/completions"><label for="model">Модель / model ID</label><input id="model" placeholder="Например: provider/model"><label for="apiKey">API-ключ (не показывается повторно)</label><input id="apiKey" type="password" autocomplete="off" placeholder="Вставь ключ провайдера"><div class="actions top-gap"><button class="primary" id="saveConfig">Сохранить настройки</button></div><div class="muted top-gap-small" id="keyStatus">Ключ хранится в защищённом хранилище ОС.</div></section>
-<section class="card"><div class="title-row"><h2>Встроенный браузер</h2></div><label for="url">Адрес сайта</label><input id="url" value="https://www.google.com" placeholder="https://example.com"><div class="actions top-gap-small"><button id="back">← Назад</button><button id="forward">Вперёд →</button><button id="reload">↻</button><button class="primary" id="go">Открыть</button></div><div class="actions top-gap-small"><button id="readPage">Прочитать страницу</button></div><div class="muted top-gap-small" id="pageStatus">Страница открывается справа. ИИ сможет анализировать её текст после твоего запроса.</div></section>
-<section class="card"><div class="title-row"><h2>Сеть QUN</h2><span class="muted">Core / Compute</span></div><div class="muted">Проверка облачного управляющего ядра. Статус узлов и выполнение заданий подключим следующим этапом через существующую очередь QUN.</div><div class="actions top-gap-small"><button id="checkCore">Проверить QUN Core</button><button id="checkNode">Проверить локальную ноду</button></div><div class="muted top-gap-small" id="coreStatus">Облако: не проверено.</div><div class="muted top-gap-small" id="nodeStatus">Локальный узел: не проверено.</div></section>
-<section class="card"><div class="title-row"><h2>Задача для ИИ</h2></div><div class="muted">Модель получит текст текущей страницы как контекст. В этой ранней версии агент анализирует содержимое, но не отправляет формы и не нажимает кнопки за тебя.</div><div id="chatlog"><div class="bubble ai">Привет! Настрой API, открой сайт и попроси меня объяснить страницу, найти важное или составить план действий.</div></div><textarea id="prompt" placeholder="Например: кратко объясни, что здесь происходит, и предложи следующий шаг."></textarea><div class="actions top-gap-small"><button class="primary" id="send">Отправить запрос</button><button id="clear">Очистить чат</button></div><div class="status" id="chatStatus"></div></section>
-<div class="warning">Безопасность: используй только свои аккаунты и разрешённые сайты. API-ключ шифруется системным хранилищем Windows. Не вставляй секреты в текст запросов. Это MVP, не запускай его с конфиденциальными данными до аудита.</div>
-</aside><main><div class="card"><h2>Добро пожаловать в QUN Desktop Agent</h2><p class="muted">Браузер справа работает внутри приложения. Панель слева управляет подключением модели и запросами. Подключай бесплатные или платные совместимые API; приложение не навязывает конкретного провайдера.</p><div class="actions"><button id="openQun">Открыть QUN</button><button id="openGitHub">GitHub проекта</button></div></div><div class="card"><h2>План развития</h2><p class="muted">01 · Встроенный браузер + API моделей<br>02 · Разрешённые действия браузера с подтверждением<br>03 · Подключение QUN Agent Core и очереди задач<br>04 · Распределённые узлы QUN Compute<br>05 · Установка и обновления с открытыми релизами</p></div></main>
-<script src="./app.js"></script></body></html>
+<title>QUN Desktop Agent</title><link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="icon-button mobile-menu" id="toggleSidebar" aria-label="Меню">☰</button>
+  <div class="brand-mark">Q</div>
+  <div class="brand-copy"><div class="brand">QUN</div><div class="sub">Desktop Agent</div></div>
+  <div class="top-spacer"></div>
+  <div class="model-pill" id="modelBadge"><span class="status-dot"></span> Модель не настроена</div>
+  <button class="top-action" id="toggleBrowser"><span>▣</span> <span id="browserToggleLabel">Открыть браузер</span></button>
+</header>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <button class="new-chat" id="newChat"><span class="plus">＋</span> Новый чат <span class="shortcut">Ctrl K</span></button>
+    <nav class="primary-nav">
+      <button class="nav-item active" id="navChat"><span class="nav-icon">◉</span> Чат</button>
+      <button class="nav-item" id="navBrowser"><span class="nav-icon">▣</span> Браузер <span class="nav-trailing" id="browserNavState">●</span></button>
+      <button class="nav-item" id="navSettings"><span class="nav-icon">⚙</span> Модели и API</button>
+      <button class="nav-item" id="navNetwork"><span class="nav-icon">⌘</span> Сеть QUN</button>
+    </nav>
+    <div class="sidebar-section-title">Недавние чаты</div>
+    <div class="chat-history" id="chatHistory"><div class="empty-history">Здесь появятся твои разговоры</div></div>
+    <div class="sidebar-bottom">
+      <div class="node-status"><span class="status-dot" id="nodeDot"></span><div><strong>QUN Compute</strong><small id="nodeMiniStatus">Проверка узла…</small></div></div>
+      <button class="profile-button" id="openAbout"><span class="avatar">Q</span><span><strong>QUN Workspace</strong><small>Открытая рабочая среда</small></span><span class="more">···</span></button>
+    </div>
+  </aside>
+  <main class="workspace" id="workspace">
+    <section class="chat-column" id="chatColumn">
+      <div class="welcome" id="welcome">
+        <div class="welcome-orb">Q</div>
+        <p class="eyebrow">QUN WORKSPACE</p>
+        <h1>Что будем создавать?</h1>
+        <p class="welcome-copy">Один рабочий стол для ИИ, браузера и вычислительной сети QUN.</p>
+        <div class="suggestions">
+          <button class="suggestion" data-prompt="Открой текущую страницу и объясни, что на ней можно сделать."><span>⌕</span><strong>Изучить сайт</strong><small>Разобраться в странице и найти нужное</small></button>
+          <button class="suggestion" data-prompt="Помоги составить план выполнения моей задачи по шагам."><span>✳</span><strong>Спланировать задачу</strong><small>Разбить цель на понятные действия</small></button>
+          <button class="suggestion" data-prompt="Проверь состояние подключённых компонентов QUN и объясни результат."><span>⌘</span><strong>Проверить QUN</strong><small>Посмотреть состояние ядра и ноды</small></button>
+        </div>
+      </div>
+      <div class="chatlog" id="chatlog" aria-live="polite"></div>
+      <div class="composer-wrap">
+        <div class="page-context" id="pageContext"><span class="context-dot"></span><span id="pageContextText">Браузер готов к работе</span><button id="clearContext" title="Скрыть контекст">×</button></div>
+        <div class="composer">
+          <textarea id="prompt" rows="1" placeholder="Напиши задачу…"></textarea>
+          <div class="composer-bottom"><div class="composer-tools"><button class="tool-button" id="readPage" title="Добавить контекст страницы">＋ <span>Контекст страницы</span></button><span class="composer-hint">Enter — отправить · Shift+Enter — новая строка</span></div><button class="send-button" id="send" aria-label="Отправить">↑</button></div>
+        </div>
+        <div class="fine-print">ИИ может ошибаться. Проверяй важные действия перед выполнением.</div>
+        <div class="status" id="chatStatus"></div>
+      </div>
+    </section>
+    <section class="browser-panel" id="browserPanel">
+      <div class="browser-toolbar">
+        <div class="browser-nav"><button id="back" title="Назад">‹</button><button id="forward" title="Вперёд">›</button><button id="reload" title="Обновить">↻</button></div>
+        <div class="url-box"><span>⌕</span><input id="url" value="https://www.avito.ru/" aria-label="Адрес сайта"><button id="go">Перейти</button></div>
+        <button class="icon-button" id="closeBrowser" title="Скрыть браузер">×</button>
+      </div>
+      <div class="browser-loading" id="pageStatus"><span class="status-dot"></span> Встроенный браузер · Avito</div>
+    </section>
+    <section class="settings-panel" id="settingsPanel">
+      <div class="panel-heading"><button class="back-to-chat" id="settingsBack">← Назад к чату</button><p class="eyebrow">НАСТРОЙКИ</p><h2>Модели и API</h2><p>Подключи любую совместимую модель — локальную, бесплатную или платную. QUN не навязывает провайдера.</p></div>
+      <div class="settings-card"><div class="settings-card-head"><div><h3>Провайдер модели</h3><p>OpenAI-compatible Chat Completions API</p></div><span class="settings-icon">✳</span></div>
+        <label for="endpoint">API endpoint</label><input id="endpoint" value="https://openrouter.ai/api/v1/chat/completions" placeholder="https://provider.example/v1/chat/completions">
+        <label for="model">Модель / model ID</label><input id="model" placeholder="Например: provider/model">
+        <label for="apiKey">API-ключ</label><input id="apiKey" type="password" autocomplete="off" placeholder="Вставь ключ провайдера">
+        <div class="settings-actions"><button class="primary-button" id="saveConfig">Сохранить настройки</button><span class="settings-note" id="keyStatus">Ключ хранится в защищённом хранилище ОС.</span></div>
+      </div>
+      <div class="settings-card"><div class="settings-card-head"><div><h3>Сеть QUN</h3><p>Существующие компоненты, без отдельной параллельной сети</p></div><span class="settings-icon">⌘</span></div>
+        <div class="network-row"><span class="status-dot" id="coreDot"></span><div><strong>QUN Agent Core</strong><small id="coreStatus">Не проверено</small></div><button id="checkCore">Проверить</button></div>
+        <div class="network-row"><span class="status-dot" id="nodeDotSettings"></span><div><strong>Локальный QUN Node</strong><small id="nodeStatus">Не проверено</small></div><button id="checkNode">Проверить</button></div>
+      </div>
+      <div class="settings-note">В этой версии ИИ анализирует страницу и предлагает шаги. Выполнение действий в браузере подключим отдельно с подтверждением пользователя.</div>
+    </section>
+  </main>
+</div>
+<script src="./app.js"></script>
+</body></html>
+
+[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
