@@ -1,0 +1,13 @@
+name = "qun-telegram-control"
+main = "worker.js"
+compatibility_date = "2026-11-05"
+workers_dev = true
+
+[vars]
+CHANNEL_ID = "@qunnews"
+ADMIN_IDS = ""
+
+# Optional: create a KV namespace and add its ID here before deployment.
+# [[kv_namespaces]]
+# binding = "QUN_TELEGRAM_KV"
+# id = "REPLACE_WITH_KV_NAMESPACE_ID"
