@@ -31,5 +31,3 @@ document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLower
 init();
 
 window.qun.onBrowserNavigated(({url})=>{if($('url'))$('url').value=url;if($('pageContextText'))$('pageContextText').textContent='Текущая страница: '+url;if($('pageStatus'))$('pageStatus').textContent='Открыто: '+url;});
-
-[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
