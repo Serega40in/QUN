@@ -1,5 +1,3 @@
-[Reading 104 lines from start (total: 104 lines, 0 remaining)]
-
 const { app, BrowserWindow, BrowserView, ipcMain, safeStorage, shell } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
