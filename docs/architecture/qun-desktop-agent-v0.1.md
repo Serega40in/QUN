@@ -79,3 +79,12 @@ This slice deliberately does **not** poll `/pult/peek`, claim commands, or execu
 Selected consequential clicks (for example delete/pay/buy labels) now trigger an OS-native one-time confirmation dialog that shows the current site host and element label. Publishing, sending, and form submission are still hard-blocked, even if a generic confirmation could be shown. Audit logs record outcome/reason without typed values or page contents.
 
 The current production Core endpoint responds healthy, but its health response reports both MCP and device API keys as not configured. The PULT pairing endpoint uses a one-time code, yet the existing `qun_agent_pairing_codes` table currently has zero active unused codes, and no issuance route was found in the deployed `qun-agent-core` function. Do not bypass this by inserting a code directly. Queue polling/claiming remains disabled until the existing secure code-issuance path is found or implemented and the user explicitly pairs the device.
+
+
+## Local model, files and extensibility foundation (2026-11-13)
+
+- Local model preset uses Ollama's OpenAI-compatible endpoint at `http://127.0.0.1:11434/v1/chat/completions`; the default starter model is `qwen2.5:1.5b`. Local endpoints do not require or transmit a provider API key. The desktop UI can check Ollama `/api/tags` for installed models. Ollama and model weights are installed separately from the QUN app.
+- Assistant answers can be exported through a native Save dialog to Markdown, HTML, PDF, TXT, JSON or CSV. HTML and PDF wrappers escape the answer as text and never execute generated HTML.
+- User-authored local memory is stored in `memory.md`, editable in settings, bounded to 12,000 characters, and included as context in later prompts. This is retrieval/context memory, not fine-tuning or autonomous model training.
+- Extension storage roots are under Electron userData: `skills/*.md` and `connectors/*.json`. Current implementation can open these directories and list manifests. Extensions are not executed yet; next step is a versioned manifest schema, permissions, user approval, signature/trust policy and a sandboxed runtime.
+- Model choice and external provider keys remain under user control; no automatic paid provider or cloud storage is enabled.
