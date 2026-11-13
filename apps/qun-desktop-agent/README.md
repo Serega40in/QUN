@@ -47,3 +47,24 @@ This is an early local MVP, not an unrestricted computer-use agent. It does not 
 Use only APIs and sites you are authorized to access. Do not submit private page contents to an external provider unless you intend to. Electron security defaults are enabled; the embedded browser is isolated from the app preload bridge. Treat this MVP as experimental until dependency and security audits are complete.
 
 License: follow the repository root license; this folder is a prototype.
+
+[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
+
+
+## ChatGPT / local control bridge
+
+The desktop app exposes a loopback-only control API on `127.0.0.1:47881`. It creates a random 256-bit bearer token in Electron's user-data directory (`control-token.txt`). Never publish this token or place it in renderer JavaScript.
+
+Authenticated endpoints:
+- `GET /health` — app and current embedded page status
+- `GET /browser/page` — current page title, URL and bounded visible text
+- `GET /browser/elements` — visible links, buttons and fields with temporary selectors
+- `POST /browser/navigate` — open an HTTP/HTTPS URL
+- `POST /browser/action` — back, forward, reload
+- `POST /browser/click` — click a visible element; potentially consequential buttons and form submission are blocked
+- `POST /browser/type` — fill a normal text field; password, hidden, file and submit inputs are blocked
+- `POST /ui/action` — switch between Chat, Settings, QUN Network and Browser
+
+All requests require `Authorization: Bearer <local token>`. The server binds only to IPv4 loopback, rejects browser-origin requests, and has no CORS allowance. Page text is untrusted. This bridge is a development interface, not a production security boundary; keep the token private and do not expose the port to a network.
+
+[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
