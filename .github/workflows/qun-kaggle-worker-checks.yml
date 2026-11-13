@@ -1,0 +1,63 @@
+name: QUN Kaggle Worker Notebook Checks
+
+on:
+  push:
+    paths:
+      - "tools/qun-node-worker/kaggle_qun_render_worker.ipynb"
+      - "docs/studio/KAGGLE-WORKER.md"
+      - ".github/workflows/qun-kaggle-worker-checks.yml"
+  pull_request:
+    paths:
+      - "tools/qun-node-worker/kaggle_qun_render_worker.ipynb"
+      - "docs/studio/KAGGLE-WORKER.md"
+      - ".github/workflows/qun-kaggle-worker-checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-notebook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate notebook JSON and Python cells
+        run: |
+          python - <<'PY'
+          import ast
+          import json
+          from pathlib import Path
+
+          path = Path("tools/qun-node-worker/kaggle_qun_render_worker.ipynb")
+          notebook = json.loads(path.read_text(encoding="utf-8"))
+          assert notebook.get("nbformat") == 4, "Notebook must use nbformat 4"
+          assert notebook.get("metadata", {}).get("kaggle", {}).get("accelerator") == "GPU"
+          code_cells = [cell for cell in notebook["cells"] if cell.get("cell_type") == "code"]
+          assert code_cells, "Notebook has no executable cells"
+
+          combined = []
+          for index, cell in enumerate(code_cells, start=1):
+              source = "".join(cell.get("source", []))
+              ast.parse(source, filename=f"cell-{index}")
+              assert cell.get("execution_count") is None, "Committed notebook must not contain execution counts"
+              assert not cell.get("outputs"), "Committed notebook must not contain saved outputs"
+              combined.append(source)
+
+          source = "\\n".join(combined)
+          for required in (
+              "QUN_COMFYUI_WORKFLOW_IMAGE",
+              "QUN_NODE_REGISTRY_FILE",
+              "comfyui_worker",
+              "127.0.0.1",
+              "register_gpu_worker",
+          ):
+              assert required in source, f"Missing expected worker integration: {required}"
+
+          for forbidden in ("ngrok", "cloudflared", '"0.0.0.0"'):
+              assert forbidden not in source.lower(), f"Public tunnel or bind address is not allowed: {forbidden}"
+
+          print(f"Validated {len(code_cells)} Python cells in {path}")
+          PY

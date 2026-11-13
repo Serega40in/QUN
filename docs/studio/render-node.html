@@ -22,6 +22,15 @@ h1{font-size:clamp(30px,5vw,46px);line-height:1.05;letter-spacing:-.04em;margin:
 <div class="eyebrow">Owner-bound GPU executor</div><h1>Подключить <span style="color:var(--mint)">свой GPU-узел.</span></h1>
 <p class="lead">Этот узел будет выполнять задания только твоего QUN ID. Видеозадачи не попадут на случайные телефоны и обычные компьютеры сети.</p>
 <section class="card">
+<h2>Бесплатный Kaggle Worker — первый тест GPU</h2>
+<p class="hint">Подключи Kaggle как временный личный GPU-узел QUN. Первая версия уже подготовлена для генерации артов: Studio ставит задачу в очередь, Worker рендерит PNG и возвращает его в приватную QUN Library.</p>
+<div class="row">
+<a class="btn" href="https://raw.githubusercontent.com/Serega40in/QUN/main/tools/qun-node-worker/kaggle_qun_render_worker.ipynb" target="_blank" rel="noopener">Скачать Kaggle Notebook ↗</a>
+<a class="btn secondary" href="https://github.com/Serega40in/QUN/blob/main/docs/studio/KAGGLE-WORKER.md" target="_blank" rel="noopener">Инструкция ↗</a>
+</div>
+<div class="warning" style="margin-top:12px">Это личный некоммерческий тестовый узел на время активной Kaggle-сессии. Сейчас поддерживается генерация изображений; видеомодель подключим отдельным этапом. ComfyUI остаётся закрытым на 127.0.0.1 — публичные туннели не используются.</div>
+</section>
+<section class="card">
 <h2>1. Создать одноразовый код</h2><p class="hint">Код действует 15 минут, используется один раз и привязывает будущий Linux GPU-узел к текущему QUN ID.</p>
 <div class="row"><button class="btn" id="makeCode">Создать код подключения</button><span class="small" id="expires"></span></div>
 <div id="codeWrap" class="hidden" style="margin-top:13px"><div id="code" class="code"></div><div class="row" style="margin-top:10px"><button id="copyCode" class="btn secondary">Скопировать код</button><span class="small" id="countdown"></span></div></div>
