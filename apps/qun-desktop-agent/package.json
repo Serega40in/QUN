@@ -4,7 +4,14 @@
   "private": true,
   "description": "Open-source desktop AI agent with an embedded browser and pluggable model APIs.",
   "main": "main.js",
-  "scripts": { "start": "electron .", "check": "node --check main.js && node --check preload.js" },
-  "devDependencies": { "electron": "37.2.6" },
-  "engines": { "node": ">=20" }
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check main.js && node --check preload.js && node --check renderer/app.js"
+  },
+  "devDependencies": {
+    "electron": "37.2.6"
+  },
+  "engines": {
+    "node": ">=20"
+  }
 }
