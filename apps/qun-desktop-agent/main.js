@@ -5,9 +5,16 @@ const http = require('node:http');
 const crypto = require('node:crypto');
 const APP_VERSION = '0.1.0';
 let win, browser, browserVisible = true;
-let config = { endpoint: 'https://openrouter.ai/api/v1/chat/completions', model: '', encryptedKey: '', coreBaseUrl: 'https://qdxjltqlnphvzafapncm.supabase.co', coreDeviceId: 'qun-desktop-agent', encryptedCoreToken: '' };
+let config = { endpoint: 'http://127.0.0.1:11434/v1/chat/completions', model: 'qwen2.5:0.5b', encryptedKey: '', coreBaseUrl: 'https://qdxjltqlnphvzafapncm.supabase.co', coreDeviceId: 'qun-desktop-agent', encryptedCoreToken: '' };
 function configPath() { return path.join(app.getPath('userData'), 'settings.json'); }
-function loadConfig() { try { config = { ...config, ...JSON.parse(fs.readFileSync(configPath(), 'utf8')) }; } catch {} }
+function loadConfig() {
+  try { config = { ...config, ...JSON.parse(fs.readFileSync(configPath(), 'utf8')) }; } catch {}
+  if (!config.model && !config.encryptedKey) {
+    config.endpoint = 'http://127.0.0.1:11434/v1/chat/completions';
+    config.model = 'qwen2.5:0.5b';
+    saveConfig();
+  }
+}
 function saveConfig() { fs.mkdirSync(app.getPath('userData'), { recursive: true }); fs.writeFileSync(configPath(), JSON.stringify(config, null, 2), { mode: 0o600 }); }
 function decryptKey() {
   if (!config.encryptedKey) return '';
