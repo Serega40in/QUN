@@ -1,5 +1,3 @@
-[Reading 9 lines from start (total: 9 lines, 0 remaining)]
-
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('qun', {
   getConfig: () => ipcRenderer.invoke('qun:get-config'),
@@ -10,5 +8,3 @@ contextBridge.exposeInMainWorld('qun', {
   chat: prompt => ipcRenderer.invoke('qun:chat', prompt),
   coreHealth: () => ipcRenderer.invoke('qun:core-health')
 });
-
-[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
