@@ -222,7 +222,7 @@ function startLocalControlApi() {
           if (!(el instanceof HTMLElement)) return {ok:false,error:'Target is not an HTML element.'};
           const text = [el.innerText,el.getAttribute('aria-label'),el.getAttribute('title'),el.value].filter(Boolean).join(' ').slice(0,300);
           if (/publish|post|submit|send|delete|pay|buy|создать объявление|разместить|оплатить|купить|удалить|отправить|опубликовать|подтвердить/i.test(text)) return {ok:false,error:'Blocked potentially consequential action. Ask the user for explicit confirmation first.'};
-          if (el.matches('input[type=submit],button[type=submit],form')) return {ok:false,error:'Form submission is not allowed through this endpoint.'};
+          if (el.matches('input[type=submit],button[type=submit],form') || (el.closest('form') && el.tagName==='BUTTON' && (!el.getAttribute('type') || el.type==='submit'))) return {ok:false,error:'Form submission is not allowed through this endpoint.'};
           const rect = el.getBoundingClientRect();
           if (!rect.width || !rect.height || getComputedStyle(el).visibility==='hidden') return {ok:false,error:'Element is not visible.'};
           el.click(); return {ok:true,tag:el.tagName,text:text.slice(0,100)};
