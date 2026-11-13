@@ -103,7 +103,6 @@ ipcMain.handle('qun:chat', async (_event, prompt) => {
   } catch (error) { return { ok: false, error: error.message }; }
 });
 
-[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
 ipcMain.handle('qun:core-health', async () => {
   try {
     const response = await fetch('https://qdxjltqlnphvzafapncm.supabase.co/functions/v1/qun-agent-core/health', {
