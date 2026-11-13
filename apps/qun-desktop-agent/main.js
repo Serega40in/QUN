@@ -5,7 +5,7 @@ const http = require('node:http');
 const crypto = require('node:crypto');
 const APP_VERSION = '0.1.0';
 let win, browser, browserVisible = true;
-let config = { endpoint: 'https://openrouter.ai/api/v1/chat/completions', model: '', encryptedKey: '' };
+let config = { endpoint: 'https://openrouter.ai/api/v1/chat/completions', model: '', encryptedKey: '', coreBaseUrl: 'https://qdxjltqlnphvzafapncm.supabase.co', coreDeviceId: 'qun-desktop-agent', encryptedCoreToken: '' };
 function configPath() { return path.join(app.getPath('userData'), 'settings.json'); }
 function loadConfig() { try { config = { ...config, ...JSON.parse(fs.readFileSync(configPath(), 'utf8')) }; } catch {} }
 function saveConfig() { fs.mkdirSync(app.getPath('userData'), { recursive: true }); fs.writeFileSync(configPath(), JSON.stringify(config, null, 2), { mode: 0o600 }); }
@@ -14,7 +14,21 @@ function decryptKey() {
   if (!safeStorage.isEncryptionAvailable()) throw new Error('Защищённое хранилище ОС недоступно. Ключ не был сохранён.');
   return safeStorage.decryptString(Buffer.from(config.encryptedKey, 'base64'));
 }
-function publicConfig() { return { endpoint: config.endpoint, model: config.model, hasKey: Boolean(config.encryptedKey), version: APP_VERSION }; }
+function publicConfig() { return { endpoint: config.endpoint, model: config.model, hasKey: Boolean(config.encryptedKey), coreBaseUrl: config.coreBaseUrl, coreDeviceId: config.coreDeviceId, corePaired: Boolean(config.encryptedCoreToken), version: APP_VERSION }; }
+function validateCoreBaseUrl(value) {
+  const u = new URL(String(value || '').trim());
+  if (!['https:', 'http:'].includes(u.protocol) || (u.protocol === 'http:' && !['localhost', '127.0.0.1', '[::1]'].includes(u.hostname))) throw new Error('QUN Core должен использовать HTTPS; HTTP допустим только для localhost.');
+  if (u.username || u.password || u.search || u.hash || (u.pathname !== '/' && u.pathname !== '')) throw new Error('Укажи только базовый URL Supabase-проекта без пути, логина или параметров.');
+  return u.origin;
+}
+function auditAction(event, details = {}) {
+  try {
+    const dir = path.join(app.getPath('userData'), 'audit');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.appendFileSync(path.join(dir, 'actions.jsonl'), JSON.stringify({ at: new Date().toISOString(), event, ...details }) + '\n', { mode: 0o600 });
+  } catch (error) { console.error('QUN audit log unavailable:', error.message); }
+}
+function currentPageHost() { try { return new URL(browser?.webContents.getURL() || '').host; } catch { return ''; } }
 function validEndpoint(value) {
   const u = new URL(value);
   if (!['https:', 'http:'].includes(u.protocol)) throw new Error('Разрешены только HTTP/HTTPS API endpoints.');
@@ -76,7 +90,7 @@ ipcMain.handle('qun:navigate', async (_event, rawUrl) => {
     let url = String(rawUrl || '').trim(); if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
     const u = new URL(url);
     if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password) throw new Error('Укажи обычный HTTP/HTTPS адрес без встроенных credentials.');
-    await browser.webContents.loadURL(u.toString()); return { ok: true, url: u.toString() };
+    await browser.webContents.loadURL(u.toString()); auditAction('browser.navigate', { host: u.host, result: 'success' }); return { ok: true, url: u.toString() };
   } catch (error) { return { ok: false, error: error.message }; }
 });
 ipcMain.handle('qun:browser-action', async (_event, action) => {
@@ -119,7 +133,8 @@ ipcMain.handle('qun:chat', async (_event, prompt) => {
 
 ipcMain.handle('qun:core-health', async () => {
   try {
-    const response = await fetch('https://qdxjltqlnphvzafapncm.supabase.co/functions/v1/qun-agent-core/health', {
+    const base = validateCoreBaseUrl(config.coreBaseUrl);
+    const response = await fetch(base + '/functions/v1/qun-agent-core/health', {
       headers: { 'Accept': 'application/json' },
       signal: AbortSignal.timeout(5000)
     });
@@ -128,6 +143,51 @@ ipcMain.handle('qun:core-health', async () => {
     return { ok: true, data };
   } catch (error) {
     return { ok: false, error: error.message };
+  }
+});
+
+ipcMain.handle('qun:pair-core', async (_event, input) => {
+  try {
+    const coreBaseUrl = validateCoreBaseUrl(input?.coreBaseUrl || config.coreBaseUrl);
+    const deviceId = String(input?.deviceId || config.coreDeviceId || '').trim().toLowerCase();
+    const pairingCode = String(input?.pairingCode || '').trim().toLowerCase();
+    if (!/^[a-z0-9][a-z0-9-]{2,63}$/.test(deviceId)) throw new Error('ID устройства: 3–64 символа, латиница, цифры и дефисы.');
+    if (!/^[a-f0-9]{64}$/.test(pairingCode)) throw new Error('Одноразовый код должен содержать ровно 64 шестнадцатеричных символа.');
+    if (!safeStorage.isEncryptionAvailable()) throw new Error('Защищённое хранилище ОС недоступно. Токен не будет сохранён.');
+    const response = await fetch(coreBaseUrl + '/functions/v1/qun-agent-core/pult/pair', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ pairingCode, deviceId, name: 'QUN Desktop Agent', version: APP_VERSION }), signal: AbortSignal.timeout(10000)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok || typeof data.deviceToken !== 'string' || !/^[a-f0-9]{64}$/i.test(data.deviceToken)) throw new Error(data.error || ('Pairing failed: HTTP ' + response.status));
+    config.coreBaseUrl = coreBaseUrl;
+    config.coreDeviceId = deviceId;
+    config.encryptedCoreToken = safeStorage.encryptString(data.deviceToken).toString('base64');
+    saveConfig();
+    auditAction('core.paired', { deviceId, coreHost: new URL(coreBaseUrl).host, result: 'success' });
+    return { ok: true, config: publicConfig(), device: data.device || null };
+  } catch (error) {
+    auditAction('core.pair', { result: 'failed', reason: String(error.message || error).slice(0, 200) });
+    return { ok: false, error: error.message || String(error) };
+  }
+});
+ipcMain.handle('qun:core-device-heartbeat', async () => {
+  try {
+    if (!config.encryptedCoreToken) throw new Error('Сначала подключи устройство одноразовым кодом QUN Core.');
+    if (!safeStorage.isEncryptionAvailable()) throw new Error('Защищённое хранилище ОС недоступно.');
+    const token = safeStorage.decryptString(Buffer.from(config.encryptedCoreToken, 'base64'));
+    const base = validateCoreBaseUrl(config.coreBaseUrl);
+    const response = await fetch(base + '/functions/v1/qun-agent-core/pult/heartbeat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ deviceId: config.coreDeviceId }), signal: AbortSignal.timeout(8000)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok) throw new Error(data.error || ('Heartbeat failed: HTTP ' + response.status));
+    auditAction('core.heartbeat', { deviceId: config.coreDeviceId, result: 'success' });
+    return { ok: true, data };
+  } catch (error) {
+    auditAction('core.heartbeat', { result: 'failed', reason: String(error.message || error).slice(0, 200) });
+    return { ok: false, error: error.message || String(error) };
   }
 });
 
@@ -227,6 +287,7 @@ function startLocalControlApi() {
           if (!rect.width || !rect.height || getComputedStyle(el).visibility==='hidden') return {ok:false,error:'Element is not visible.'};
           el.click(); return {ok:true,tag:el.tagName,text:text.slice(0,100)};
         })()`, true);
+        auditAction('browser.click', { host: currentPageHost(), result: result.ok ? 'success' : 'blocked', reason: result.ok ? undefined : String(result.error || '').slice(0, 160) });
         return send(result.ok ? 200 : 400, result);
       }
       if (req.method === 'POST' && url.pathname === '/browser/type') {
@@ -243,6 +304,7 @@ function startLocalControlApi() {
           el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true}));
           return {ok:true,tag:el.tagName,type:el.type||'contenteditable',length:${JSON.stringify(value)}.length};
         })()`, true);
+        auditAction('browser.type', { host: currentPageHost(), result: result.ok ? 'success' : 'blocked', fieldType: result.type || result.tag || '', length: result.length || 0 });
         return send(result.ok ? 200 : 400, result);
       }
       if (req.method === 'POST' && url.pathname === '/ui/action') {
