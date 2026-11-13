@@ -9,5 +9,4 @@ $('send').onclick=async()=>{const p=$('prompt').value.trim();if(!p)return;bubble
 $('prompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('send').click()}});$('clear').onclick=()=>{$('chatlog').replaceChildren();$('chatStatus').textContent=''};
 $('openQun').onclick=()=>window.qun.navigate('https://serega40in.github.io/QUN/');$('openGitHub').onclick=()=>window.qun.navigate('https://github.com/Serega40in/QUN/tree/feat/qun-desktop-agent-mvp');init();
 
-[executed on device: S40in-LenovoIdeapad-White (0ba7026d-d272-4d74-9960-a5d220722248)]
 $('checkCore').onclick=async()=>{ $('coreStatus').textContent='Проверяю облачный QUN Agent Core…'; const r=await window.qun.coreHealth(); $('coreStatus').textContent=r.ok?'Связь есть · '+r.data.name+' v'+r.data.version+' · '+r.data.status+' · '+r.data.transports.join(', '):'Недоступно: '+r.error; };
