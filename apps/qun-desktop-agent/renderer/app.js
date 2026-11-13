@@ -10,3 +10,5 @@ $('prompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.pr
 $('openQun').onclick=()=>window.qun.navigate('https://serega40in.github.io/QUN/');$('openGitHub').onclick=()=>window.qun.navigate('https://github.com/Serega40in/QUN/tree/feat/qun-desktop-agent-mvp');init();
 
 $('checkCore').onclick=async()=>{ $('coreStatus').textContent='Проверяю облачный QUN Agent Core…'; const r=await window.qun.coreHealth(); $('coreStatus').textContent=r.ok?'Связь есть · '+r.data.name+' v'+r.data.version+' · '+r.data.status+' · '+r.data.transports.join(', '):'Недоступно: '+r.error; };
+
+$('checkNode').onclick=async()=>{ $('nodeStatus').textContent='Проверяю локальный QUN Node…'; const r=await window.qun.nodeHealth(); $('nodeStatus').textContent=r.ok?'Узел активен · '+r.data.nodeId+' · '+r.data.mode+' · объектов: '+r.data.storage.objectCount+' · зарегистрирован в сети: '+r.data.registry.registered:'Локальный узел недоступен: '+r.error; };
