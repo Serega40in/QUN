@@ -180,7 +180,7 @@ fun BrowserScreen(sessionToken: String, onBack: () -> Unit) {
                 }
                 "click" -> {
                     val selector = JSONObject.quote(step.getString("selector"))
-                    val script = "(function(){const e=document.querySelector($selector);if(!e)return 'not_found';if(e.matches('input[type=password],button[type=submit],input[type=submit]'))return 'blocked_sensitive';const t=(e.innerText||e.value||'').trim().toLowerCase();if(/publish|опубликовать|разместить|подтвердить заказ|оплатить/.test(t))return 'blocked_sensitive';e.click();return 'clicked';})()"
+                    val script = "(function(){const e=document.querySelector($selector);if(!e)return 'not_found';if(e.matches('input[type=password],button[type=submit],input[type=submit]'))return 'blocked_sensitive';const t=(e.innerText||e.value||'').trim().toLowerCase();if(/publish|опубликовать|разместить|подтвердить|оплатить|удалить|delete|отправить|send|submit|place order/.test(t))return 'blocked_sensitive';e.click();return 'clicked';})()"
                     val outcome = webView?.evalText(script) ?: "no_webview"
                     results.put(JSONObject().put("action", "click").put("result", outcome))
                 }
