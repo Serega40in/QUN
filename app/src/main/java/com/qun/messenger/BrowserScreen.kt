@@ -270,7 +270,7 @@ fun BrowserScreen(sessionToken: String, onBack: () -> Unit) {
                     activeTab = index
                     address = url
                     webView?.loadUrl(url)
-                }) { Text(if (index == activeTab) "● ${index + 1}" else "${index + 1}", color = if (index == activeTab) Emerald else Color.Gray) }
+                }) { Text(if (index == activeTab) "● ${index + 1}" else "${index + 1}", color = if (index == activeTab) BrowserEmerald else Color.Gray) }
             }
         }
         Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -289,7 +289,7 @@ fun BrowserScreen(sessionToken: String, onBack: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("QUN Agent", color = Color(0xFF082A45), fontSize = 14.sp)
-                        Text(agentStatus, color = if (agentToken != null) BrowserEmerald else Color.Gray, fontSize = 11.sp)
+                        Text(agentStatus, color = if (agentToken != null) BrowserBrowserEmerald else Color.Gray, fontSize = 11.sp)
                     }
                     if (agentBusy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                     else TextButton(onClick = {
@@ -322,7 +322,7 @@ fun BrowserScreen(sessionToken: String, onBack: () -> Unit) {
                                 agentBusy = false
                             }
                         }
-                    }) { Text(if (agentToken == null) "Подключить" else "Отключить", color = BrowserEmerald) }
+                    }) { Text(if (agentToken == null) "Подключить" else "Отключить", color = BrowserBrowserEmerald) }
                 }
                 agentError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = 11.sp) }
                 Text("Команды выполняются в открытом браузере. Пароли не читаются; кнопки публикации и отправки заблокированы.", color = Color.Gray, fontSize = 10.sp)
