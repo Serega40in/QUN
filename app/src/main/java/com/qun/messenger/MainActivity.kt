@@ -654,7 +654,7 @@ private fun HomeScreen(
     var browserOpen by remember { mutableStateOf(false) }
 
     if (browserOpen) {
-        BrowserScreen(onBack = { browserOpen = false })
+        BrowserScreen(sessionToken = session.access_token, onBack = { browserOpen = false })
         return
     }
 
