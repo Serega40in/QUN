@@ -394,7 +394,7 @@ function startLocalControlApi() {
           if (!el) return {ok:false,error:'Element not found.'};
           if (!(el instanceof HTMLElement)) return {ok:false,error:'Target is not an HTML element.'};
           const text = [el.innerText,el.getAttribute('aria-label'),el.getAttribute('title'),el.value].filter(Boolean).join(' ').slice(0,300);
-          const isSubmitAction = el.matches('input[type=submit],button[type=submit],form') || (el.closest('form') && el.tagName==='BUTTON' && (!el.getAttribute('type') || el.type==='submit'));
+          const isSubmitAction = el.matches('input[type=submit],button[type=submit],form') || Boolean(el.closest('form'));
           const isPublishing = /publish|post|submit|send|создать объявление|разместить объявление|опубликовать|отправить/i.test(text);
           // Fail closed: the generic browser-control API must never submit a form,
           // including on Avito. A future publishing workflow needs a separate,
