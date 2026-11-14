@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONArray
@@ -45,6 +46,7 @@ private const val AGENT_ENDPOINT = "https://qdxjltqlnphvzafapncm.supabase.co/fun
 private const val AGENT_API_KEY = "sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d8-8fpL8"
 private const val MOBILE_DEVICE_ID = "qun-android-main"
 private const val TOKEN_ALIAS = "qun_mobile_agent_aes"
+private val BrowserEmerald = Color(0xFF087A63)
 
 private fun tokenKey(): SecretKey {
     val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
@@ -320,7 +322,7 @@ fun BrowserScreen(sessionToken: String, onBack: () -> Unit) {
                                 agentBusy = false
                             }
                         }
-                    }) { Text(if (agentToken == null) "Подключить" else "Отключить", color = Emerald) }
+                    }) { Text(if (agentToken == null) "Подключить" else "Отключить", color = BrowserEmerald) }
                 }
                 agentError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = 11.sp) }
                 Text("Команды выполняются в открытом браузере. Пароли не читаются; кнопки публикации и отправки заблокированы.", color = Color.Gray, fontSize = 10.sp)
