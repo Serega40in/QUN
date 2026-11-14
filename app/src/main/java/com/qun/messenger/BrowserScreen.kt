@@ -43,7 +43,7 @@ import javax.crypto.spec.GCMParameterSpec
 import kotlin.coroutines.resume
 
 private const val AGENT_ENDPOINT = "https://qdxjltqlnphvzafapncm.supabase.co/functions/v1/qun-agent-core"
-private const val AGENT_API_KEY = "sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d8-8fpL8"
+private const val AGENT_API_KEY = "sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L"
 private const val MOBILE_DEVICE_ID = "qun-android-main"
 private const val TOKEN_ALIAS = "qun_mobile_agent_aes"
 private val BrowserEmerald = Color(0xFF087A63)
@@ -128,7 +128,7 @@ private suspend fun WebView.evalText(script: String): String =
 @Composable
 fun BrowserScreen(sessionToken: String, onBack: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    var address by remember { mutableStateOf("https://www.avito.ru/") }
+    var address by remember { mutableStateOf("https://www.google.com/") }
     var pageTitle by remember { mutableStateOf("QUN Браузер") }
     var loading by remember { mutableStateOf(false) }
     var webView by remember { mutableStateOf<WebView?>(null) }
@@ -137,7 +137,7 @@ fun BrowserScreen(sessionToken: String, onBack: () -> Unit) {
     var agentStatus by remember { mutableStateOf(if (agentToken != null) "Подключение…" else "ИИ-управление не подключено") }
     var agentBusy by remember { mutableStateOf(false) }
     var agentError by remember { mutableStateOf<String?>(null) }
-    var tabs by remember { mutableStateOf(listOf("https://www.avito.ru/")) }
+    var tabs by remember { mutableStateOf(listOf("https://www.google.com/")) }
     var activeTab by remember { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
 
@@ -258,7 +258,7 @@ fun BrowserScreen(sessionToken: String, onBack: () -> Unit) {
             TextButton(onClick = onBack) { Text("‹ QUN", color = Color.White) }
             Text("Браузер", color = Color.White, fontSize = 17.sp, modifier = Modifier.weight(1f))
             TextButton(onClick = {
-                tabs = tabs + "https://www.google.com"
+                tabs = tabs + "https://www.google.com/"
                 activeTab = tabs.lastIndex
                 address = tabs[activeTab]
                 webView?.loadUrl(address)
@@ -282,7 +282,6 @@ fun BrowserScreen(sessionToken: String, onBack: () -> Unit) {
             OutlinedButton(onClick = { webView?.goBack() }, enabled = canGoBack) { Text("←") }
             OutlinedButton(onClick = { webView?.goForward() }) { Text("→") }
             OutlinedButton(onClick = { webView?.reload() }) { Text("↻") }
-            Button(onClick = { openUrl("https://www.avito.ru/") }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF082A45))) { Text("Авито") }
         }
         Card(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
             Column(Modifier.fillMaxWidth().padding(10.dp)) {
