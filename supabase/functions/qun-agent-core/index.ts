@@ -712,7 +712,7 @@ async function handlePultApi(req: Request, path: string): Promise<Response> {
       .upsert({
         device_id: deviceId,
         name: name || "PULT Chrome",
-        platform: "browser",
+        platform: deviceId === "qun-android-main" ? "android" : "browser",
         status: "online",
         version,
         capabilities,
