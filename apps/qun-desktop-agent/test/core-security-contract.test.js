@@ -17,6 +17,7 @@ test('local control API requires bearer token and bounds request body', () => {
 test('generic browser control fails closed on all form submissions', () => {
   assert.match(source, /if\s*\(isSubmitAction\s*\|\|\s*isPublishing\)\s*return\s*\{ok:false,error:'Form submission is blocked/);
   assert.doesNotMatch(source, /browser\.avito-publish/);
+  assert.match(source, /Boolean\(el\.closest\('form'\)\)/);
   assert.doesNotMatch(source, /if\s*\(isAvito\s*&&\s*\(isSubmitAction\s*\|\|\s*isPublishing\)\)/);
 });
 
