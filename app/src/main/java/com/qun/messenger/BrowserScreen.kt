@@ -289,7 +289,7 @@ fun BrowserScreen(sessionToken: String, onBack: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("QUN Agent", color = Color(0xFF082A45), fontSize = 14.sp)
-                        Text(agentStatus, color = if (agentToken != null) Emerald else Color.Gray, fontSize = 11.sp)
+                        Text(agentStatus, color = if (agentToken != null) BrowserEmerald else Color.Gray, fontSize = 11.sp)
                     }
                     if (agentBusy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                     else TextButton(onClick = {
