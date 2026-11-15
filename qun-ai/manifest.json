@@ -1,0 +1,11 @@
+{
+  "name": "QUN AI",
+  "short_name": "QUN AI",
+  "description": "Умный помощник в экосистеме QUN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#f8fafc",
+  "icons": []
+}
