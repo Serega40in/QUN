@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320mm" height="235mm" viewBox="0 0 1400 1030">
+  <title>QUN Wear — back composition, embroidery master</title>
+  <desc>Wide stitch-friendly composition: orbit, living K monogram, DNA, distant mountains, river and QUN wordmark.</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M170 480 C170 258 373 116 700 116 C1027 116 1230 258 1230 480" stroke="#C8A45D" stroke-width="18"/>
+    <circle cx="700" cy="116" r="13" fill="#C8A45D" stroke="none"/>
+    <path d="M356 270 C440 322 440 380 356 432 C272 484 272 542 356 594" stroke="#0D806A" stroke-width="22"/>
+    <path d="M444 270 C360 322 360 380 444 432 C528 484 528 542 444 594" stroke="#C8A45D" stroke-width="22"/>
+    <path d="M377 308 L423 308 M350 378 L450 378 M350 486 L450 486 M377 556 L423 556" stroke="#F0E6D1" stroke-width="15"/>
+    <path d="M690 224 L690 574" stroke="#C8A45D" stroke-width="34"/>
+    <path d="M640 230 L741 230" stroke="#C8A45D" stroke-width="26"/>
+    <path d="M691 400 C762 361 830 294 911 229" stroke="#0D806A" stroke-width="38"/>
+    <path d="M691 400 C768 444 836 500 922 563" stroke="#0D806A" stroke-width="38"/>
+    <path d="M690 572 C662 594 637 608 604 618 M690 572 C715 594 744 608 778 618" stroke="#C8A45D" stroke-width="20"/>
+    <path d="M823 300 C832 243 883 214 935 233 C923 282 878 312 823 300 Z" fill="#0D806A" stroke="#0D806A" stroke-width="7"/>
+    <path d="M839 292 C867 270 898 247 922 239" stroke="#F0E6D1" stroke-width="10"/>
+    <circle cx="691" cy="400" r="29" fill="#0B1E3B" stroke="#C8A45D" stroke-width="10"/>
+    <path d="M691 377 L699 393 L714 400 L699 407 L691 423 L683 407 L668 400 L683 393 Z" fill="#C8A45D" stroke="none"/>
+    <path d="M962 574 L1037 478 L1111 574 Z M1060 574 L1131 494 L1204 574 Z" fill="#0D806A" stroke="#0D806A" stroke-width="8"/>
+    <path d="M1037 478 L1056 506 L1040 500 L1027 516 Z M1131 494 L1150 522 L1134 516 L1120 535 Z" fill="#F0E6D1" stroke="none"/>
+    <path d="M480 658 C590 620 680 626 770 658 C862 690 961 690 1063 654" stroke="#0D806A" stroke-width="22"/>
+    <path d="M555 694 C650 668 734 674 806 697 C879 720 944 718 1008 695" stroke="#C8A45D" stroke-width="16"/>
+  </g>
+  <text x="700" y="844" text-anchor="middle" fill="#F0E6D1" font-family="Noto Serif, DejaVu Serif, serif" font-size="154" font-weight="700" letter-spacing="28">QUN</text>
+  <path d="M562 878 H838" stroke="#C8A45D" stroke-width="8" stroke-linecap="round"/>
+  <text x="700" y="954" text-anchor="middle" fill="#C8A45D" font-family="Inter, Lato, sans-serif" font-size="30" font-weight="600" letter-spacing="8">NATURE  •  TECHNOLOGY  •  CONSCIOUSNESS</text>
+</svg>
