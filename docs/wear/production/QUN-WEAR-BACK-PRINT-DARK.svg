@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320mm" height="255mm" viewBox="0 0 1400 1115">
+  <title>QUN Wear — back artwork for print, dark garments</title>
+  <desc>Expanded print artwork in emerald, warm gold, deep teal and warm ivory. Transparent background.</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M130 482 C130 235 356 82 700 82 C1044 82 1270 235 1270 482" stroke="#C8A45D" stroke-width="9"/>
+    <path d="M196 498 C254 350 365 247 500 205 M1204 498 C1146 350 1035 247 900 205" stroke="#117C70" stroke-width="6"/>
+    <circle cx="700" cy="122" r="25" stroke="#C8A45D" stroke-width="8"/>
+    <circle cx="700" cy="122" r="7" fill="#C8A45D" stroke="none"/>
+    <path d="M700 72 V93 M660 87 L675 103 M740 87 L725 103" stroke="#C8A45D" stroke-width="7"/>
+    <path d="M212 282 L222 300 L240 310 L222 320 L212 338 L202 320 L184 310 L202 300 Z M1188 282 L1198 300 L1216 310 L1198 320 L1188 338 L1178 320 L1160 310 L1178 300 Z" fill="#C8A45D" stroke="none"/>
+    <path d="M340 245 C431 316 431 388 340 459 C249 530 249 602 340 673" stroke="#117C70" stroke-width="13"/>
+    <path d="M454 245 C363 316 363 388 454 459 C545 530 545 602 454 673" stroke="#C8A45D" stroke-width="13"/>
+    <path d="M365 279 L429 279 M329 350 L465 350 M320 459 L474 459 M329 568 L465 568 M365 639 L429 639" stroke="#F1E7D2" stroke-width="8"/>
+    <path d="M690 214 L690 622" stroke="#C8A45D" stroke-width="27"/>
+    <path d="M644 219 L736 219" stroke="#C8A45D" stroke-width="18"/>
+    <path d="M691 405 C770 361 846 291 932 220" stroke="#0D806A" stroke-width="33"/>
+    <path d="M691 405 C778 452 855 515 951 601" stroke="#0D806A" stroke-width="33"/>
+    <path d="M690 620 C662 645 631 665 590 681 M690 620 C719 645 752 666 795 681" stroke="#C8A45D" stroke-width="17"/>
+    <path d="M839 302 C846 243 897 211 958 232 C946 285 900 320 839 302 Z" fill="#0D806A" stroke="#0D806A" stroke-width="7"/>
+    <path d="M854 293 C884 270 920 245 946 238" stroke="#F1E7D2" stroke-width="7"/>
+    <path d="M791 349 C787 309 819 279 858 288 C853 324 824 351 791 349 Z" fill="#117C70" stroke="#117C70" stroke-width="7"/>
+    <circle cx="691" cy="405" r="29" fill="#0B1E3B" stroke="#C8A45D" stroke-width="8"/>
+    <path d="M691 380 L699 397 L716 405 L699 413 L691 430 L683 413 L666 405 L683 397 Z" fill="#C8A45D" stroke="none"/>
+    <path d="M966 609 L1043 500 L1120 609 Z M1071 609 L1141 523 L1213 609 Z" fill="#117C70" stroke="#117C70" stroke-width="7"/>
+    <path d="M1043 500 L1060 529 L1045 522 L1032 543 Z M1141 523 L1158 548 L1143 542 L1130 559 Z" fill="#F1E7D2" stroke="none"/>
+    <path d="M1009 608 L1022 570 L1037 608 M1093 608 L1106 574 L1120 608" stroke="#117C70" stroke-width="8"/>
+    <path d="M420 698 C536 656 630 660 713 694 C818 735 930 737 1048 692" stroke="#117C70" stroke-width="14"/>
+    <path d="M470 737 C579 699 671 706 750 733 C845 766 929 764 1010 731" stroke="#C8A45D" stroke-width="9"/>
+    <path d="M548 771 C632 746 700 751 765 773 C834 796 890 795 946 777" stroke="#F1E7D2" stroke-width="6"/>
+    <circle cx="270" cy="168" r="6" fill="#117C70" stroke="none"/>
+    <circle cx="1130" cy="168" r="6" fill="#117C70" stroke="none"/>
+    <circle cx="172" cy="519" r="7" fill="#C8A45D" stroke="none"/>
+    <circle cx="1228" cy="519" r="7" fill="#C8A45D" stroke="none"/>
+  </g>
+  <text x="700" y="900" text-anchor="middle" fill="#F1E7D2" font-family="Noto Serif, DejaVu Serif, serif" font-size="166" font-weight="700" letter-spacing="30">QUN</text>
+  <path d="M417 944 H570 M830 944 H983" stroke="#C8A45D" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="700" cy="944" r="7" fill="#117C70"/>
+  <text x="700" y="1018" text-anchor="middle" fill="#C8A45D" font-family="Inter, Lato, sans-serif" font-size="29" font-weight="600" letter-spacing="8">NATURE  •  TECHNOLOGY  •  CONSCIOUSNESS</text>
+</svg>
