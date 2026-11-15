@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="60mm" height="70mm" viewBox="0 0 600 700">
+  <title>QUN Wear — chest emblem, embroidery master</title>
+  <desc>Compact K-tree monogram inside an open orbital ring, with QUN wordmark. Three thread colours, simplified stitch-friendly geometry.</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M132 388 C74 323 66 211 125 129 C179 54 290 34 388 72 C483 108 536 191 526 287" stroke="#C8A45D" stroke-width="11"/>
+    <path d="M110 412 C151 481 221 514 292 512" stroke="#0D806A" stroke-width="10"/>
+    <path d="M266 135 L266 430" stroke="#C8A45D" stroke-width="25"/>
+    <path d="M224 139 L307 139" stroke="#C8A45D" stroke-width="19"/>
+    <path d="M266 286 C325 248 384 187 445 139" stroke="#0D806A" stroke-width="28"/>
+    <path d="M266 286 C336 326 397 392 475 445" stroke="#0D806A" stroke-width="28"/>
+    <path d="M266 428 C244 450 226 466 198 477" stroke="#C8A45D" stroke-width="17"/>
+    <path d="M266 428 C285 451 306 465 333 477" stroke="#C8A45D" stroke-width="17"/>
+    <path d="M389 184 C392 133 439 105 486 124 C478 170 437 201 389 184 Z" fill="#0D806A" stroke="#0D806A" stroke-width="7"/>
+    <path d="M403 178 C427 159 451 142 477 132" stroke="#F0E6D1" stroke-width="8"/>
+    <circle cx="266" cy="286" r="27" fill="#0B1E3B" stroke="#C8A45D" stroke-width="9"/>
+    <path d="M266 266 L272 280 L287 286 L272 292 L266 307 L260 292 L245 286 L260 280 Z" fill="#C8A45D" stroke="none"/>
+  </g>
+  <text x="300" y="615" text-anchor="middle" fill="#C8A45D" font-family="Noto Serif, DejaVu Serif, serif" font-size="112" font-weight="600" letter-spacing="18">QUN</text>
+  <path d="M198 650 H258 M342 650 H402" stroke="#0D806A" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="300" cy="650" r="6" fill="#C8A45D"/>
+</svg>
