@@ -1,7 +1,7 @@
 # QUN LLM v0.1 — архитектура, хранение и безопасное развитие
 
-**Статус:** engineering proposal + first implementation steps. Не является заявлением о готовой собственной foundation-модели.  
-**Дата:** 2026-11-13  
+**Статус:** engineering proposal + first implementation steps. Не является заявлением о готовой собственной foundation-модели.
+**Дата:** 2026-11-13
 **Репозиторий:** https://github.com/Serega40in/QUN
 
 ## Цель
