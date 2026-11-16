@@ -1,0 +1,7 @@
+{
+  "chain_id": "qun-local-testnet-v1",
+  "protocol_version": 1,
+  "allocations": {
+    "alice-demo": 1000000
+  }
+}
