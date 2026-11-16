@@ -137,6 +137,7 @@ pub enum ChainError {
     InvalidPreviousHash { at: usize },
     InvalidHash { at: usize },
     InvalidSignedTransaction { at: usize },
+    EmptySignedBlock,
 }
 
 impl Chain {
@@ -167,6 +168,9 @@ impl Chain {
         timestamp: u64,
         signed_transactions: Vec<SignedTransaction>,
     ) -> Result<&Block, ChainError> {
+        if signed_transactions.is_empty() {
+            return Err(ChainError::EmptySignedBlock);
+        }
         for (position, signed) in signed_transactions.iter().enumerate() {
             signed.verify().map_err(|_| ChainError::InvalidSignedTransaction { at: position })?;
         }
@@ -399,6 +403,19 @@ mod tests {
             chain.validate(),
             Err(ChainError::InvalidSignedTransaction { at: 1 })
         );
+    }
+
+    #[test]
+    fn append_signed_rejects_empty_block_without_mutation() {
+        let mut chain = Chain::new();
+        let before = chain.clone();
+
+        assert_eq!(
+            chain.append_signed(1, vec![]).cloned(),
+            Err(ChainError::EmptySignedBlock)
+        );
+        assert_eq!(chain, before);
+        assert!(chain.validate().is_ok());
     }
 
     #[test]
