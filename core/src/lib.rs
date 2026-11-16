@@ -1,3 +1,6 @@
+mod state_replay;
+pub use state_replay::StateReplayError;
+
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
