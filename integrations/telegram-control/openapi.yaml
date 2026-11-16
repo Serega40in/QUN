@@ -1,0 +1,112 @@
+openapi: 3.1.0
+info:
+  title: QUN Control API
+  version: 0.1.0
+  description: >
+    Private API for the QUN Control assistant. Use only for explicit,
+    user-authorized QUN Telegram publishing and aggregate statistics.
+servers:
+  - url: https://qun-telegram-control.REPLACE_WITH_CLOUDFLARE_SUBDOMAIN.workers.dev
+    description: Replace with the deployed Worker URL before connecting a ChatGPT plugin.
+security:
+  - BearerAuth: []
+paths:
+  /health:
+    get:
+      operationId: checkQunControlHealth
+      summary: Check whether QUN Control API is online
+      security: []
+      responses:
+        "200":
+          description: Service status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  service:
+                    type: string
+                  version:
+                    type: string
+  /api/stats:
+    get:
+      operationId: getQunTelegramStats
+      summary: Get aggregate Telegram update and publication counters
+      responses:
+        "200":
+          description: Aggregate counters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  updates_total:
+                    type: integer
+                  posts_total:
+                    type: integer
+        "401":
+          description: Unauthorized
+  /api/publish:
+    post:
+      operationId: publishQunTelegramPost
+      summary: Publish an explicitly approved QUN update to the configured Telegram channel
+      description: >
+        Only call after the user has approved the exact final text and destination.
+        A photo_url must be a public HTTPS image URL. Do not publish drafts or
+        unapproved announcements.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  minLength: 1
+                  maxLength: 4096
+                channel_id:
+                  type: string
+                  description: Optional explicit Telegram channel ID; omit to use configured default.
+                photo_url:
+                  type: string
+                  format: uri
+                  description: Optional public HTTPS image URL.
+                parse_mode:
+                  type: string
+                  enum: [HTML, Markdown, MarkdownV2]
+                  default: HTML
+      responses:
+        "200":
+          description: Telegram accepted the publication
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message_id:
+                    type: integer
+                  chat_id:
+                    oneOf:
+                      - type: integer
+                      - type: string
+        "400":
+          description: Invalid request
+        "401":
+          description: Unauthorized
+        "502":
+          description: Telegram publication failed
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: QUN_API_KEY
