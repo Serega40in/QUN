@@ -10,7 +10,8 @@ A mobile-friendly video platform frontend at `apps/qun-video/`, connected to the
 - Persistent likes, comments and creator subscriptions for uploaded videos
 - Local browser-only saved videos, history and demo-card interactions
 - Responsive layout, category filters and text search
-- Row Level Security on QUN Video database tables and owner-folder upload policies
+- Row Level Security on QUN Video tables and owner-folder upload policies
+- Subscription records are readable only by the subscriber, reducing exposure of user IDs
 - No paid service intentionally enabled by this app
 
 ## Configuration
@@ -34,5 +35,6 @@ The free tier has usage and bandwidth limits, which can change. This is not a tr
 - `supabase/migrations/202611160001_qun_video_mvp_core.sql` — core tables, RLS and Storage bucket policies.
 - `supabase/migrations/202611160002_qun_video_foreign_key_indexes.sql` — foreign-key indexes.
 - `supabase/migrations/202611160003_qun_video_author_name.sql` — idempotent creator display-name column migration for existing deployments.
+- `supabase/migrations/202611160004_qun_video_private_subscriptions.sql` — limits subscription reads to the signed-in subscriber.
 
 The schema was applied to the existing QUN Supabase project; no separate paid project was created.
