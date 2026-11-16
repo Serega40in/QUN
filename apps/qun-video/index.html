@@ -90,9 +90,9 @@ document.getElementById('authForm').addEventListener('submit',async e=>{
  const btn=document.getElementById('signInBtn');btn.disabled=true;btn.textContent='Входим…';
  const {error}=await sb.auth.signInWithPassword({email,password});
  btn.disabled=false;btn.textContent='Войти';
- if(error){sayAuth(error.message);return}await refreshAuth();await loadRemote();
-async function loadMySubscriptions(){if(!authUser)return;const {data,error}=await sb.from('qun_video_subscriptions').select('creator_id').eq('subscriber_id',authUser.id);if(error){console.warn('QUN Video subscriptions:',error.message);return}const ids=(data||[]).map(x=>x.creator_id);const demo=state.subs.filter(x=>typeof x==='string'&&!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(x));state.subs=[...new Set([...demo,...ids])];persist();render()}
-await loadMySubscriptions();sayToast('Вход выполнен.');
+ if(error){sayAuth(error.message);return}async function loadMySubscriptions(){if(!authUser)return;const {data,error}=await sb.from('qun_video_subscriptions').select('creator_id').eq('subscriber_id',authUser.id);if(error){console.warn('QUN Video subscriptions:',error.message);return}const ids=(data||[]).map(x=>x.creator_id);const demo=state.subs.filter(x=>typeof x==='string'&&!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(x));state.subs=[...new Set([...demo,...ids])];persist();render()}
+await refreshAuth();await loadRemote();
+await loadMySubscriptions();await loadMySubscriptions();sayToast('Вход выполнен.');
 });
 document.getElementById('signUpBtn').addEventListener('click',async()=>{
  const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;
