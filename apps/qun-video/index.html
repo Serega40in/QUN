@@ -18,7 +18,12 @@
 <section class="page" id="page-trending"><div class="section-head"><h2>↗ В тренде</h2><span class="muted">Популярное в этой ленте</span></div><div class="grid" id="trendingGrid"></div></section>
 <section class="page" id="page-subscriptions"><div class="section-head"><h2>◎ Подписки</h2></div><p class="muted">Подписывайся на авторов, чтобы собирать свою ленту.</p><div class="grid" id="subsGrid"></div><div id="subsEmpty" class="empty">Пока нет подписок. Открой видео и нажми «Подписаться».</div></section>
 <section class="page" id="page-library"><div class="section-head"><h2>▤ Моя библиотека</h2></div><div class="filters"><button class="chip active" data-library="liked">Понравилось</button><button class="chip" data-library="saved">Сохранённое</button><button class="chip" data-library="history">История</button></div><div class="grid" id="libraryGrid"></div><div id="libraryEmpty" class="empty">Здесь появятся видео, которые ты отметишь.</div></section>
-<section class="page" id="page-upload"><div class="section-head"><h2>＋ Опубликовать видео</h2></div><div class="uploadbox"><p class="muted">Добавь ролик, придумай название и выбери категорию.</p><div class="notice">Это первый MVP: видео пока добавляется локально в этом браузере. Для публикации всем пользователям понадобятся серверное хранилище и база данных. Файлы не отправляются на сервер.</div><form id="uploadForm"><label class="field">Видеофайл <input id="videoFile" type="file" accept="video/*" required></label><label class="field">Название <input id="videoTitle" maxlength="100" required placeholder="О чём это видео?"></label><label class="field">Описание <textarea id="videoDescription" maxlength="1000" placeholder="Расскажи немного о видео"></textarea></label><label class="field">Автор / канал <input id="videoAuthor" maxlength="50" placeholder="Например, QUN Studio" value="Мой канал"></label><label class="field">Категория <select id="videoCategory"><option>Творчество</option><option>Природа</option><option>Технологии</option><option>Музыка</option><option>Обучение</option><option>Другое</option></select></label><button class="primary" type="submit">Добавить в мою ленту</button></form><p class="muted" style="font-size:12px">Совет: после добавления не очищай данные сайта, пока видео хранится локально.</p></div></section>
+<section class="page" id="page-upload"><div class="section-head"><h2>＋ Опубликовать видео</h2></div><div class="uploadbox">
+<div style="padding:16px;border:1px solid var(--line);border-radius:12px;margin-bottom:20px">
+<h3 style="margin-top:0">Аккаунт QUN Video</h3><p id="authStatus" class="muted">Подключаем аккаунт…</p>
+<form id="authForm"><label class="field">Email<input id="authEmail" type="email" autocomplete="email" required placeholder="you@example.com"></label><label class="field">Пароль<input id="authPassword" type="password" minlength="6" autocomplete="current-password" required placeholder="Минимум 6 символов"></label><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" type="submit" id="signInBtn">Войти</button><button class="secondary" type="button" id="signUpBtn">Создать аккаунт</button><button class="secondary" type="button" id="signOutBtn" style="display:none">Выйти</button></div></form>
+<p class="muted" style="font-size:12px;margin-bottom:0">Для публикации видео нужен аккаунт. Если включено подтверждение email, сначала подтверди адрес.</p></div>
+<p class="muted">Добавь ролик, придумай название и выбери категорию.</p><div class="notice">Загрузка в QUN Storage: до 50 МБ на файл в текущей бесплатной конфигурации. Видео публикуется для просмотра по публичной ссылке. Не загружай чужие материалы без разрешения.</div><form id="uploadForm"><label class="field">Видеофайл <input id="videoFile" type="file" accept="video/*" required></label><label class="field">Название <input id="videoTitle" maxlength="100" required placeholder="О чём это видео?"></label><label class="field">Описание <textarea id="videoDescription" maxlength="1000" placeholder="Расскажи немного о видео"></textarea></label><label class="field">Автор / канал <input id="videoAuthor" maxlength="50" placeholder="Например, QUN Studio" value="Мой канал"></label><label class="field">Категория <select id="videoCategory"><option>Творчество</option><option>Природа</option><option>Технологии</option><option>Музыка</option><option>Обучение</option><option>Другое</option></select></label><button class="primary" type="submit">Добавить в мою ленту</button></form><p class="muted" style="font-size:12px">Файл отправляется в облачное хранилище QUN. Не закрывай страницу до завершения загрузки.</p></div></section>
 <section class="page" id="page-detail"><button class="secondary" id="backBtn">← Назад к видео</button><div id="detailContent"></div></section>
 </main></div>
 <nav class="mobile-nav"><button class="active" data-page="home"><span>⌂</span>Главная</button><button data-page="trending"><span>↗</span>В тренде</button><button data-page="subscriptions"><span>◎</span>Подписки</button><button data-page="library"><span>▤</span>Библиотека</button><button data-page="upload"><span>＋</span>Загрузить</button></nav><div class="toast" id="toast"></div>
@@ -55,4 +60,84 @@ document.querySelector('[data-library="liked"]').parentElement.onclick=e=>{let b
 document.getElementById('uploadForm').onsubmit=e=>{e.preventDefault();let f=document.getElementById('videoFile').files[0];if(!f)return;if(!f.type.startsWith('video/')){toast('Выбери видеофайл.');return}if(f.size>80*1024*1024){toast('Для локального MVP выбери файл до 80 МБ.');return}let url=URL.createObjectURL(f);let v={id:'local-'+Date.now(),title:document.getElementById('videoTitle').value.trim(),description:document.getElementById('videoDescription').value.trim(),author:document.getElementById('videoAuthor').value.trim()||'Мой канал',category:document.getElementById('videoCategory').value,views:0,age:'только что',duration:'Новое',url,emoji:'▶',art:'linear-gradient(135deg,#143b52,#23695d)',local:true};state.videos.unshift(v);persist();e.target.reset();document.getElementById('videoAuthor').value='Мой канал';render();toast('Видео добавлено в эту сессию браузера.');openVideo(v.id)});
 document.getElementById('backBtn').onclick=()=>showPage('home');document.getElementById('exploreBtn').onclick=()=>document.getElementById('videoGrid').scrollIntoView({behavior:'smooth'});document.getElementById('profileBtn').onclick=()=>toast('Профиль и регистрация подключаются на следующем этапе.');
 render();
-</script></body></html>
+</script>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+const sb = createClient('https://qdxjltqlnphvzafapncm.supabase.co','sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L');
+window.qunVideoSupabase=sb;
+let authUser=null;
+const authStatus=document.getElementById('authStatus'), signOutBtn=document.getElementById('signOutBtn');
+function sayAuth(msg){authStatus.textContent=msg}
+function sayToast(msg){if(typeof toast==='function')toast(msg);else alert(msg)}
+function publicUrl(path){return sb.storage.from('qun-video').getPublicUrl(path).data.publicUrl}
+function mapVideo(v){return {id:v.id,title:v.title,description:v.description,author:v.author_name||'Автор QUN',category:v.category,views:v.views_count||0,age:new Date(v.created_at).toLocaleDateString('ru-RU'),duration:v.duration_seconds?new Date(v.duration_seconds*1000).toISOString().slice(14,19):'Видео',url:publicUrl(v.object_path),object_path:v.object_path,user_id:v.user_id,remote:true,emoji:'▶',art:'linear-gradient(135deg,#143b52,#23695d)'}}
+async function loadRemote(){
+ const {data,error}=await sb.from('qun_video_videos').select('*').in('status',['published','unlisted']).order('created_at',{ascending:false}).limit(100);
+ if(error){console.warn('QUN Video feed:',error.message);return}
+ const remote=(data||[]).map(mapVideo);
+ state.videos=[...remote,...state.videos.filter(v=>!v.remote)];
+ render();
+}
+async function refreshAuth(){
+ const {data}=await sb.auth.getSession();authUser=data.session?.user||null;
+ sayAuth(authUser?'Вошли как '+authUser.email:'Войди или создай аккаунт, чтобы публиковать видео, ставить лайки и комментировать.');
+ signOutBtn.style.display=authUser?'inline-block':'none';
+ document.getElementById('signInBtn').style.display=authUser?'none':'inline-block';
+ document.getElementById('signUpBtn').style.display=authUser?'none':'inline-block';
+}
+document.getElementById('authForm').addEventListener('submit',async e=>{
+ e.preventDefault();const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;
+ const btn=document.getElementById('signInBtn');btn.disabled=true;btn.textContent='Входим…';
+ const {error}=await sb.auth.signInWithPassword({email,password});
+ btn.disabled=false;btn.textContent='Войти';
+ if(error){sayAuth(error.message);return}await refreshAuth();await loadRemote();sayToast('Вход выполнен.');
+});
+document.getElementById('signUpBtn').addEventListener('click',async()=>{
+ const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;
+ if(!email||password.length<6){sayAuth('Укажи email и пароль не короче 6 символов.');return}
+ const {data,error}=await sb.auth.signUp({email,password});
+ if(error){sayAuth(error.message);return}
+ if(data.session){await refreshAuth();sayAuth('Аккаунт создан. Ты вошёл.');}
+ else sayAuth('Аккаунт создан. Проверь почту и подтверди email, затем войди.');
+});
+signOutBtn.addEventListener('click',async()=>{await sb.auth.signOut();authUser=null;await refreshAuth();sayToast('Ты вышел из аккаунта.')});
+sb.auth.onAuthStateChange((_event,session)=>{authUser=session?.user||null;refreshAuth()});
+const originalUpload=document.getElementById('uploadForm').onsubmit;
+document.getElementById('uploadForm').onsubmit=async e=>{
+ e.preventDefault();
+ if(!authUser){sayAuth('Сначала войди или создай аккаунт.');showPage('upload');return}
+ const file=document.getElementById('videoFile').files[0];
+ if(!file||!file.type.startsWith('video/')){sayToast('Выбери видеофайл.');return}
+ if(file.size>50*1024*1024){sayToast('Файл больше лимита 50 МБ. Выбери меньший файл.');return}
+ const submit=e.submitter; if(submit){submit.disabled=true;submit.textContent='Загружаем…'}
+ try{
+  const ext=(file.name.split('.').pop()||'mp4').toLowerCase().replace(/[^a-z0-9]/g,'')||'mp4';
+  const path=authUser.id+'/'+crypto.randomUUID()+'.'+ext;
+  const {error:uploadError}=await sb.storage.from('qun-video').upload(path,file,{contentType:file.type,upsert:false});
+  if(uploadError)throw uploadError;
+  const payload={user_id:authUser.id,title:document.getElementById('videoTitle').value.trim(),description:document.getElementById('videoDescription').value.trim(),category:document.getElementById('videoCategory').value,object_path:path,status:'published'};
+  const {data,error}=await sb.from('qun_video_videos').insert(payload).select().single();
+  if(error){await sb.storage.from('qun-video').remove([path]);throw error}
+  e.target.reset();document.getElementById('videoAuthor').value='Мой канал';
+  await loadRemote();sayToast('Видео опубликовано в QUN Video!');openVideo(data.id);
+ }catch(err){sayAuth('Не удалось загрузить: '+(err.message||'ошибка сервера'));sayToast('Ошибка загрузки: '+(err.message||'попробуй ещё раз'))}
+ finally{if(submit){submit.disabled=false;submit.textContent='Добавить в мою ленту'}}
+};
+const originalOpenVideo=window.openVideo;
+window.openVideo=async function(id){
+ originalOpenVideo(id);
+ const v=byId(id); if(!v?.remote)return;
+ const {count}=await sb.from('qun_video_likes').select('*',{count:'exact',head:true}).eq('video_id',id);
+ const likeBtn=document.getElementById('likeBtn');
+ if(likeBtn){const {data:mine}=await sb.from('qun_video_likes').select('video_id').eq('video_id',id).eq('user_id',authUser?.id||'00000000-0000-0000-0000-000000000000').maybeSingle();likeBtn.textContent=(mine?'♥':'♡')+' Нравится · '+(count||0);likeBtn.onclick=async()=>{if(!authUser){sayToast('Войди, чтобы ставить лайки.');return}if(mine){const {error}=await sb.from('qun_video_likes').delete().eq('video_id',id).eq('user_id',authUser.id);if(error)sayToast(error.message)}else{const {error}=await sb.from('qun_video_likes').insert({video_id:id,user_id:authUser.id});if(error)sayToast(error.message)}window.openVideo(id)}}
+ const subBtn=document.getElementById('subBtn');
+ if(subBtn&&v.user_id){const {data:mineSub}=await sb.from('qun_video_subscriptions').select('creator_id').eq('creator_id',v.user_id).eq('subscriber_id',authUser?.id||'00000000-0000-0000-0000-000000000000').maybeSingle();subBtn.textContent=mineSub?'✓ Вы подписаны':'Подписаться';subBtn.onclick=async()=>{if(!authUser){sayToast('Войди, чтобы подписываться.');return}const q=sb.from('qun_video_subscriptions');const res=mineSub?await q.delete().eq('creator_id',v.user_id).eq('subscriber_id',authUser.id):await q.insert({creator_id:v.user_id,subscriber_id:authUser.id});if(res.error)sayToast(res.error.message);else window.openVideo(id)}}
+ const {data:comments,error}=await sb.from('qun_video_comments').select('id,user_id,content,created_at').eq('video_id',id).order('created_at',{ascending:false}).limit(100);
+ if(!error){document.getElementById('commentsList').innerHTML=(comments||[]).map(c=>'<div class="comment"><b>Участник QUN</b><div class="muted" style="font-size:11px">'+new Date(c.created_at).toLocaleString('ru-RU')+'</div><div>'+esc(c.content)+'</div>'+(authUser?.id===c.user_id?'<button class="secondary" data-delete-comment="'+c.id+'" style="margin-top:6px;padding:5px 8px">Удалить</button>':'')+'</div>').join('')||'<p class="muted">Будь первым — начни обсуждение.</p>'}
+ const form=document.getElementById('commentForm');
+ if(form)form.onsubmit=async e=>{e.preventDefault();if(!authUser){sayToast('Войди, чтобы комментировать.');return}const input=document.getElementById('commentInput'),content=input.value.trim();if(!content)return;const {error}=await sb.from('qun_video_comments').insert({video_id:id,user_id:authUser.id,content});if(error){sayToast(error.message);return}input.value='';window.openVideo(id)};
+ document.getElementById('commentsList').onclick=async e=>{const b=e.target.closest('[data-delete-comment]');if(!b)return;const {error}=await sb.from('qun_video_comments').delete().eq('id',b.dataset.deleteComment).eq('user_id',authUser?.id);if(error)sayToast(error.message);else window.openVideo(id)};
+};
+await refreshAuth();await loadRemote();
+</script>
+</body></html>
