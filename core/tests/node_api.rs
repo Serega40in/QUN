@@ -34,6 +34,8 @@ impl TestNode {
             .env("QUN_BIND", &address)
             .env("QUN_DATA_FILE", &data_file)
             .env("QUN_ENABLE_DEV_FUNDING", "true")
+            .env_remove("QUN_ENABLE_UNSIGNED_DEV_MINE")
+            .env_remove("QUN_ALLOW_NON_LOOPBACK")
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()
@@ -86,6 +88,8 @@ impl TestNode {
             .env("QUN_BIND", &self.address)
             .env("QUN_DATA_FILE", &self.data_file)
             .env("QUN_ENABLE_DEV_FUNDING", "true")
+            .env_remove("QUN_ENABLE_UNSIGNED_DEV_MINE")
+            .env_remove("QUN_ALLOW_NON_LOOPBACK")
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()
@@ -193,4 +197,27 @@ fn valid_signed_transaction_updates_chain_and_ledger() {
     node.restart();
     assert_eq!(node.get("/chain").unwrap(), chain_after_transfer, "chain must survive node restart");
     assert_eq!(node.get("/accounts").unwrap(), accounts_after_transfer, "balances and nonces must survive node restart");
+}
+
+#[test]
+fn unsigned_dev_mine_is_disabled_by_default() {
+    let mut node = TestNode::start();
+    let (fund_status, _) = node.post("/dev/fund", &json!({"address": "alice-demo", "amount": 50}));
+    assert_eq!(fund_status, 200);
+    let chain_before = node.get("/chain").unwrap();
+    let accounts_before = node.get("/accounts").unwrap();
+
+    let (status, _) = node.post(
+        "/dev/mine",
+        &json!({"transactions": [{"from": "alice-demo", "to": "mallory", "amount": 50, "nonce": 1}]}),
+    );
+    assert_eq!(status, 403, "unsigned transfers must be refused unless explicitly enabled");
+    let (status, _) = node.request("POST", "/dev/mine", Some(&json!("not a mine request")));
+    assert_eq!(status, 403, "a disabled route answers 403 before parsing the body");
+    assert_eq!(node.get("/chain").unwrap(), chain_before);
+    assert_eq!(node.get("/accounts").unwrap(), accounts_before);
+
+    let health = node.get("/health").unwrap();
+    assert_eq!(health["chain_id"], qun_core::CHAIN_ID);
+    assert_eq!(health["unsigned_dev_mine_enabled"], false);
 }
