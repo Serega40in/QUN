@@ -394,16 +394,12 @@ function startLocalControlApi() {
           if (!el) return {ok:false,error:'Element not found.'};
           if (!(el instanceof HTMLElement)) return {ok:false,error:'Target is not an HTML element.'};
           const text = [el.innerText,el.getAttribute('aria-label'),el.getAttribute('title'),el.value].filter(Boolean).join(' ').slice(0,300);
-          const isSubmitAction = el.matches('input[type=submit],button[type=submit],form') || (el.closest('form') && el.tagName==='BUTTON' && (!el.getAttribute('type') || el.type==='submit'));
+          const isSubmitAction = el.matches('input[type=submit],button[type=submit],form') || Boolean(el.closest('form'));
           const isPublishing = /publish|post|submit|send|создать объявление|разместить объявление|опубликовать|отправить/i.test(text);
-          const isAvito = /(^|\\.)avito\\.ru$/i.test(currentPageHost());
-          if (isAvito && (isSubmitAction || isPublishing)) {
-            const rect = el.getBoundingClientRect();
-            if (!rect.width || !rect.height || getComputedStyle(el).visibility==='hidden') return {ok:false,error:'Element is not visible.'};
-            el.click(); auditAction('browser.avito-publish', { host: currentPageHost(), result: 'submitted' });
-            return {ok:true,tag:el.tagName,action:'avito-publish'};
-          }
-          if (isSubmitAction || isPublishing) return {ok:false,error:'Form submission is restricted to the explicitly authorized Avito publishing workflow.'};
+          // Fail closed: the generic browser-control API must never submit a form,
+          // including on Avito. A future publishing workflow needs a separate,
+          // narrowly scoped, user-confirmed implementation.
+          if (isSubmitAction || isPublishing) return {ok:false,error:'Form submission is blocked. Use a dedicated workflow with explicit confirmation.'};
           if (/delete|pay|buy|купить|оплатить|удалить|перевести|подписать|заказать|продвинуть|платные услуги/i.test(text)) return {ok:false,requiresConfirmation:true,label:text.slice(0,180),tag:el.tagName};
           const rect = el.getBoundingClientRect();
           if (!rect.width || !rect.height || getComputedStyle(el).visibility==='hidden') return {ok:false,error:'Element is not visible.'};
