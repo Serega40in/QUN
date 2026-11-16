@@ -4,10 +4,11 @@ This directory defines a reproducible path toward a QUN-specific model adapter. 
 
 ## Current baseline
 
-- Desktop runtime: Ollama on `127.0.0.1:11434`.
-- Smoke-test model: `qwen2.5:0.5b`.
-- The model is a third-party base model, not QUN-owned weights.
-- QUN AI web runtime: Supabase Edge Function `qun-ai-chat`, now supports an operator-configured OpenAI-compatible endpoint via secrets.
+- **Desktop and web:** cloud-first through the QUN AI Gateway; no local model server is required.
+- **Ollama:** intentionally disabled for this project because it is too heavy for the target PC. Do not instruct users to reinstall or run it.
+- **Current web provider:** existing Supabase Edge Function `qun-ai-chat` uses the configured Gemini API key until a QUN LLM cloud endpoint is provisioned.
+- **QUN LLM endpoint:** the gateway supports an operator-configured OpenAI-compatible cloud endpoint via Supabase secrets. No endpoint is currently confirmed as configured, so do not claim QUN LLM is serving production traffic.
+- **Model ownership:** QUN-specific model/adapter is a development goal; a third-party base model is not itself a QUN-trained model.
 
 ## Safe workflow
 
