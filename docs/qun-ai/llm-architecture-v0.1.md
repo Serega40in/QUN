@@ -10,8 +10,8 @@ QUN LLM — семейство моделей и адаптеров для QUN A
 
 ## Принцип запуска
 
-1. **Desktop / local-first:** QUN Desktop Agent обращается к Ollama на `127.0.0.1:11434`. Первая проверенная базовая модель — `qwen2.5:0.5b`; она подходит для smoke-тестов и простых задач, но не считается качественной финальной моделью QUN.
-2. **Web / shared runtime:** сайт GitHub Pages не может обращаться к localhost пользователя. Веб-клиент обращается только к защищённому QUN AI Gateway (сейчас Supabase Edge Function `qun-ai-chat`). Для собственной модели Gateway использует настраиваемый OpenAI-compatible endpoint. До настройки удалённого inference endpoint сайт продолжает работать через текущий Gemini-провайдер.
+1. **Desktop / cloud-first:** QUN Desktop Agent и веб-клиент обращаются к QUN AI Gateway. Ollama намеренно отключён: локальный inference слишком тяжёл для целевого ПК. Desktop остаётся лёгким клиентом; локальный runtime не является обязательной зависимостью.
+2. **Web / shared runtime:** GitHub Pages и Desktop обращаются только к QUN AI Gateway (Supabase Edge Function `qun-ai-chat`), никогда напрямую к модели с секретом. Сейчас функция использует Gemini при наличии `GEMINI_API_KEY`; облачный QUN LLM endpoint в production ещё не подтверждён. Для переключения потребуется доступный облачный inference endpoint и секреты в Supabase.
 3. **Compute:** QUN Compute — место для opt-in GPU worker или отдельного inference service. Сначала один контролируемый endpoint; распределённый inference не внедрять до измерения качества, задержки и стоимости.
 4. **Control plane:** QUN Core сохраняет роль управления устройствами и заданиями. Не создавать параллельную сеть, вторую очередь или отдельный identity layer.
 5. **Fallback:** если QUN LLM endpoint недоступен, Gateway сообщает об ошибке или использует только явно настроенный fallback. Не скрывать переключение провайдера и не заявлять, что ответ сгенерирован QUN LLM, если это не так.
@@ -58,14 +58,14 @@ QUN LLM — семейство моделей и адаптеров для QUN A
 
 ## Порядок реализации
 
-1. Подключить конфигурируемый OpenAI-compatible provider в `qun-ai-chat`, сохранив текущий Gemini fallback.
-2. Проверить локальный Desktop Agent end-to-end с Ollama.
-3. Настроить один доступный QUN Compute inference endpoint и секреты вне GitHub.
-4. Подключить QUN AI web через Gateway; добавить статус активного провайдера без раскрытия секретов.
-5. Создать evaluation set и RAG ingestion для утверждённых документов QUN.
+1. Проверить конфигурируемый OpenAI-compatible provider в `qun-ai-chat`, сохранив текущий Gemini путь.
+2. Выбрать облачный inference runtime с бесплатным/условно-бесплатным GPU и проверить его ограничения; не запускать платный ресурс без согласия.
+3. Поднять один контролируемый QUN LLM endpoint через QUN Compute или совместимый cloud worker; хранить ключи только в Supabase secrets.
+4. Подключить QUN AI web и Desktop через Gateway; показывать фактического провайдера и health status.
+5. Прогнать evaluation set и RAG ingestion для утверждённых документов QUN.
 6. Добавить feedback dataset pipeline с явным согласием и ручной модерацией.
-7. Только после измерений выбрать базовую модель и запускать LoRA/QLoRA.
-8. После smoke/security tests открыть PR и выпустить отдельно; не выкатывать непроверенный runtime в production автоматически.
+7. После измерений выбрать базовую модель и GPU workflow для LoRA/QLoRA.
+8. После smoke/security tests выпустить отдельно; не выкатывать непроверенный runtime в production автоматически.
 
 ## Definition of done для v0.1
 
