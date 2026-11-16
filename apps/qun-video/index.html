@@ -115,7 +115,7 @@ document.getElementById('uploadForm').onsubmit=async e=>{
   const path=authUser.id+'/'+crypto.randomUUID()+'.'+ext;
   const {error:uploadError}=await sb.storage.from('qun-video').upload(path,file,{contentType:file.type,upsert:false});
   if(uploadError)throw uploadError;
-  const payload={user_id:authUser.id,title:document.getElementById('videoTitle').value.trim(),description:document.getElementById('videoDescription').value.trim(),category:document.getElementById('videoCategory').value,object_path:path,status:'published'};
+  const payload={user_id:authUser.id,author_name:document.getElementById('videoAuthor').value.trim()||authUser.email?.split('@')[0]||'Автор QUN',title:document.getElementById('videoTitle').value.trim(),description:document.getElementById('videoDescription').value.trim(),category:document.getElementById('videoCategory').value,object_path:path,status:'published'};
   const {data,error}=await sb.from('qun_video_videos').insert(payload).select().single();
   if(error){await sb.storage.from('qun-video').remove([path]);throw error}
   e.target.reset();document.getElementById('videoAuthor').value='Мой канал';
