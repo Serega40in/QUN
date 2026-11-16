@@ -5,6 +5,7 @@ on:
     paths:
       - "docs/**"
       - "apps/qun-mobile/**"
+      - "apps/qun-video/**"
       - ".github/workflows/deploy-web.yml"
   workflow_dispatch:
 permissions:
@@ -32,6 +33,11 @@ jobs:
           mkdir -p docs/apps
           rm -rf docs/apps/qun-mobile
           cp -R apps/qun-mobile docs/apps/qun-mobile
+      - name: Include QUN Video app in published site
+        run: |
+          mkdir -p docs/apps
+          rm -rf docs/apps/qun-video
+          cp -R apps/qun-video docs/apps/qun-video
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
