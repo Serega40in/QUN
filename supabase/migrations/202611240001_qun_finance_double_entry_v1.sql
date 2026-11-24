@@ -72,7 +72,7 @@ create policy qun_finance_read_own_journal_transactions on public.qun_finance_jo
       from public.qun_finance_journal_entries e
       join public.qun_finance_accounts a on a.id = e.account_id
       join public.qun_wallets w on w.id = a.wallet_id
-      where e.transaction_id = id and w.user_id = (select auth.uid())
+      where e.transaction_id = public.qun_finance_journal_transactions.id and w.user_id = (select auth.uid())
     )
   );
 
