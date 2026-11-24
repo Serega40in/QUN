@@ -14,7 +14,7 @@ create table if not exists public.qun_finance_accounts (
   account_type text not null check (account_type in ('wallet','faucet','opening')),
   created_at timestamptz not null default now(),
   check ((account_type = 'wallet' and wallet_id is not null)
-      or (account_type = 'faucet' and wallet_id is null))
+      or (account_type in ('faucet','opening') and wallet_id is null))
 );
 
 create unique index if not exists qun_finance_one_system_account_per_asset
