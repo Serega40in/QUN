@@ -194,3 +194,26 @@ fn valid_signed_transaction_updates_chain_and_ledger() {
     assert_eq!(node.get("/chain").unwrap(), chain_after_transfer, "chain must survive node restart");
     assert_eq!(node.get("/accounts").unwrap(), accounts_after_transfer, "balances and nonces must survive node restart");
 }
+
+#[test]
+fn development_funding_cannot_overwrite_an_existing_account() {
+    let mut node = TestNode::start();
+    let key = SigningKey::from_bytes(&[77_u8; 32]);
+    let address = hex::encode(key.verifying_key().as_bytes());
+
+    let (first_status, _) = node.post(
+        "/dev/fund",
+        &json!({"address": address, "amount": 100}),
+    );
+    assert_eq!(first_status, 200);
+
+    let (refill_status, _) = node.post(
+        "/dev/fund",
+        &json!({"address": address, "amount": 999_999}),
+    );
+    assert_eq!(refill_status, 400, "refunding an existing account must be rejected");
+
+    let accounts = node.get("/accounts").unwrap();
+    assert_eq!(accounts["balances"][address], 100);
+}
+
