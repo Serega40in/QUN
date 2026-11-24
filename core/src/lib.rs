@@ -256,6 +256,7 @@ pub struct LedgerState {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LedgerError {
     EmptyAddress,
+    AccountAlreadyFunded,
     ZeroAmount,
     SelfTransfer,
     InvalidNonce { expected: u64, actual: u64 },
@@ -274,6 +275,9 @@ impl LedgerState {
         let address = address.into();
         if address.trim().is_empty() {
             return Err(LedgerError::EmptyAddress);
+        }
+        if self.balances.contains_key(&address) {
+            return Err(LedgerError::AccountAlreadyFunded);
         }
         self.balances.insert(address, amount);
         Ok(())
@@ -540,6 +544,18 @@ mod tests {
         let before = ledger.clone();
         assert_eq!(ledger.apply(&tx), Err(LedgerError::BalanceOverflow));
         assert_eq!(ledger, before);
+    }
+
+
+    #[test]
+    fn genesis_funding_cannot_overwrite_existing_balance() {
+        let mut state = LedgerState::default();
+        state.set_genesis_balance("alice", 100).unwrap();
+        assert_eq!(
+            state.set_genesis_balance("alice", 1),
+            Err(LedgerError::AccountAlreadyFunded)
+        );
+        assert_eq!(state.balances.get("alice"), Some(&100));
     }
 
 }
