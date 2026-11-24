@@ -28,6 +28,7 @@ create table if not exists public.qun_finance_journal_transactions (
   status text not null default 'posted' check (status in ('pending','posted','reversed')),
   created_by_user_id uuid references auth.users(id) on delete restrict,
   legacy_transaction_id uuid unique,
+  request_fingerprint text,
   created_at timestamptz not null default now()
 );
 
@@ -188,6 +189,7 @@ declare
   v_existing public.qun_finance_journal_transactions%rowtype;
   v_result jsonb;
   v_legacy_id uuid;
+  v_fingerprint text;
 begin
   if v_uid is null then raise exception 'QUN ID login required'; end if;
   if p_request_id is null then raise exception 'Request ID required'; end if;
@@ -202,13 +204,17 @@ begin
    where address = upper(trim(p_recipient_address));
   if v_recipient.id is null then raise exception 'Recipient QUN wallet not found'; end if;
   if v_recipient.id = v_sender.id then raise exception 'Cannot send QUN to your own wallet'; end if;
+  if char_length(coalesce(p_memo,'')) > 240 then raise exception 'Memo is too long'; end if;
+  v_fingerprint := md5(v_sender.id::text || '|' || v_recipient.id::text || '|' || p_amount::text || '|' || coalesce(p_memo,''));
 
   -- A pre-existing legacy transfer with this key has no guaranteed journal history.
   if exists (select 1 from public.qun_wallet_transactions
               where sender_wallet_id = v_sender.id and request_id = p_request_id) then
     select * into v_existing from public.qun_finance_journal_transactions
      where idempotency_key = p_request_id;
-    if v_existing.id is not null and v_existing.created_by_user_id = v_uid then
+    if v_existing.id is not null and v_existing.created_by_user_id = v_uid
+       and v_existing.operation_type = 'test_transfer'
+       and v_existing.request_fingerprint = v_fingerprint then
       return jsonb_build_object('status','already_processed','ledger_transaction_id',v_existing.id);
     end if;
     raise exception 'Legacy transaction requires reconciliation before journal migration';
@@ -225,15 +231,16 @@ begin
   select id into v_recipient_account from public.qun_finance_accounts where wallet_id = v_recipient.id;
 
   insert into public.qun_finance_journal_transactions
-    (idempotency_key,operation_type,created_by_user_id,status)
-  values (p_request_id,'test_transfer',v_uid,'posted')
+    (idempotency_key,operation_type,created_by_user_id,status,request_fingerprint)
+  values (p_request_id,'test_transfer',v_uid,'posted',v_fingerprint)
   on conflict (idempotency_key) do nothing
   returning id into v_journal_id;
 
   if v_journal_id is null then
     select * into v_existing from public.qun_finance_journal_transactions
      where idempotency_key = p_request_id;
-    if v_existing.created_by_user_id = v_uid and v_existing.operation_type = 'test_transfer' then
+    if v_existing.created_by_user_id = v_uid and v_existing.operation_type = 'test_transfer'
+       and v_existing.request_fingerprint = v_fingerprint then
       return jsonb_build_object('status','already_processed','ledger_transaction_id',v_existing.id);
     end if;
     raise exception 'Idempotency key already used';
