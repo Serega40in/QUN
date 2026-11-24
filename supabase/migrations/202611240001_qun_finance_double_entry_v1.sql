@@ -49,6 +49,9 @@ alter table public.qun_finance_journal_entries enable row level security;
 revoke all on public.qun_finance_accounts from anon, authenticated;
 revoke all on public.qun_finance_journal_transactions from anon, authenticated;
 revoke all on public.qun_finance_journal_entries from anon, authenticated;
+grant select on public.qun_finance_accounts to authenticated;
+grant select on public.qun_finance_journal_transactions to authenticated;
+grant select on public.qun_finance_journal_entries to authenticated;
 
 drop policy if exists qun_finance_read_own_accounts on public.qun_finance_accounts;
 create policy qun_finance_read_own_accounts on public.qun_finance_accounts
