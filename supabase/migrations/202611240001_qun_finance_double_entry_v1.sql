@@ -3,11 +3,15 @@
 -- Keeps legacy wallet tables/functions intact. Use only for QUN_TEST balances.
 begin;
 
+-- Prevent concurrent wallet writes while opening balances are snapshotted.
+lock table public.qun_wallets in share row exclusive mode;
+lock table public.qun_wallet_transactions in share row exclusive mode;
+
 create table if not exists public.qun_finance_accounts (
   id uuid primary key default gen_random_uuid(),
   wallet_id uuid unique references public.qun_wallets(id) on delete restrict,
   asset_code text not null check (asset_code ~ '^[A-Z0-9_]{2,24}$'),
-  account_type text not null check (account_type in ('wallet','faucet')),
+  account_type text not null check (account_type in ('wallet','faucet','opening')),
   created_at timestamptz not null default now(),
   check ((account_type = 'wallet' and wallet_id is not null)
       or (account_type = 'faucet' and wallet_id is null))
@@ -20,7 +24,7 @@ create unique index if not exists qun_finance_one_system_account_per_asset
 create table if not exists public.qun_finance_journal_transactions (
   id uuid primary key default gen_random_uuid(),
   idempotency_key uuid not null unique,
-  operation_type text not null check (operation_type in ('test_transfer','test_faucet')),
+  operation_type text not null check (operation_type in ('test_transfer','test_faucet','opening_balance')),
   status text not null default 'posted' check (status in ('pending','posted','reversed')),
   created_by_user_id uuid references auth.users(id) on delete restrict,
   legacy_transaction_id uuid unique,
@@ -112,6 +116,55 @@ create constraint trigger qun_finance_entries_balanced
   after insert on public.qun_finance_journal_entries
   deferrable initially deferred
   for each row execute function public.qun_finance_assert_balanced();
+
+-- Snapshot current legacy balances as opening entries so the new journal starts
+-- reconciled at the cutover point. This is not a replay of historical transfers.
+insert into public.qun_finance_accounts(wallet_id,asset_code,account_type)
+select w.id,'QUN_TEST','wallet' from public.qun_wallets w
+on conflict (wallet_id) do nothing;
+
+insert into public.qun_finance_accounts(wallet_id,asset_code,account_type)
+values (null,'QUN_TEST','opening')
+on conflict (asset_code,account_type) where wallet_id is null do nothing;
+
+insert into public.qun_finance_accounts(wallet_id,asset_code,account_type)
+values (null,'QUN_TEST','faucet')
+on conflict (asset_code,account_type) where wallet_id is null do nothing;
+
+insert into public.qun_finance_journal_transactions
+  (idempotency_key,operation_type,status,created_by_user_id)
+select md5('QUN_FINANCE_OPENING:' || w.id::text)::uuid,
+       'opening_balance','posted',null
+from public.qun_wallets w
+where w.balance > 0
+on conflict (idempotency_key) do nothing;
+
+insert into public.qun_finance_journal_entries
+  (transaction_id,account_id,asset_code,direction,amount)
+select jt.id, sys.id, 'QUN_TEST','debit',w.balance
+from public.qun_wallets w
+join public.qun_finance_journal_transactions jt
+  on jt.idempotency_key = md5('QUN_FINANCE_OPENING:' || w.id::text)::uuid
+join public.qun_finance_accounts sys
+  on sys.wallet_id is null and sys.asset_code='QUN_TEST' and sys.account_type='opening'
+where w.balance > 0
+  and not exists (
+    select 1 from public.qun_finance_journal_entries e
+    where e.transaction_id=jt.id and e.account_id=sys.id and e.direction='debit'
+  );
+
+insert into public.qun_finance_journal_entries
+  (transaction_id,account_id,asset_code,direction,amount)
+select jt.id, a.id, 'QUN_TEST','credit',w.balance
+from public.qun_wallets w
+join public.qun_finance_journal_transactions jt
+  on jt.idempotency_key = md5('QUN_FINANCE_OPENING:' || w.id::text)::uuid
+join public.qun_finance_accounts a on a.wallet_id=w.id
+where w.balance > 0
+  and not exists (
+    select 1 from public.qun_finance_journal_entries e
+    where e.transaction_id=jt.id and e.account_id=a.id and e.direction='credit'
+  );
 
 -- Wallet users may read their own account/journal rows, but cannot write ledger rows directly.
 create or replace function public.qun_finance_transfer_v1(
