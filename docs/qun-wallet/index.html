@@ -74,7 +74,7 @@ try {
     const sendStatus = $('ton-send-status');
     function toNanoTon(input) {
       const value = String(input || '').trim().replace(',', '.');
-      if (!/^(?:0|[1-9]\\d*)(?:\\.\\d{1,9})?$/.test(value)) throw new Error('Введи сумму больше нуля, максимум 9 знаков после запятой.');
+      if (!/^(?:0|[1-9]\d*)(?:\.\d{1,9})?$/.test(value)) throw new Error('Введи сумму больше нуля, максимум 9 знаков после запятой.');
       const parts = value.split('.');
       const whole = BigInt(parts[0]);
       const fraction = BigInt((parts[1] || '').padEnd(9, '0') || '0');
