@@ -7,7 +7,12 @@
 <header class="top"><a class="brand" href="./">◈ QUN <b>Wallet</b></a><nav class="nav"><a href="../">Мессенджер</a><a href="../qun-social/">Соцсеть</a><a href="../node/">QUN Node</a></nav><div class="topright"><button class="btn" id="authButton">Войти через QUN ID</button></div></header>
 <main class="wrap"><section class="hero"><div class="eyebrow">Единая экосистема QUN</div><h1>Твой кошелёк.<br><span style="color:var(--g)">Твоя сеть.</span></h1><p class="muted">Создавай адрес, получай тестовые монеты и проверяй переводы между участниками QUN. Один QUN ID для экосистемы.</p></section>
 <div class="warning"><strong>Только тестовая сеть.</strong> QUN здесь — экспериментальные единицы внутреннего тестового реестра, не выпущенная криптовалюта и не реальные деньги. Нет вывода, обмена или денежной стоимости. Это пока не блокчейн и не кошелёк для хранения реальных активов.</div>
-<section class="card" style="margin:0 0 18px;border-color:#c9e1ee;background:linear-gradient(135deg,#fff,#f2f8fc)"><div class="receive-head"><div class="receive-mark" style="background:#e4f1fb;color:#1476a8">◇</div><div><div class="eyebrow" style="color:#1476a8">Внешний блокчейн</div><h2 style="margin:2px 0;font-size:20px">Подключить TON-кошелёк</h2><div class="muted small">Начинаем с TON Testnet: подключение и просмотр адреса, без отправки транзакций.</div></div></div><div id="ton-connect-button" style="margin:14px 0"></div><div id="ton-wallet-status" class="info" style="margin-top:10px">Подключи совместимый кошелёк, например Tonkeeper. Секретная фраза QUN не нужна и никогда не должна передаваться сайту.</div><div id="ton-address-wrap" class="receive-address hidden"><code id="ton-address" style="overflow-wrap:anywhere;flex:1;min-width:0"></code><button class="btn" id="copyTonAddress" type="button">Скопировать TON-адрес</button></div><div id="ton-balance" class="info" style="margin-top:10px">Баланс TON Testnet появится после подключения.</div><button class="btn" id="refreshTonBalance" type="button" style="margin-top:10px" disabled>↻ Обновить баланс TON</button><div class="receive-note">Показываем только нативный баланс тестовой сети TON. Jetton-токены и NFT будут следующим этапом. Отправка транзакций отключена.</div></section>
+<section class="card" style="margin:0 0 18px;border-color:#c9e1ee;background:linear-gradient(135deg,#fff,#f2f8fc)"><div class="receive-head"><div class="receive-mark" style="background:#e4f1fb;color:#1476a8">◇</div><div><div class="eyebrow" style="color:#1476a8">Внешний блокчейн</div><h2 style="margin:2px 0;font-size:20px">Подключить TON-кошелёк</h2><div class="muted small">Начинаем с TON Testnet: подключение и просмотр адреса, без отправки транзакций.</div></div></div><div id="ton-connect-button" style="margin:14px 0"></div><div id="ton-wallet-status" class="info" style="margin-top:10px">Подключи совместимый кошелёк, например Tonkeeper. Секретная фраза QUN не нужна и никогда не должна передаваться сайту.</div><div id="ton-address-wrap" class="receive-address hidden"><code id="ton-address" style="overflow-wrap:anywhere;flex:1;min-width:0"></code><button class="btn" id="copyTonAddress" type="button">Скопировать TON-адрес</button></div><div id="ton-balance" class="info" style="margin-top:10px">Баланс TON Testnet появится после подключения.</div><button class="btn" id="refreshTonBalance" type="button" style="margin-top:10px" disabled>↻ Обновить баланс TON</button><div class="receive-note">Показываем нативный баланс TON Testnet. Для переводов нужны тестовые TON на подключённом кошельке. Никогда не вводи seed-фразу на сайте.</div>
+<div class="field"><label for="ton-recipient">Адрес получателя TON</label><input id="ton-recipient" inputmode="text" autocomplete="off" spellcheck="false" placeholder="Адрес кошелька в TON Testnet"></div>
+<div class="field"><label for="ton-send-amount">Сумма TON</label><input id="ton-send-amount" inputmode="decimal" autocomplete="off" placeholder="Например, 0.1"></div>
+<button class="btn primary" id="sendTonTransaction" type="button" disabled>Отправить тестовые TON</button>
+<div id="ton-send-status" class="info" role="status" aria-live="polite" style="margin-top:10px">Подключи TON Testnet-кошелёк, чтобы подготовить перевод.</div>
+<div class="receive-note">Перед отправкой кошелёк покажет детали и попросит подтверждение. QUN не получает доступ к ключам. Результат отправки сам по себе не означает, что транзакция уже подтверждена в блокчейне.</div></section>
 <section id="authCard" class="card auth"><div class="eyebrow">QUN ID</div><h2>Войди в свою экосистему</h2><p class="muted small">Используй существующий логин и пароль QUN ID.</p><div class="field"><label for="loginName">Логин QUN ID</label><input id="loginName" autocomplete="username" placeholder="Например, serega40in"></div><div class="field"><label for="password">Пароль</label><input id="password" type="password" autocomplete="current-password" placeholder="Пароль QUN ID"></div><div class="row"><button class="btn primary" id="signIn">Войти</button><button class="btn" id="signUp">Создать QUN ID</button></div><div id="authMsg" class="authmsg"></div></section>
 <section id="walletArea" class="hidden"><article class="card receive-card"><div class="receive-head"><div class="receive-mark">↙</div><div><div class="eyebrow">Получить перевод</div><h2 style="margin:2px 0;font-size:20px">Твой адрес QUN</h2><div class="muted small">Отправь этот адрес человеку, который хочет перевести тебе тестовые QUN.</div></div></div><div class="receive-address"><code id="receiveAddress">Загружаем адрес…</code><button class="btn primary receive-copy" id="copyReceiveAddress" type="button">⧉ Скопировать адрес</button></div><div class="receive-note">Это внутренний адрес QUN для тестовых переводов. Он не является адресом TON или другой блокчейн-сети.</div></article><div class="grid"><div><article class="card balancecard"><div class="bal-top"><strong>QUN Wallet</strong><span class="pill">● TESTNET</span></div><div class="bal-label">Доступный баланс</div><div class="balance"><span id="balance">0.00000000</span> <small>QUN</small></div><div class="address"><code id="address">Создаём адрес…</code><button id="copyAddress">Копировать</button></div></article><article class="card history"><div class="head"><h2>История операций</h2><button class="btn" id="refresh">↻ Обновить</button></div><div id="transactions"><div class="empty">Загружаем операции…</div></div></article></div>
 <div><article class="card"><div class="head"><h2>Получить QUN</h2></div><p class="muted small">Поделись адресом с другим участником. Для проверки сети можно один раз получить тестовые монеты.</p><button class="btn primary" id="claim" style="width:100%">Получить 100 тестовых QUN</button><div class="info" id="claimInfo">Разовая выдача тестовых монет. Это не вознаграждение за майнинг.</div></article>
@@ -65,12 +70,55 @@ try {
       } finally { $('refreshTonBalance').disabled = !currentTonAddress; }
     }
     $('refreshTonBalance').onclick = refreshTonBalance;
+    const sendButton = $('sendTonTransaction');
+    const sendStatus = $('ton-send-status');
+    function toNanoTon(input) {
+      const value = String(input || '').trim().replace(',', '.');
+      if (!/^(?:0|[1-9]\d*)(?:\.\d{1,9})?$/.test(value)) throw new Error('Введи сумму больше нуля, максимум 9 знаков после запятой.');
+      const parts = value.split('.');
+      const whole = BigInt(parts[0]);
+      const fraction = BigInt((parts[1] || '').padEnd(9, '0') || '0');
+      const nano = whole * 1000000000n + fraction;
+      if (nano <= 0n) throw new Error('Сумма должна быть больше нуля.');
+      return nano.toString();
+    }
+    sendButton.onclick = async () => {
+      if (!tonUI.wallet || !currentTonAddress) { sendStatus.textContent = 'Сначала подключи TON Testnet-кошелёк.'; return; }
+      const recipient = $('ton-recipient').value.trim();
+      if (!recipient) { sendStatus.textContent = 'Укажи адрес получателя.'; return; }
+      let amount;
+      try { amount = toNanoTon($('ton-send-amount').value); }
+      catch (err) { sendStatus.textContent = err.message; return; }
+      sendButton.disabled = true;
+      sendStatus.textContent = 'Ожидаем подтверждение в подключённом кошельке…';
+      try {
+        const result = await tonUI.sendTransaction({
+          validUntil: Math.floor(Date.now() / 1000) + 300,
+          network: '-3',
+          messages: [{ address: recipient, amount }]
+        });
+        sendStatus.textContent = 'Кошелёк вернул отправленное сообщение. Проверь подтверждение в обозревателе TON Testnet; это ещё не доказательство финального включения в блок.';
+        const link = document.createElement('a');
+        link.href = 'https://testnet.tonviewer.com/';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = 'Открыть обозреватель TON Testnet';
+        sendStatus.appendChild(document.createTextNode(' '));
+        sendStatus.appendChild(link);
+        await refreshTonBalance();
+      } catch (err) {
+        sendStatus.textContent = 'Перевод не завершён: ' + (err?.message || 'кошелёк отклонил запрос или произошла ошибка.');
+      } finally {
+        sendButton.disabled = !currentTonAddress;
+      }
+    };
     const renderTonWallet = (w) => {
       const connected = !!w;
       currentTonAddress = connected ? w.account.address : '';
       $('ton-address-wrap').classList.toggle('hidden', !connected);
       $('ton-address').textContent = currentTonAddress;
       $('refreshTonBalance').disabled = !connected;
+      $('sendTonTransaction').disabled = !connected;
       $('ton-wallet-status').textContent = connected
         ? 'TON Testnet подключён. Адрес отображается ниже. Подключение не даёт QUN доступ к приватным ключам.'
         : 'Подключи совместимый кошелёк, например Tonkeeper. Секретная фраза QUN не нужна и никогда не должна передаваться сайту.';
