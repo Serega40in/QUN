@@ -1,0 +1,46 @@
+name: QUN Wallet static checks
+
+on:
+  pull_request:
+    paths:
+      - "docs/qun-wallet/**"
+      - ".github/workflows/qun-wallet-static-check.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/qun-wallet/**"
+      - ".github/workflows/qun-wallet-static-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate TON Connect manifest JSON
+        run: python3 -m json.tool docs/qun-wallet/tonconnect-manifest.json > /dev/null
+
+      - name: Extract and syntax-check the inline module
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          html = Path("docs/qun-wallet/index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r'<script type="module">([\\s\\S]*?)</script>', html, re.IGNORECASE)
+          if len(scripts) != 1:
+              raise SystemExit(f"Expected exactly one inline module script, found {len(scripts)}")
+          Path("/tmp/qun-wallet.mjs").write_text(scripts[0], encoding="utf-8")
+          PY
+          node --check /tmp/qun-wallet.mjs
