@@ -5,6 +5,7 @@ on:
     paths:
       - "docs/qun-wallet/**"
       - ".github/workflows/qun-wallet-static-check.yml"
+      - "tests/qun-wallet-ton-testnet.test.mjs"
   push:
     branches: [main]
     paths:
@@ -44,3 +45,6 @@ jobs:
           Path("/tmp/qun-wallet.mjs").write_text(scripts[0], encoding="utf-8")
           PY
           node --check /tmp/qun-wallet.mjs
+
+      - name: Test TON Testnet address and amount validation
+        run: node --test tests/qun-wallet-ton-testnet.test.mjs
