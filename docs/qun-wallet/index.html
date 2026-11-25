@@ -32,6 +32,7 @@
 <script src="https://unpkg.com/@tonconnect/ui@5.0.0/dist/tonconnect-ui.min.js"></script>
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { normalizeTonTestnetAddress, parseTonNanoAmount, TON_TESTNET_CHAIN } from './ton-testnet.mjs';
 const URL='https://qdxjltqlnphvzafapncm.supabase.co',KEY='sb_publishable_aCUwbGYj_kUU8nVUu1kWmQ_-d-8fp8L';
 const sb=createClient(URL,KEY),$=id=>document.getElementById(id);let session=null,wallet=null,txs=[],pendingTransferFingerprint='',pendingTransferRequestId='';
 function toast(m){$('toast').textContent=m;$('toast').style.display='block';clearTimeout(window.__tt);window.__tt=setTimeout(()=>$('toast').style.display='none',3500)}
@@ -62,39 +63,6 @@ try {
     let currentTonAddress = '';
     let currentTonFriendlyAddress = '';
     let tonWalletOnTestnet = false;
-    const TON_TESTNET_CHAIN = '-3';
-    const TON_TESTNET_MAX_NANO = 100n * 1000000000n;
-
-    function normalizeTonTestnetAddress(input) {
-      const value = String(input || '').trim();
-      if (/^-?\d+:[a-fA-F0-9]{64}$/.test(value)) {
-        const convert = window.TON_CONNECT_UI?.toUserFriendlyAddress;
-        if (typeof convert !== 'function') throw new Error('Не удалось преобразовать TON-адрес. Обнови страницу.');
-        const friendly = convert(value, true);
-        if (/^(?:kQ|0Q)[A-Za-z0-9_-]{46}$/.test(friendly)) return friendly;
-        throw new Error('Не удалось преобразовать адрес в формат TON Testnet.');
-      }
-      if (/^(?:kQ|0Q)[A-Za-z0-9_-]{46}$/.test(value)) return value;
-      if (/^(?:EQ|UQ)/.test(value)) {
-        throw new Error('Похоже, это адрес TON Mainnet. Для этой операции нужен адрес TON Testnet (kQ… или 0Q…).');
-      }
-      throw new Error('Проверь адрес: нужен тестовый адрес формата kQ… / 0Q… или raw-адрес 0:<64 hex>.');
-    }
-
-    function parseTonNanoAmount(input) {
-      const value = String(input || '').trim().replace(',', '.');
-      if (!/^(?:0|[1-9]\d*)(?:\.\d{1,9})?$/.test(value)) {
-        throw new Error('Введи сумму от 0.000000001 до 100 TON и не более 9 знаков после запятой.');
-      }
-      const parts = value.split('.');
-      const whole = BigInt(parts[0]);
-      const fraction = BigInt(((parts[1] || '') + '000000000').slice(0, 9));
-      const amount = whole * 1000000000n + fraction;
-      if (amount <= 0n) throw new Error('Сумма должна быть больше нуля.');
-      if (amount > TON_TESTNET_MAX_NANO) throw new Error('Лимит одного тестового перевода — 100 TON.');
-      return amount;
-    }
-
     async function refreshTonBalance() {
       const out = $('ton-balance');
       if (!currentTonAddress) { out.textContent = 'Сначала подключи TON Testnet-кошелёк.'; return; }
@@ -124,7 +92,7 @@ try {
       let recipient;
       let nanoAmount;
       try {
-        recipient = normalizeTonTestnetAddress($('ton-recipient').value);
+        recipient = normalizeTonTestnetAddress($('ton-recipient').value, window.TON_CONNECT_UI?.toUserFriendlyAddress);
         nanoAmount = parseTonNanoAmount($('ton-amount').value);
       } catch (err) {
         toast(err?.message || 'Проверь адрес и сумму.');
