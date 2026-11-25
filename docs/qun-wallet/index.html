@@ -67,7 +67,7 @@ try {
 
     function normalizeTonTestnetAddress(input) {
       const value = String(input || '').trim();
-      if (/^-?\\d+:[a-fA-F0-9]{64}$/.test(value)) {
+      if (/^-?\d+:[a-fA-F0-9]{64}$/.test(value)) {
         const convert = window.TON_CONNECT_UI?.toUserFriendlyAddress;
         if (typeof convert !== 'function') throw new Error('Не удалось преобразовать TON-адрес. Обнови страницу.');
         const friendly = convert(value, true);
@@ -83,7 +83,7 @@ try {
 
     function parseTonNanoAmount(input) {
       const value = String(input || '').trim().replace(',', '.');
-      if (!/^(?:0|[1-9]\\d*)(?:\\.\\d{1,9})?$/.test(value)) {
+      if (!/^(?:0|[1-9]\d*)(?:\.\d{1,9})?$/.test(value)) {
         throw new Error('Введи сумму от 0.000000001 до 100 TON и не более 9 знаков после запятой.');
       }
       const parts = value.split('.');
@@ -135,7 +135,7 @@ try {
         return;
       }
       const amountText = String($('ton-amount').value).trim().replace(',', '.');
-      if (!confirm('Отправить ' + amountText + ' тестовых TON на адрес\\n' + recipient + '?\\nСеть: TON Testnet (не Mainnet). Проверь данные перед подтверждением в кошельке.')) return;
+      if (!confirm('Отправить ' + amountText + ' тестовых TON на адрес\n' + recipient + '?\nСеть: TON Testnet (не Mainnet). Проверь данные перед подтверждением в кошельке.')) return;
       const button = $('sendTonTestnet');
       const status = $('ton-send-status');
       button.disabled = true;
