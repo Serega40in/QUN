@@ -25,10 +25,8 @@ impl TestNode {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let data_file = std::env::temp_dir().join(format!(
-            "qun-api-test-{}-{unique}.json",
-            std::process::id()
-        ));
+        let data_file =
+            std::env::temp_dir().join(format!("qun-api-test-{}-{unique}.json", std::process::id()));
         let address = format!("127.0.0.1:{port}");
         let child = Command::new(env!("CARGO_BIN_EXE_node"))
             .env("QUN_BIND", &address)
@@ -39,7 +37,11 @@ impl TestNode {
             .spawn()
             .expect("start local QUN node test process");
 
-        let mut node = Self { child, address, data_file };
+        let mut node = Self {
+            child,
+            address,
+            data_file,
+        };
         for _ in 0..100 {
             // Wait for the TCP listener before sending an HTTP request; otherwise startup
             // can race the bind and the request helper panics on ConnectionRefused.
@@ -57,22 +59,42 @@ impl TestNode {
     fn request(&mut self, method: &str, path: &str, body: Option<&Value>) -> (u16, Value) {
         let payload = body.map(Value::to_string).unwrap_or_default();
         let mut stream = TcpStream::connect(&self.address).expect("connect to local test node");
-        stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(2)))
+            .unwrap();
         let request = format!(
             "{method} {path} HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}",
             payload.len(), payload
         );
-        stream.write_all(request.as_bytes()).expect("write HTTP request");
+        stream
+            .write_all(request.as_bytes())
+            .expect("write HTTP request");
         let mut response = String::new();
-        stream.read_to_string(&mut response).expect("read HTTP response");
-        let (head, body) = response.split_once("\r\n\r\n").expect("HTTP response headers");
-        let status = head.lines().next().unwrap().split_whitespace().nth(1).unwrap().parse().unwrap();
+        stream
+            .read_to_string(&mut response)
+            .expect("read HTTP response");
+        let (head, body) = response
+            .split_once("\r\n\r\n")
+            .expect("HTTP response headers");
+        let status = head
+            .lines()
+            .next()
+            .unwrap()
+            .split_whitespace()
+            .nth(1)
+            .unwrap()
+            .parse()
+            .unwrap();
         (status, serde_json::from_str(body).unwrap_or(Value::Null))
     }
 
     fn get(&mut self, path: &str) -> Result<Value, String> {
         let (status, body) = self.request("GET", path, None);
-        if (200..300).contains(&status) { Ok(body) } else { Err(format!("HTTP {status}: {body}")) }
+        if (200..300).contains(&status) {
+            Ok(body)
+        } else {
+            Err(format!("HTTP {status}: {body}"))
+        }
     }
 
     fn post(&mut self, path: &str, body: &Value) -> (u16, Value) {
@@ -183,14 +205,28 @@ fn valid_signed_transaction_updates_chain_and_ledger() {
     let accounts_after_transfer = node.get("/accounts").unwrap();
     assert_eq!(accounts_after_transfer["balances"][address], 6);
     assert_eq!(accounts_after_transfer["balances"]["recipient-test"], 4);
-    assert_eq!(accounts_after_transfer["nonces"][hex::encode(key.verifying_key().as_bytes())], 1);
+    assert_eq!(
+        accounts_after_transfer["nonces"][hex::encode(key.verifying_key().as_bytes())],
+        1
+    );
 
     let (replay_status, _) = node.post("/dev/mine-signed", &submit(signed));
-    assert_eq!(replay_status, 422, "replaying the same signed transaction must be rejected");
+    assert_eq!(
+        replay_status, 422,
+        "replaying the same signed transaction must be rejected"
+    );
     assert_eq!(node.get("/chain").unwrap(), chain_after_transfer);
     assert_eq!(node.get("/accounts").unwrap(), accounts_after_transfer);
 
     node.restart();
-    assert_eq!(node.get("/chain").unwrap(), chain_after_transfer, "chain must survive node restart");
-    assert_eq!(node.get("/accounts").unwrap(), accounts_after_transfer, "balances and nonces must survive node restart");
+    assert_eq!(
+        node.get("/chain").unwrap(),
+        chain_after_transfer,
+        "chain must survive node restart"
+    );
+    assert_eq!(
+        node.get("/accounts").unwrap(),
+        accounts_after_transfer,
+        "balances and nonces must survive node restart"
+    );
 }
