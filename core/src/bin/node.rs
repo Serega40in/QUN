@@ -64,7 +64,12 @@ struct NodeSnapshot {
 }
 
 impl Default for NodeSnapshot {
-    fn default() -> Self { Self { chain: Chain::new(), ledger: LedgerState::default() } }
+    fn default() -> Self {
+        Self {
+            chain: Chain::new(),
+            ledger: LedgerState::default(),
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -85,7 +90,10 @@ struct AccountsResponse {
 }
 
 #[derive(Deserialize)]
-struct FundRequest { address: String, amount: u64 }
+struct FundRequest {
+    address: String,
+    amount: u64,
+}
 
 #[derive(Deserialize)]
 struct MineRequest {
@@ -161,16 +169,29 @@ fn save_snapshot(path: &FsPath, snapshot: &NodeSnapshot) -> Result<(), ApiFailur
 }
 
 fn load_snapshot(path: &FsPath) -> Result<NodeSnapshot, String> {
-    if !path.exists() { return Ok(NodeSnapshot::default()); }
+    if !path.exists() {
+        return Ok(NodeSnapshot::default());
+    }
     let bytes = std::fs::read(path).map_err(|error| format!("read {}: {error}", path.display()))?;
     let snapshot = match serde_json::from_slice::<NodeSnapshot>(&bytes) {
         Ok(snapshot) => snapshot,
         Err(_) => {
-            let chain: Chain = serde_json::from_slice(&bytes).map_err(|error| format!("parse {} as snapshot or legacy chain: {error}", path.display()))?;
-            NodeSnapshot { chain, ledger: LedgerState::default() }
+            let chain: Chain = serde_json::from_slice(&bytes).map_err(|error| {
+                format!(
+                    "parse {} as snapshot or legacy chain: {error}",
+                    path.display()
+                )
+            })?;
+            NodeSnapshot {
+                chain,
+                ledger: LedgerState::default(),
+            }
         }
     };
-    snapshot.chain.validate().map_err(|error| format!("stored chain failed integrity validation: {error:?}"))?;
+    snapshot
+        .chain
+        .validate()
+        .map_err(|error| format!("stored chain failed integrity validation: {error:?}"))?;
     Ok(snapshot)
 }
 
@@ -194,23 +215,41 @@ async fn get_chain(State(state): State<AppState>) -> Json<Chain> {
 
 async fn get_accounts(State(state): State<AppState>) -> Json<AccountsResponse> {
     let snapshot = state.snapshot.lock().await;
-    Json(AccountsResponse { balances: snapshot.ledger.balances.clone(), nonces: snapshot.ledger.nonces.clone() })
+    Json(AccountsResponse {
+        balances: snapshot.ledger.balances.clone(),
+        nonces: snapshot.ledger.nonces.clone(),
+    })
 }
 
-async fn dev_fund(State(state): State<AppState>, Json(request): Json<FundRequest>) -> Result<Json<AccountsResponse>, ApiFailure> {
+async fn dev_fund(
+    State(state): State<AppState>,
+    Json(request): Json<FundRequest>,
+) -> Result<Json<AccountsResponse>, ApiFailure> {
     if !state.dev_funding_enabled {
         return Err(api_error(StatusCode::FORBIDDEN, "development funding is disabled; set QUN_ENABLE_DEV_FUNDING=true for local testing only"));
     }
     if request.amount == 0 || request.address.trim().is_empty() {
-        return Err(api_error(StatusCode::BAD_REQUEST, "address must be non-empty and amount must be greater than zero"));
+        return Err(api_error(
+            StatusCode::BAD_REQUEST,
+            "address must be non-empty and amount must be greater than zero",
+        ));
     }
     let mut snapshot = state.snapshot.lock().await;
     let mut next = snapshot.clone();
-    next.ledger.set_genesis_balance(request.address, request.amount)
-        .map_err(|error| api_error(StatusCode::BAD_REQUEST, format!("invalid funding request: {error:?}")))?;
+    next.ledger
+        .set_genesis_balance(request.address, request.amount)
+        .map_err(|error| {
+            api_error(
+                StatusCode::BAD_REQUEST,
+                format!("invalid funding request: {error:?}"),
+            )
+        })?;
     save_snapshot(state.data_file.as_path(), &next)?;
     *snapshot = next;
-    Ok(Json(AccountsResponse { balances: snapshot.ledger.balances.clone(), nonces: snapshot.ledger.nonces.clone() }))
+    Ok(Json(AccountsResponse {
+        balances: snapshot.ledger.balances.clone(),
+        nonces: snapshot.ledger.nonces.clone(),
+    }))
 }
 
 async fn get_block(
@@ -218,7 +257,8 @@ async fn get_block(
     Path(index): Path<u64>,
 ) -> Result<Json<qun_core::Block>, ApiFailure> {
     let snapshot = state.snapshot.lock().await;
-    snapshot.chain
+    snapshot
+        .chain
         .blocks
         .iter()
         .find(|block| block.index == index)
@@ -233,7 +273,10 @@ async fn dev_mine_signed(
     Json(request): Json<SignedMineRequest>,
 ) -> Result<(StatusCode, Json<qun_core::Block>), ApiFailure> {
     if request.signed_transactions.is_empty() {
-        return Err(api_error(StatusCode::BAD_REQUEST, "signed_transactions must not be empty"));
+        return Err(api_error(
+            StatusCode::BAD_REQUEST,
+            "signed_transactions must not be empty",
+        ));
     }
     if request.signed_transactions.len() > MAX_TRANSACTIONS_PER_BLOCK {
         return Err(api_error(
@@ -243,27 +286,41 @@ async fn dev_mine_signed(
     }
 
     for (position, signed) in request.signed_transactions.iter().enumerate() {
-        signed.verify().map_err(|error| api_error(
-            StatusCode::UNPROCESSABLE_ENTITY,
-            format!("signed transaction {position} failed signature verification: {error:?}"),
-        ))?;
+        signed.verify().map_err(|error| {
+            api_error(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!("signed transaction {position} failed signature verification: {error:?}"),
+            )
+        })?;
     }
 
     let timestamp = unix_timestamp()?;
     let mut snapshot = state.snapshot.lock().await;
     let mut next = snapshot.clone();
     for (position, signed) in request.signed_transactions.iter().enumerate() {
-        next.ledger.apply(&signed.transaction).map_err(|error| api_error(
-            StatusCode::UNPROCESSABLE_ENTITY,
-            format!("signed transaction {position} rejected by ledger: {error:?}"),
-        ))?;
+        next.ledger.apply(&signed.transaction).map_err(|error| {
+            api_error(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!("signed transaction {position} rejected by ledger: {error:?}"),
+            )
+        })?;
     }
-    let block = next.chain.append_signed(timestamp, request.signed_transactions)
-        .map_err(|error| api_error(StatusCode::UNPROCESSABLE_ENTITY, format!("signed block rejected: {error:?}")))?
+    let block = next
+        .chain
+        .append_signed(timestamp, request.signed_transactions)
+        .map_err(|error| {
+            api_error(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!("signed block rejected: {error:?}"),
+            )
+        })?
         .clone();
-    next.chain.validate().map_err(|error| api_error(
-        StatusCode::INTERNAL_SERVER_ERROR, format!("new signed block failed validation: {error:?}"),
-    ))?;
+    next.chain.validate().map_err(|error| {
+        api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("new signed block failed validation: {error:?}"),
+        )
+    })?;
     save_snapshot(state.data_file.as_path(), &next)?;
     *snapshot = next;
     Ok((StatusCode::CREATED, Json(block)))
@@ -288,10 +345,20 @@ async fn dev_mine(
             format!("transaction {position} rejected by demo ledger: {error:?}; sender identity is NOT cryptographically authenticated")))?;
     }
     next.chain.append(timestamp, request.transactions);
-    next.chain.validate().map_err(|error| api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("new block failed validation: {error:?}")))?;
+    next.chain.validate().map_err(|error| {
+        api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("new block failed validation: {error:?}"),
+        )
+    })?;
     save_snapshot(state.data_file.as_path(), &next)?;
     *snapshot = next;
-    let block = snapshot.chain.blocks.last().expect("append always creates a block").clone();
+    let block = snapshot
+        .chain
+        .blocks
+        .last()
+        .expect("append always creates a block")
+        .clone();
     Ok((StatusCode::CREATED, Json(block)))
 }
 
@@ -305,9 +372,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         env::var("QUN_DATA_FILE").unwrap_or_else(|_| "data/qun-chain.json".to_owned()),
     );
 
-    let snapshot = load_snapshot(&data_file).map_err(|error| format!("cannot start QUN node: {error}"))?;
-    let dev_funding_enabled = env::var("QUN_ENABLE_DEV_FUNDING").map(|v| v == "true" || v == "1").unwrap_or(false);
-    let state = AppState { snapshot: Arc::new(Mutex::new(snapshot)), data_file: Arc::new(data_file.clone()), dev_funding_enabled };
+    let snapshot =
+        load_snapshot(&data_file).map_err(|error| format!("cannot start QUN node: {error}"))?;
+    let dev_funding_enabled = env::var("QUN_ENABLE_DEV_FUNDING")
+        .map(|v| v == "true" || v == "1")
+        .unwrap_or(false);
+    let state = AppState {
+        snapshot: Arc::new(Mutex::new(snapshot)),
+        data_file: Arc::new(data_file.clone()),
+        dev_funding_enabled,
+    };
 
     let app = Router::new()
         .route("/", get(dashboard))
@@ -329,7 +403,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-
 #[cfg(test)]
 mod persistence_tests {
     use super::*;
@@ -345,7 +418,8 @@ mod persistence_tests {
             amount: 3,
             nonce: 1,
         };
-        let signature = signing_key.sign(&qun_core::SignedTransaction::signing_payload(&transaction));
+        let signature =
+            signing_key.sign(&qun_core::SignedTransaction::signing_payload(&transaction));
         let signed = qun_core::SignedTransaction {
             transaction,
             public_key,
@@ -362,15 +436,24 @@ mod persistence_tests {
         ));
 
         let mut snapshot = NodeSnapshot::default();
-        snapshot.chain.append_signed(1, vec![signed]).expect("valid signature should append");
-        assert!(save_snapshot(&path, &snapshot).is_ok(), "valid snapshot should persist");
+        snapshot
+            .chain
+            .append_signed(1, vec![signed])
+            .expect("valid signature should append");
+        assert!(
+            save_snapshot(&path, &snapshot).is_ok(),
+            "valid snapshot should persist"
+        );
 
         let loaded = load_snapshot(&path).expect("persisted signed chain should validate");
         assert_eq!(loaded.chain, snapshot.chain);
 
         let mut tampered = loaded;
         tampered.chain.blocks[1].signed_transactions[0].signature = "00".repeat(64);
-        assert!(save_snapshot(&path, &tampered).is_ok(), "test fixture should be writable");
+        assert!(
+            save_snapshot(&path, &tampered).is_ok(),
+            "test fixture should be writable"
+        );
         assert!(
             load_snapshot(&path).is_err(),
             "a persisted chain with a modified signature must be rejected"
