@@ -1,6 +1,6 @@
-# QUN Core development node API
+# QUN Core local development node
 
-This executable is an integration step for local wallet development. It is **not** a production node: it runs one process, stores a local JSON snapshot, and has no peer networking or consensus. On startup it validates the saved chain and replays signed transactions to reconstruct the ledger; it refuses to start if the saved chain or state transitions are invalid.
+The canonical development node is `core/src/bin/node.rs` (binary name: `node`). It includes a local explorer, a JSON snapshot file, signed Ed25519 transaction verification, state replay/validation on startup, and development-only funding. It is **not** a production blockchain node: peer-to-peer networking, consensus/finality, network identity, and real-asset safety are not implemented.
 
 ## Run
 
@@ -8,35 +8,28 @@ From the repository root:
 
 ```sh
 cd core
-cargo run --bin qun-node
+cargo run --bin node
 ```
 
-By default it binds to `127.0.0.1:8787`. Keep it on loopback; do not expose this prototype to the public internet.
+By default it binds to `127.0.0.1:8787`. Keep it on loopback; the prototype has no authentication and must not be exposed to the public internet.
 
-The node writes state to `./.qun-node-data.json` in the current working directory. Override this with `QUN_NODE_DATA_FILE=/path/to/state.json`. Accepted transactions are written to a temporary file, synced, and renamed into place before in-memory state is committed. This is a local single-writer snapshot, not replicated or consensus-backed storage.
-
-Optional development-only genesis allocations can be supplied before the first startup:
-
-```sh
-QUN_DEV_GENESIS_BALANCES='{"<lowercase-hex-ed25519-public-key>":100000}' cargo run --bin qun-node
-```
-
-Once the state file exists, its genesis allocations are authoritative for that local database; changing the environment variable does not rewrite existing state. This configuration is operator-controlled and is not a consensus-committed genesis specification. Do not use it to imply production token issuance.
+The local state file defaults to `core/data/qun-chain.json` when run from the repository root. Override the location with `QUN_DATA_FILE=/path/to/state.json`. Override the bind address with `QUN_BIND=127.0.0.1:8787`.
 
 ## Endpoints
 
-- `GET /health` — service mode and current height; response warns that peer networking and consensus are absent.
-- `GET /chain` — current chain.
-- `GET /balance/{address}` — current balance and account nonce.
-- `POST /transactions` — submit a JSON `SignedTransaction` object. The node verifies Ed25519 ownership/signature, validates nonce and balances against a cloned ledger state, builds a candidate block, persists it, and only then commits the candidate chain and ledger in memory.
+- `GET /` — local QUN Core explorer.
+- `GET /health` — node status and height.
+- `GET /chain` — chain data.
+- `GET /accounts` — balances and account nonces.
+- `GET /blocks/{index}` — details for a block.
+- `POST /dev/mine-signed` — validate and append signed Ed25519 transactions, persist the candidate state, then commit it in memory.
+- `POST /dev/mine` — unsigned demo transactions only; sender identity is not cryptographically authenticated.
+- `POST /dev/fund` — development-only test balance allocation, disabled by default. Enable explicitly with `QUN_ENABLE_DEV_FUNDING=true` only for local testing.
 
-The signing payload is currently the existing `QUN_TX_V1` format. A protocol upgrade must add an explicit network/chain ID to the signed bytes before multi-network use. Wallets should not use this prototype with valuable funds.
+The browser explorer creates an Ed25519 key in tab memory for test transactions. It is not a secure wallet and the key is lost when the tab closes or reloads. Do not use valuable funds.
 
-## Required next steps before a devnet
+## Verified capabilities and remaining work
 
-1. Define immutable genesis configuration and protocol/network ID.
-2. Add transaction size limits, request timeouts, rate limits, and API error tests.
-3. Implement peer protocol and a reviewed consensus/finality design.
-4. Test independent nodes, restarts, duplicate submissions, forks, and partitions.
-5. Have the wallet sign locally and verify network identity before sending.
-6. Review persistence semantics and threat model before treating this as production storage.
+The existing integration tests cover signed transfers, rejection of replayed transactions, persistence across node restart, and rejection of tampered saved chains. The CI gate must pass formatting, Clippy, and all tests before merging.
+
+Before calling this a devnet, the project still needs immutable genesis and explicit network/chain IDs, peer networking, a reviewed consensus/finality design, independent multi-node tests (including forks and partitions), API authentication/rate limits, and a security review. TON integration is a separate network path and does not make this sovereign QUN chain live.
