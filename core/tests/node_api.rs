@@ -231,7 +231,6 @@ fn valid_signed_transaction_updates_chain_and_ledger() {
     );
 }
 
-
 #[test]
 fn two_nodes_sync_valid_signed_chain_and_reject_wrong_network() {
     let mut source = TestNode::start();
@@ -239,10 +238,8 @@ fn two_nodes_sync_valid_signed_chain_and_reject_wrong_network() {
     let key = SigningKey::from_bytes(&[77_u8; 32]);
     let address = hex::encode(key.verifying_key().as_bytes());
 
-    let (source_fund, _) =
-        source.post("/dev/fund", &json!({"address": address, "amount": 10}));
-    let (target_fund, _) =
-        target.post("/dev/fund", &json!({"address": address, "amount": 10}));
+    let (source_fund, _) = source.post("/dev/fund", &json!({"address": address, "amount": 10}));
+    let (target_fund, _) = target.post("/dev/fund", &json!({"address": address, "amount": 10}));
     assert_eq!(source_fund, 200);
     assert_eq!(target_fund, 200);
 
