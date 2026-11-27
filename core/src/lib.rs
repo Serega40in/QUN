@@ -718,3 +718,46 @@ mod fork_choice_tests {
         );
     }
 }
+
+
+#[cfg(test)]
+mod network_signature_tests {
+    use super::*;
+    use ed25519_dalek::{Signer, SigningKey};
+
+    #[test]
+    fn network_bound_signature_rejects_cross_network_replay() {
+        let key = SigningKey::from_bytes(&[101_u8; 32]);
+        let public_key = hex::encode(key.verifying_key().as_bytes());
+        let network_id = "qun-local-dev-v0".to_owned();
+        let transaction = Transaction {
+            from: public_key.clone(),
+            to: "network-test-recipient".to_owned(),
+            amount: 1,
+            nonce: 1,
+        };
+        let signature = key.sign(&SignedTransaction::signing_payload_for_network(
+            &network_id,
+            &transaction,
+        ));
+        let signed = SignedTransaction {
+            transaction,
+            public_key,
+            network_id: network_id.clone(),
+            signature: hex::encode(signature.to_bytes()),
+        };
+
+        assert_eq!(signed.verify_for_network(&network_id), Ok(()));
+        assert_eq!(
+            signed.verify_for_network("qun-other-network"),
+            Err(SignatureError::NetworkMismatch)
+        );
+
+        let mut tampered_network = signed;
+        tampered_network.network_id = "qun-other-network".to_owned();
+        assert_eq!(
+            tampered_network.verify(),
+            Err(SignatureError::InvalidSignature)
+        );
+    }
+}
