@@ -1,6 +1,6 @@
 # QUN Core local development node
 
-The canonical development node is `core/src/bin/node.rs` (binary name: `node`). It includes a local explorer, a JSON snapshot file, signed Ed25519 transaction verification, state replay/validation on startup, and development-only funding. It is **not** a production blockchain node: peer-to-peer transport/discovery, secure peer authentication, consensus/finality, immutable production genesis, and real-asset safety are not implemented. A fixed `qun-local-dev-v0` network label is only a development guard, not a cryptographic chain ID.
+The canonical development node is `core/src/bin/node.rs` (binary name: `node`). It includes a local explorer, a JSON snapshot file, signed Ed25519 transaction verification, state replay/validation on startup, and development-only funding. It is **not** a production blockchain node: peer-to-peer transport/discovery, secure peer authentication, consensus/finality, immutable production genesis, and real-asset safety are not implemented. The `qun-local-dev-v0` label is included in QUN_TX_V2 signature bytes, so it blocks accidental cross-label replay in this prototype; it is still a fixed development ID, not an immutable genesis manifest or production chain ID.
 
 ## Run
 
