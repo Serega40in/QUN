@@ -570,7 +570,6 @@ mod tests {
     }
 }
 
-
 /// Experimental chain-selection result for peer-sync prototypes.
 /// This is deterministic fork choice, not a consensus or finality guarantee.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -610,7 +609,10 @@ pub fn choose_chain(
         .map_err(ForkChoiceError::InvalidCandidateChain)?;
 
     let local_tip = local.blocks.last().expect("validated chains are non-empty");
-    let candidate_tip = candidate.blocks.last().expect("validated chains are non-empty");
+    let candidate_tip = candidate
+        .blocks
+        .last()
+        .expect("validated chains are non-empty");
     if candidate_tip.index > local_tip.index
         || (candidate_tip.index == local_tip.index && candidate_tip.hash < local_tip.hash)
     {
@@ -657,7 +659,9 @@ mod fork_choice_tests {
         candidate.blocks[1].hash = "tampered".to_owned();
         assert!(matches!(
             choose_chain("qun-test-v1", &local, "qun-test-v1", &candidate),
-            Err(ForkChoiceError::InvalidCandidateChain(ChainError::InvalidHash { at: 1 }))
+            Err(ForkChoiceError::InvalidCandidateChain(
+                ChainError::InvalidHash { at: 1 }
+            ))
         ));
     }
 
