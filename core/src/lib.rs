@@ -569,3 +569,122 @@ mod tests {
         assert_eq!(ledger, before);
     }
 }
+
+
+/// Experimental chain-selection result for peer-sync prototypes.
+/// This is deterministic fork choice, not a consensus or finality guarantee.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ForkChoice {
+    KeepLocal,
+    AdoptCandidate,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ForkChoiceError {
+    NetworkMismatch,
+    InvalidLocalChain(ChainError),
+    InvalidCandidateChain(ChainError),
+}
+
+/// Select between two fully validated chains for the same configured network.
+///
+/// Policy: prefer the greater height; for equal heights, prefer the chain whose
+/// tip hash is lexicographically smaller. The tie-break is only to make prototype
+/// nodes converge deterministically when given the same candidates. It is not
+/// proof of work/stake, Sybil resistance, or Byzantine consensus and must not be
+/// used as a production fork-choice rule.
+pub fn choose_chain(
+    local_network_id: &str,
+    local: &Chain,
+    candidate_network_id: &str,
+    candidate: &Chain,
+) -> Result<ForkChoice, ForkChoiceError> {
+    if local_network_id != candidate_network_id {
+        return Err(ForkChoiceError::NetworkMismatch);
+    }
+    local
+        .validate()
+        .map_err(ForkChoiceError::InvalidLocalChain)?;
+    candidate
+        .validate()
+        .map_err(ForkChoiceError::InvalidCandidateChain)?;
+
+    let local_tip = local.blocks.last().expect("validated chains are non-empty");
+    let candidate_tip = candidate.blocks.last().expect("validated chains are non-empty");
+    if candidate_tip.index > local_tip.index
+        || (candidate_tip.index == local_tip.index && candidate_tip.hash < local_tip.hash)
+    {
+        Ok(ForkChoice::AdoptCandidate)
+    } else {
+        Ok(ForkChoice::KeepLocal)
+    }
+}
+
+#[cfg(test)]
+mod fork_choice_tests {
+    use super::*;
+
+    #[test]
+    fn prefers_longer_valid_chain() {
+        let local = Chain::new();
+        let mut candidate = Chain::new();
+        candidate.append(1, vec![]);
+        assert_eq!(
+            choose_chain("qun-test-v1", &local, "qun-test-v1", &candidate),
+            Ok(ForkChoice::AdoptCandidate)
+        );
+        assert_eq!(
+            choose_chain("qun-test-v1", &candidate, "qun-test-v1", &local),
+            Ok(ForkChoice::KeepLocal)
+        );
+    }
+
+    #[test]
+    fn rejects_different_network_ids() {
+        let local = Chain::new();
+        let candidate = Chain::new();
+        assert_eq!(
+            choose_chain("qun-test-v1", &local, "qun-other-v1", &candidate),
+            Err(ForkChoiceError::NetworkMismatch)
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_candidate_chain() {
+        let local = Chain::new();
+        let mut candidate = Chain::new();
+        candidate.append(1, vec![]);
+        candidate.blocks[1].hash = "tampered".to_owned();
+        assert!(matches!(
+            choose_chain("qun-test-v1", &local, "qun-test-v1", &candidate),
+            Err(ForkChoiceError::InvalidCandidateChain(ChainError::InvalidHash { at: 1 }))
+        ));
+    }
+
+    #[test]
+    fn equal_height_tie_break_is_deterministic() {
+        let mut first = Chain::new();
+        first.append(1, vec![]);
+        let mut second = Chain::new();
+        second.append(2, vec![]);
+        assert_ne!(first.blocks[1].hash, second.blocks[1].hash);
+
+        let expected = if second.blocks[1].hash < first.blocks[1].hash {
+            ForkChoice::AdoptCandidate
+        } else {
+            ForkChoice::KeepLocal
+        };
+        assert_eq!(
+            choose_chain("qun-test-v1", &first, "qun-test-v1", &second),
+            Ok(expected)
+        );
+        assert_eq!(
+            choose_chain("qun-test-v1", &second, "qun-test-v1", &first),
+            Ok(if expected == ForkChoice::AdoptCandidate {
+                ForkChoice::KeepLocal
+            } else {
+                ForkChoice::AdoptCandidate
+            })
+        );
+    }
+}
