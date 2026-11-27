@@ -5,7 +5,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use qun_core::{Chain, LedgerState, SignedTransaction, Transaction};
+use qun_core::{choose_chain, Chain, ForkChoice, LedgerState, SignedTransaction, Transaction};
 use serde::{Deserialize, Serialize};
 use std::{
     env,
@@ -49,6 +49,8 @@ async fn dashboard() -> Html<&'static str> {
 }
 
 const MAX_TRANSACTIONS_PER_BLOCK: usize = 1_000;
+const MAX_PEER_CHAIN_BLOCKS: usize = 10_000;
+const NETWORK_ID: &str = "qun-local-dev-v0";
 
 #[derive(Clone)]
 struct AppState {
@@ -74,6 +76,21 @@ impl Default for NodeSnapshot {
             genesis_balances: std::collections::BTreeMap::new(),
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct PeerChainBundle {
+    network_id: String,
+    chain: Chain,
+    genesis_balances: std::collections::BTreeMap<String, u64>,
+}
+
+#[derive(Serialize)]
+struct PeerSyncResponse {
+    adopted: bool,
+    height: u64,
+    tip_hash: String,
+    message: &'static str,
 }
 
 #[derive(Serialize)]
@@ -216,7 +233,7 @@ async fn health(State(state): State<AppState>) -> Json<Health> {
     let snapshot = state.snapshot.lock().await;
     Json(Health {
         status: "ok",
-        network: "qun-local-dev-v0",
+        network: NETWORK_ID,
         mode: "single-process-development-only",
         height: snapshot.chain.blocks.last().map(|block| block.index).unwrap_or(0),
         blocks: snapshot.chain.blocks.len(),
@@ -224,6 +241,63 @@ async fn health(State(state): State<AppState>) -> Json<Health> {
             "Local development only; no distributed consensus, P2P, or real assets. Do not expose this API publicly.",
         dev_funding_enabled: state.dev_funding_enabled,
     })
+}
+
+async fn peer_export(State(state): State<AppState>) -> Json<PeerChainBundle> {
+    let snapshot = state.snapshot.lock().await;
+    Json(PeerChainBundle {
+        network_id: NETWORK_ID.to_owned(),
+        chain: snapshot.chain.clone(),
+        genesis_balances: snapshot.genesis_balances.clone(),
+    })
+}
+
+/// Accept a chain bundle copied from another local dev node. This is manual,
+/// unauthenticated prototype sync, not production peer networking or consensus.
+async fn peer_sync(
+    State(state): State<AppState>,
+    Json(bundle): Json<PeerChainBundle>,
+) -> Result<Json<PeerSyncResponse>, ApiFailure> {
+    if bundle.network_id != NETWORK_ID {
+        return Err(api_error(StatusCode::CONFLICT, "peer network ID does not match this node"));
+    }
+    if bundle.chain.blocks.len() > MAX_PEER_CHAIN_BLOCKS {
+        return Err(api_error(StatusCode::PAYLOAD_TOO_LARGE, "peer chain exceeds local block limit"));
+    }
+    for (index, block) in bundle.chain.blocks.iter().enumerate().skip(1) {
+        if block.transactions.len() > MAX_TRANSACTIONS_PER_BLOCK {
+            return Err(api_error(StatusCode::PAYLOAD_TOO_LARGE, format!("peer block {index} exceeds transaction limit")));
+        }
+        if !block.transactions.is_empty() && block.signed_transactions.is_empty() {
+            return Err(api_error(StatusCode::UNPROCESSABLE_ENTITY, format!("peer block {index} contains unauthenticated demo transactions")));
+        }
+    }
+    let candidate_ledger = replay_ledger(&bundle.chain, &bundle.genesis_balances)
+        .map_err(|error| api_error(StatusCode::UNPROCESSABLE_ENTITY, format!("peer chain/state rejected: {error}")))?;
+
+    let mut snapshot = state.snapshot.lock().await;
+    if bundle.genesis_balances != snapshot.genesis_balances {
+        return Err(api_error(StatusCode::CONFLICT, "peer genesis allocations differ; automatic state merge is disabled"));
+    }
+    let choice = choose_chain(NETWORK_ID, &snapshot.chain, &bundle.network_id, &bundle.chain)
+        .map_err(|error| api_error(StatusCode::UNPROCESSABLE_ENTITY, format!("peer chain selection failed: {error:?}")))?;
+    let adopted = choice == ForkChoice::AdoptCandidate;
+    if adopted {
+        let next = NodeSnapshot {
+            chain: bundle.chain,
+            ledger: candidate_ledger,
+            genesis_balances: snapshot.genesis_balances.clone(),
+        };
+        save_snapshot(state.data_file.as_path(), &next)?;
+        *snapshot = next;
+    }
+    let tip = snapshot.chain.blocks.last().expect("validated local chain is non-empty");
+    Ok(Json(PeerSyncResponse {
+        adopted,
+        height: tip.index,
+        tip_hash: tip.hash.clone(),
+        message: "Experimental manual chain sync only; deterministic fork choice is not consensus or finality",
+    }))
 }
 
 async fn get_chain(State(state): State<AppState>) -> Json<Chain> {
@@ -402,6 +476,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(dashboard))
         .route("/health", get(health))
         .route("/chain", get(get_chain))
+        .route("/peer/export", get(peer_export))
+        .route("/peer/sync", post(peer_sync))
         .route("/accounts", get(get_accounts))
         .route("/blocks/:index", get(get_block))
         .route("/dev/mine", post(dev_mine))
