@@ -42,8 +42,15 @@ impl SignedTransaction {
 
     /// Canonical network-bound payload. The network ID is included in signed bytes.
     pub fn signing_payload_for_network(network_id: &str, tx: &Transaction) -> Vec<u8> {
-        serde_json::to_vec(&("QUN_TX_V2", network_id, &tx.from, &tx.to, tx.amount, tx.nonce))
-            .expect("serializing a fixed QUN transaction payload must succeed")
+        serde_json::to_vec(&(
+            "QUN_TX_V2",
+            network_id,
+            &tx.from,
+            &tx.to,
+            tx.amount,
+            tx.nonce,
+        ))
+        .expect("serializing a fixed QUN transaction payload must succeed")
     }
 
     /// Verify the transaction against a node's configured network ID.
@@ -718,7 +725,6 @@ mod fork_choice_tests {
         );
     }
 }
-
 
 #[cfg(test)]
 mod network_signature_tests {
