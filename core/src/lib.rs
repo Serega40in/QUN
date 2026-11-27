@@ -9,7 +9,6 @@ pub struct Transaction {
     pub nonce: u64,
 }
 
-
 /// A transaction paired with its Ed25519 public key and detached signature.
 /// The node must verify this signature before applying the transaction.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -41,8 +40,8 @@ impl SignedTransaction {
     pub fn verify(&self) -> Result<(), SignatureError> {
         use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 
-        let public_key_bytes = hex::decode(&self.public_key)
-            .map_err(|_| SignatureError::InvalidPublicKeyEncoding)?;
+        let public_key_bytes =
+            hex::decode(&self.public_key).map_err(|_| SignatureError::InvalidPublicKeyEncoding)?;
         let public_key_array: [u8; 32] = public_key_bytes
             .try_into()
             .map_err(|_| SignatureError::InvalidPublicKeyEncoding)?;
@@ -51,8 +50,8 @@ impl SignedTransaction {
         if self.transaction.from != self.public_key {
             return Err(SignatureError::SenderDoesNotMatchPublicKey);
         }
-        let signature_bytes = hex::decode(&self.signature)
-            .map_err(|_| SignatureError::InvalidSignatureEncoding)?;
+        let signature_bytes =
+            hex::decode(&self.signature).map_err(|_| SignatureError::InvalidSignatureEncoding)?;
         let signature = Signature::from_slice(&signature_bytes)
             .map_err(|_| SignatureError::InvalidSignatureEncoding)?;
         verifying_key
@@ -101,7 +100,8 @@ impl Block {
             previous_hash,
             transactions,
             signed_transactions,
-        )).expect("serializing a fixed QUN signed block payload must succeed");
+        ))
+        .expect("serializing a fixed QUN signed block payload must succeed");
         let digest = Sha256::digest(payload);
         digest.iter().map(|b| format!("{b:02x}")).collect()
     }
@@ -168,18 +168,34 @@ impl Chain {
         signed_transactions: Vec<SignedTransaction>,
     ) -> Result<&Block, ChainError> {
         for (position, signed) in signed_transactions.iter().enumerate() {
-            signed.verify().map_err(|_| ChainError::InvalidSignedTransaction { at: position })?;
+            signed
+                .verify()
+                .map_err(|_| ChainError::InvalidSignedTransaction { at: position })?;
         }
-        let previous = self.blocks.last().expect("Chain::new always creates genesis");
+        let previous = self
+            .blocks
+            .last()
+            .expect("Chain::new always creates genesis");
         let transactions: Vec<Transaction> = signed_transactions
-            .iter().map(|signed| signed.transaction.clone()).collect();
+            .iter()
+            .map(|signed| signed.transaction.clone())
+            .collect();
         let index = previous.index + 1;
         let previous_hash = previous.hash.clone();
         let hash = Block::calculate_signed_hash(
-            index, timestamp, &previous_hash, &transactions, &signed_transactions,
+            index,
+            timestamp,
+            &previous_hash,
+            &transactions,
+            &signed_transactions,
         );
         self.blocks.push(Block {
-            index, timestamp, previous_hash, transactions, signed_transactions, hash,
+            index,
+            timestamp,
+            previous_hash,
+            transactions,
+            signed_transactions,
+            hash,
         });
         Ok(self.blocks.last().expect("block was just appended"))
     }
@@ -215,18 +231,27 @@ impl Chain {
             }
             let expected_hash = if current.signed_transactions.is_empty() {
                 Block::calculate_hash(
-                    current.index, current.timestamp, &current.previous_hash, &current.transactions,
+                    current.index,
+                    current.timestamp,
+                    &current.previous_hash,
+                    &current.transactions,
                 )
             } else {
                 if current.signed_transactions.len() != current.transactions.len()
-                    || current.signed_transactions.iter().zip(&current.transactions)
+                    || current
+                        .signed_transactions
+                        .iter()
+                        .zip(&current.transactions)
                         .any(|(signed, tx)| signed.transaction != *tx || signed.verify().is_err())
                 {
                     return Err(ChainError::InvalidSignedTransaction { at: i });
                 }
                 Block::calculate_signed_hash(
-                    current.index, current.timestamp, &current.previous_hash,
-                    &current.transactions, &current.signed_transactions,
+                    current.index,
+                    current.timestamp,
+                    &current.previous_hash,
+                    &current.transactions,
+                    &current.signed_transactions,
                 )
             };
             if current.hash != expected_hash {
@@ -242,7 +267,6 @@ impl Default for Chain {
         Self::new()
     }
 }
-
 
 /// Deterministic account state for development and unit tests.
 /// This does not authenticate `Transaction::from`; never use it for real assets
@@ -368,7 +392,10 @@ mod tests {
             public_key,
             signature: hex::encode(signature.to_bytes()),
         };
-        assert_eq!(signed.verify(), Err(SignatureError::SenderDoesNotMatchPublicKey));
+        assert_eq!(
+            signed.verify(),
+            Err(SignatureError::SenderDoesNotMatchPublicKey)
+        );
     }
 
     #[test]
@@ -541,5 +568,4 @@ mod tests {
         assert_eq!(ledger.apply(&tx), Err(LedgerError::BalanceOverflow));
         assert_eq!(ledger, before);
     }
-
 }
