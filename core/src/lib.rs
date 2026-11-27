@@ -9,7 +9,6 @@ pub struct Transaction {
     pub nonce: u64,
 }
 
-
 /// A transaction paired with its Ed25519 public key and detached signature.
 /// The node must verify this signature before applying the transaction.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -17,6 +16,9 @@ pub struct SignedTransaction {
     pub transaction: Transaction,
     /// Lowercase hexadecimal Ed25519 public key; also the sender address.
     pub public_key: String,
+    /// Network domain for the signed payload. Empty is legacy-only and must not be accepted by nodes.
+    #[serde(default)]
+    pub network_id: String,
     /// Lowercase hexadecimal Ed25519 signature.
     pub signature: String,
 }
@@ -26,6 +28,7 @@ pub enum SignatureError {
     InvalidPublicKeyEncoding,
     InvalidPublicKey,
     SenderDoesNotMatchPublicKey,
+    NetworkMismatch,
     InvalidSignatureEncoding,
     InvalidSignature,
 }
@@ -37,12 +40,33 @@ impl SignedTransaction {
             .expect("serializing a fixed QUN transaction payload must succeed")
     }
 
-    /// Verify sender ownership and the Ed25519 signature over the transaction fields.
+    /// Canonical network-bound payload. The network ID is included in signed bytes.
+    pub fn signing_payload_for_network(network_id: &str, tx: &Transaction) -> Vec<u8> {
+        serde_json::to_vec(&(
+            "QUN_TX_V2",
+            network_id,
+            &tx.from,
+            &tx.to,
+            tx.amount,
+            tx.nonce,
+        ))
+        .expect("serializing a fixed QUN transaction payload must succeed")
+    }
+
+    /// Verify the transaction against a node's configured network ID.
+    pub fn verify_for_network(&self, expected_network_id: &str) -> Result<(), SignatureError> {
+        if self.network_id.is_empty() || self.network_id != expected_network_id {
+            return Err(SignatureError::NetworkMismatch);
+        }
+        self.verify()
+    }
+
+    /// Verify sender ownership and the Ed25519 signature. Empty network IDs are legacy V1.
     pub fn verify(&self) -> Result<(), SignatureError> {
         use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 
-        let public_key_bytes = hex::decode(&self.public_key)
-            .map_err(|_| SignatureError::InvalidPublicKeyEncoding)?;
+        let public_key_bytes =
+            hex::decode(&self.public_key).map_err(|_| SignatureError::InvalidPublicKeyEncoding)?;
         let public_key_array: [u8; 32] = public_key_bytes
             .try_into()
             .map_err(|_| SignatureError::InvalidPublicKeyEncoding)?;
@@ -51,12 +75,17 @@ impl SignedTransaction {
         if self.transaction.from != self.public_key {
             return Err(SignatureError::SenderDoesNotMatchPublicKey);
         }
-        let signature_bytes = hex::decode(&self.signature)
-            .map_err(|_| SignatureError::InvalidSignatureEncoding)?;
+        let signature_bytes =
+            hex::decode(&self.signature).map_err(|_| SignatureError::InvalidSignatureEncoding)?;
         let signature = Signature::from_slice(&signature_bytes)
             .map_err(|_| SignatureError::InvalidSignatureEncoding)?;
+        let payload = if self.network_id.is_empty() {
+            Self::signing_payload(&self.transaction)
+        } else {
+            Self::signing_payload_for_network(&self.network_id, &self.transaction)
+        };
         verifying_key
-            .verify(&Self::signing_payload(&self.transaction), &signature)
+            .verify(&payload, &signature)
             .map_err(|_| SignatureError::InvalidSignature)
     }
 }
@@ -101,7 +130,8 @@ impl Block {
             previous_hash,
             transactions,
             signed_transactions,
-        )).expect("serializing a fixed QUN signed block payload must succeed");
+        ))
+        .expect("serializing a fixed QUN signed block payload must succeed");
         let digest = Sha256::digest(payload);
         digest.iter().map(|b| format!("{b:02x}")).collect()
     }
@@ -168,18 +198,34 @@ impl Chain {
         signed_transactions: Vec<SignedTransaction>,
     ) -> Result<&Block, ChainError> {
         for (position, signed) in signed_transactions.iter().enumerate() {
-            signed.verify().map_err(|_| ChainError::InvalidSignedTransaction { at: position })?;
+            signed
+                .verify()
+                .map_err(|_| ChainError::InvalidSignedTransaction { at: position })?;
         }
-        let previous = self.blocks.last().expect("Chain::new always creates genesis");
+        let previous = self
+            .blocks
+            .last()
+            .expect("Chain::new always creates genesis");
         let transactions: Vec<Transaction> = signed_transactions
-            .iter().map(|signed| signed.transaction.clone()).collect();
+            .iter()
+            .map(|signed| signed.transaction.clone())
+            .collect();
         let index = previous.index + 1;
         let previous_hash = previous.hash.clone();
         let hash = Block::calculate_signed_hash(
-            index, timestamp, &previous_hash, &transactions, &signed_transactions,
+            index,
+            timestamp,
+            &previous_hash,
+            &transactions,
+            &signed_transactions,
         );
         self.blocks.push(Block {
-            index, timestamp, previous_hash, transactions, signed_transactions, hash,
+            index,
+            timestamp,
+            previous_hash,
+            transactions,
+            signed_transactions,
+            hash,
         });
         Ok(self.blocks.last().expect("block was just appended"))
     }
@@ -215,18 +261,27 @@ impl Chain {
             }
             let expected_hash = if current.signed_transactions.is_empty() {
                 Block::calculate_hash(
-                    current.index, current.timestamp, &current.previous_hash, &current.transactions,
+                    current.index,
+                    current.timestamp,
+                    &current.previous_hash,
+                    &current.transactions,
                 )
             } else {
                 if current.signed_transactions.len() != current.transactions.len()
-                    || current.signed_transactions.iter().zip(&current.transactions)
+                    || current
+                        .signed_transactions
+                        .iter()
+                        .zip(&current.transactions)
                         .any(|(signed, tx)| signed.transaction != *tx || signed.verify().is_err())
                 {
                     return Err(ChainError::InvalidSignedTransaction { at: i });
                 }
                 Block::calculate_signed_hash(
-                    current.index, current.timestamp, &current.previous_hash,
-                    &current.transactions, &current.signed_transactions,
+                    current.index,
+                    current.timestamp,
+                    &current.previous_hash,
+                    &current.transactions,
+                    &current.signed_transactions,
                 )
             };
             if current.hash != expected_hash {
@@ -242,7 +297,6 @@ impl Default for Chain {
         Self::new()
     }
 }
-
 
 /// Deterministic account state for development and unit tests.
 /// This does not authenticate `Transaction::from`; never use it for real assets
@@ -341,6 +395,7 @@ mod tests {
         let signed = SignedTransaction {
             transaction,
             public_key,
+            network_id: String::new(),
             signature: hex::encode(signature.to_bytes()),
         };
         assert_eq!(signed.verify(), Ok(()));
@@ -366,9 +421,13 @@ mod tests {
         let signed = SignedTransaction {
             transaction,
             public_key,
+            network_id: String::new(),
             signature: hex::encode(signature.to_bytes()),
         };
-        assert_eq!(signed.verify(), Err(SignatureError::SenderDoesNotMatchPublicKey));
+        assert_eq!(
+            signed.verify(),
+            Err(SignatureError::SenderDoesNotMatchPublicKey)
+        );
     }
 
     #[test]
@@ -387,6 +446,7 @@ mod tests {
         let signed = SignedTransaction {
             transaction,
             public_key,
+            network_id: String::new(),
             signature: hex::encode(signature.to_bytes()),
         };
 
@@ -541,5 +601,169 @@ mod tests {
         assert_eq!(ledger.apply(&tx), Err(LedgerError::BalanceOverflow));
         assert_eq!(ledger, before);
     }
+}
 
+/// Experimental chain-selection result for peer-sync prototypes.
+/// This is deterministic fork choice, not a consensus or finality guarantee.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ForkChoice {
+    KeepLocal,
+    AdoptCandidate,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ForkChoiceError {
+    NetworkMismatch,
+    InvalidLocalChain(ChainError),
+    InvalidCandidateChain(ChainError),
+}
+
+/// Select between two fully validated chains for the same configured network.
+///
+/// Policy: prefer the greater height; for equal heights, prefer the chain whose
+/// tip hash is lexicographically smaller. The tie-break is only to make prototype
+/// nodes converge deterministically when given the same candidates. It is not
+/// proof of work/stake, Sybil resistance, or Byzantine consensus and must not be
+/// used as a production fork-choice rule.
+pub fn choose_chain(
+    local_network_id: &str,
+    local: &Chain,
+    candidate_network_id: &str,
+    candidate: &Chain,
+) -> Result<ForkChoice, ForkChoiceError> {
+    if local_network_id != candidate_network_id {
+        return Err(ForkChoiceError::NetworkMismatch);
+    }
+    local
+        .validate()
+        .map_err(ForkChoiceError::InvalidLocalChain)?;
+    candidate
+        .validate()
+        .map_err(ForkChoiceError::InvalidCandidateChain)?;
+
+    let local_tip = local.blocks.last().expect("validated chains are non-empty");
+    let candidate_tip = candidate
+        .blocks
+        .last()
+        .expect("validated chains are non-empty");
+    if candidate_tip.index > local_tip.index
+        || (candidate_tip.index == local_tip.index && candidate_tip.hash < local_tip.hash)
+    {
+        Ok(ForkChoice::AdoptCandidate)
+    } else {
+        Ok(ForkChoice::KeepLocal)
+    }
+}
+
+#[cfg(test)]
+mod fork_choice_tests {
+    use super::*;
+
+    #[test]
+    fn prefers_longer_valid_chain() {
+        let local = Chain::new();
+        let mut candidate = Chain::new();
+        candidate.append(1, vec![]);
+        assert_eq!(
+            choose_chain("qun-test-v1", &local, "qun-test-v1", &candidate),
+            Ok(ForkChoice::AdoptCandidate)
+        );
+        assert_eq!(
+            choose_chain("qun-test-v1", &candidate, "qun-test-v1", &local),
+            Ok(ForkChoice::KeepLocal)
+        );
+    }
+
+    #[test]
+    fn rejects_different_network_ids() {
+        let local = Chain::new();
+        let candidate = Chain::new();
+        assert_eq!(
+            choose_chain("qun-test-v1", &local, "qun-other-v1", &candidate),
+            Err(ForkChoiceError::NetworkMismatch)
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_candidate_chain() {
+        let local = Chain::new();
+        let mut candidate = Chain::new();
+        candidate.append(1, vec![]);
+        candidate.blocks[1].hash = "tampered".to_owned();
+        assert!(matches!(
+            choose_chain("qun-test-v1", &local, "qun-test-v1", &candidate),
+            Err(ForkChoiceError::InvalidCandidateChain(
+                ChainError::InvalidHash { at: 1 }
+            ))
+        ));
+    }
+
+    #[test]
+    fn equal_height_tie_break_is_deterministic() {
+        let mut first = Chain::new();
+        first.append(1, vec![]);
+        let mut second = Chain::new();
+        second.append(2, vec![]);
+        assert_ne!(first.blocks[1].hash, second.blocks[1].hash);
+
+        let expected = if second.blocks[1].hash < first.blocks[1].hash {
+            ForkChoice::AdoptCandidate
+        } else {
+            ForkChoice::KeepLocal
+        };
+        assert_eq!(
+            choose_chain("qun-test-v1", &first, "qun-test-v1", &second),
+            Ok(expected)
+        );
+        assert_eq!(
+            choose_chain("qun-test-v1", &second, "qun-test-v1", &first),
+            Ok(if expected == ForkChoice::AdoptCandidate {
+                ForkChoice::KeepLocal
+            } else {
+                ForkChoice::AdoptCandidate
+            })
+        );
+    }
+}
+
+#[cfg(test)]
+mod network_signature_tests {
+    use super::*;
+    use ed25519_dalek::{Signer, SigningKey};
+
+    #[test]
+    fn network_bound_signature_rejects_cross_network_replay() {
+        let key = SigningKey::from_bytes(&[101_u8; 32]);
+        let public_key = hex::encode(key.verifying_key().as_bytes());
+        let network_id = "qun-local-dev-v0".to_owned();
+        let transaction = Transaction {
+            from: public_key.clone(),
+            to: "network-test-recipient".to_owned(),
+            amount: 1,
+            nonce: 1,
+        };
+        let signature = key.sign(&SignedTransaction::signing_payload_for_network(
+            &network_id,
+            &transaction,
+        ));
+        let signed = SignedTransaction {
+            transaction,
+            public_key,
+            network_id: network_id.clone(),
+            signature: hex::encode(signature.to_bytes()),
+        };
+
+        assert_eq!(signed.verify_for_network(&network_id), Ok(()));
+        assert_eq!(
+            signed.verify_for_network("qun-other-network"),
+            Err(SignatureError::NetworkMismatch)
+        );
+
+        let mut tampered_network = signed;
+        tampered_network.network_id = "qun-other-network".to_owned();
+        assert_eq!(
+            tampered_network.verify(),
+            Err(SignatureError::InvalidSignature)
+        );
+    }
 }

@@ -5,7 +5,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use qun_core::{Chain, LedgerState, SignedTransaction, Transaction};
+use qun_core::{choose_chain, Chain, ForkChoice, LedgerState, SignedTransaction, Transaction};
 use serde::{Deserialize, Serialize};
 use std::{
     env,
@@ -40,7 +40,7 @@ let wallet=null;
 const toHex=bytes=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
 el('create-wallet').addEventListener('click',async()=>{try{el('message').textContent='Создаём Ed25519-ключ…';wallet=await crypto.subtle.generateKey({name:'Ed25519'},true,['sign','verify']);const raw=await crypto.subtle.exportKey('raw',wallet.publicKey);wallet.address=toHex(raw);el('wallet-address').textContent='Адрес: '+wallet.address;el('fund').disabled=false;el('submit').disabled=false;el('message').textContent='Ключ создан. Закрытие или перезагрузка вкладки удалит его.';await refresh()}catch(err){wallet=null;el('message').textContent='Браузер не поддержал Ed25519 WebCrypto: '+err.message;el('message').className='status error'}});
 el('fund').addEventListener('click',async()=>{if(!wallet)return;try{await request('/dev/fund',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({address:wallet.address,amount:1000})});el('message').textContent='Выдано 1000 тестовых единиц для текущего ключа';await refresh()}catch(err){el('message').textContent=err.message;el('message').className='status error'}});
-el('txform').addEventListener('submit',async e=>{e.preventDefault();if(!wallet)throw new Error('Сначала создайте ключ в браузере.');const b=el('submit');b.disabled=true;el('message').textContent='Подписываем транзакцию и отправляем узлу…';el('message').className='status';try{const a=await request('/accounts');const tx={from:wallet.address,to:el('to').value.trim(),amount:Number(el('amount').value),nonce:(a.nonces[wallet.address]||0)+1};if(!tx.to||!Number.isSafeInteger(tx.amount)||tx.amount<1)throw new Error('Проверьте адрес получателя и сумму.');const payload=new TextEncoder().encode(JSON.stringify(['QUN_TX_V1',tx.from,tx.to,tx.amount,tx.nonce]));const signature=await crypto.subtle.sign({name:'Ed25519'},wallet.privateKey,payload);const signed={transaction:tx,public_key:wallet.address,signature:toHex(signature)};const block=await request('/dev/mine-signed',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({signed_transactions:[signed]})});el('message').textContent='Подписанная транзакция включена в блок #'+block.index;await refresh()}catch(err){el('message').textContent=err.message;el('message').className='status error'}finally{b.disabled=!wallet}});
+el('txform').addEventListener('submit',async e=>{e.preventDefault();if(!wallet)throw new Error('Сначала создайте ключ в браузере.');const b=el('submit');b.disabled=true;el('message').textContent='Подписываем транзакцию и отправляем узлу…';el('message').className='status';try{const a=await request('/accounts');const tx={from:wallet.address,to:el('to').value.trim(),amount:Number(el('amount').value),nonce:(a.nonces[wallet.address]||0)+1};if(!tx.to||!Number.isSafeInteger(tx.amount)||tx.amount<1)throw new Error('Проверьте адрес получателя и сумму.');const payload=new TextEncoder().encode(JSON.stringify(['QUN_TX_V2','qun-local-dev-v0',tx.from,tx.to,tx.amount,tx.nonce]));const signature=await crypto.subtle.sign({name:'Ed25519'},wallet.privateKey,payload);const signed={transaction:tx,public_key:wallet.address,network_id:'qun-local-dev-v0',signature:toHex(signature)};const block=await request('/dev/mine-signed',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({signed_transactions:[signed]})});el('message').textContent='Подписанная транзакция включена в блок #'+block.index;await refresh()}catch(err){el('message').textContent=err.message;el('message').className='status error'}finally{b.disabled=!wallet}});
 refresh();
 </script></body></html>"#;
 
@@ -49,6 +49,8 @@ async fn dashboard() -> Html<&'static str> {
 }
 
 const MAX_TRANSACTIONS_PER_BLOCK: usize = 1_000;
+const MAX_PEER_CHAIN_BLOCKS: usize = 10_000;
+const NETWORK_ID: &str = "qun-local-dev-v0";
 
 #[derive(Clone)]
 struct AppState {
@@ -61,10 +63,34 @@ struct AppState {
 struct NodeSnapshot {
     chain: Chain,
     ledger: LedgerState,
+    /// Operator-configured local development allocations; immutable after block 0.
+    #[serde(default)]
+    genesis_balances: std::collections::BTreeMap<String, u64>,
 }
 
 impl Default for NodeSnapshot {
-    fn default() -> Self { Self { chain: Chain::new(), ledger: LedgerState::default() } }
+    fn default() -> Self {
+        Self {
+            chain: Chain::new(),
+            ledger: LedgerState::default(),
+            genesis_balances: std::collections::BTreeMap::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct PeerChainBundle {
+    network_id: String,
+    chain: Chain,
+    genesis_balances: std::collections::BTreeMap<String, u64>,
+}
+
+#[derive(Serialize)]
+struct PeerSyncResponse {
+    adopted: bool,
+    height: u64,
+    tip_hash: String,
+    message: &'static str,
 }
 
 #[derive(Serialize)]
@@ -85,7 +111,10 @@ struct AccountsResponse {
 }
 
 #[derive(Deserialize)]
-struct FundRequest { address: String, amount: u64 }
+struct FundRequest {
+    address: String,
+    amount: u64,
+}
 
 #[derive(Deserialize)]
 struct MineRequest {
@@ -127,13 +156,24 @@ fn unix_timestamp() -> Result<u64, ApiFailure> {
 }
 
 fn save_snapshot(path: &FsPath, snapshot: &NodeSnapshot) -> Result<(), ApiFailure> {
+    let replayed = replay_ledger(&snapshot.chain, &snapshot.genesis_balances).map_err(|error| {
+        api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("snapshot chain/state is invalid: {error}"),
+        )
+    })?;
+    if replayed != snapshot.ledger {
+        return Err(api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "snapshot ledger does not match replayed chain state",
+        ));
+    }
     let bytes = serde_json::to_vec_pretty(snapshot).map_err(|error| {
         api_error(
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("serialize node snapshot: {error}"),
         )
     })?;
-
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|error| {
             api_error(
@@ -142,8 +182,6 @@ fn save_snapshot(path: &FsPath, snapshot: &NodeSnapshot) -> Result<(), ApiFailur
             )
         })?;
     }
-
-    // Write a temporary file first, then atomically replace the previous snapshot.
     let temporary = path.with_extension("json.tmp");
     std::fs::write(&temporary, bytes).map_err(|error| {
         api_error(
@@ -160,17 +198,65 @@ fn save_snapshot(path: &FsPath, snapshot: &NodeSnapshot) -> Result<(), ApiFailur
     Ok(())
 }
 
+fn replay_ledger(
+    chain: &Chain,
+    genesis_balances: &std::collections::BTreeMap<String, u64>,
+) -> Result<LedgerState, String> {
+    chain
+        .validate()
+        .map_err(|error| format!("chain integrity validation failed: {error:?}"))?;
+    let mut ledger = LedgerState::default();
+    for (address, amount) in genesis_balances {
+        ledger
+            .set_genesis_balance(address.clone(), *amount)
+            .map_err(|error| format!("invalid genesis allocation: {error:?}"))?;
+    }
+    for (block_index, block) in chain.blocks.iter().enumerate().skip(1) {
+        for (position, transaction) in block.transactions.iter().enumerate() {
+            if !block.signed_transactions.is_empty() {
+                let signed = block
+                    .signed_transactions
+                    .get(position)
+                    .ok_or_else(|| format!("signed transaction missing in block {block_index}"))?;
+                signed.verify_for_network(NETWORK_ID).map_err(|error| {
+                    format!("signature invalid in block {block_index}: {error:?}")
+                })?;
+            }
+            ledger.apply(transaction).map_err(|error| {
+                format!("invalid state transition in block {block_index}: {error:?}")
+            })?;
+        }
+    }
+    Ok(ledger)
+}
+
 fn load_snapshot(path: &FsPath) -> Result<NodeSnapshot, String> {
-    if !path.exists() { return Ok(NodeSnapshot::default()); }
+    if !path.exists() {
+        return Ok(NodeSnapshot::default());
+    }
     let bytes = std::fs::read(path).map_err(|error| format!("read {}: {error}", path.display()))?;
     let snapshot = match serde_json::from_slice::<NodeSnapshot>(&bytes) {
         Ok(snapshot) => snapshot,
         Err(_) => {
-            let chain: Chain = serde_json::from_slice(&bytes).map_err(|error| format!("parse {} as snapshot or legacy chain: {error}", path.display()))?;
-            NodeSnapshot { chain, ledger: LedgerState::default() }
+            let chain: Chain = serde_json::from_slice(&bytes).map_err(|error| {
+                format!(
+                    "parse {} as snapshot or legacy chain: {error}",
+                    path.display()
+                )
+            })?;
+            NodeSnapshot {
+                chain,
+                ledger: LedgerState::default(),
+                genesis_balances: std::collections::BTreeMap::new(),
+            }
         }
     };
-    snapshot.chain.validate().map_err(|error| format!("stored chain failed integrity validation: {error:?}"))?;
+    let replayed = replay_ledger(&snapshot.chain, &snapshot.genesis_balances)?;
+    if replayed != snapshot.ledger {
+        return Err(
+            "stored ledger does not match state replay from genesis allocations".to_owned(),
+        );
+    }
     Ok(snapshot)
 }
 
@@ -178,7 +264,7 @@ async fn health(State(state): State<AppState>) -> Json<Health> {
     let snapshot = state.snapshot.lock().await;
     Json(Health {
         status: "ok",
-        network: "qun-local-dev-v0",
+        network: NETWORK_ID,
         mode: "single-process-development-only",
         height: snapshot.chain.blocks.last().map(|block| block.index).unwrap_or(0),
         blocks: snapshot.chain.blocks.len(),
@@ -188,29 +274,144 @@ async fn health(State(state): State<AppState>) -> Json<Health> {
     })
 }
 
+async fn peer_export(State(state): State<AppState>) -> Json<PeerChainBundle> {
+    let snapshot = state.snapshot.lock().await;
+    Json(PeerChainBundle {
+        network_id: NETWORK_ID.to_owned(),
+        chain: snapshot.chain.clone(),
+        genesis_balances: snapshot.genesis_balances.clone(),
+    })
+}
+
+/// Accept a chain bundle copied from another local dev node. This is manual,
+/// unauthenticated prototype sync, not production peer networking or consensus.
+async fn peer_sync(
+    State(state): State<AppState>,
+    Json(bundle): Json<PeerChainBundle>,
+) -> Result<Json<PeerSyncResponse>, ApiFailure> {
+    if bundle.network_id != NETWORK_ID {
+        return Err(api_error(
+            StatusCode::CONFLICT,
+            "peer network ID does not match this node",
+        ));
+    }
+    if bundle.chain.blocks.len() > MAX_PEER_CHAIN_BLOCKS {
+        return Err(api_error(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "peer chain exceeds local block limit",
+        ));
+    }
+    for (index, block) in bundle.chain.blocks.iter().enumerate().skip(1) {
+        if block.transactions.len() > MAX_TRANSACTIONS_PER_BLOCK {
+            return Err(api_error(
+                StatusCode::PAYLOAD_TOO_LARGE,
+                format!("peer block {index} exceeds transaction limit"),
+            ));
+        }
+        if !block.transactions.is_empty() && block.signed_transactions.is_empty() {
+            return Err(api_error(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!("peer block {index} contains unauthenticated demo transactions"),
+            ));
+        }
+    }
+    let candidate_ledger =
+        replay_ledger(&bundle.chain, &bundle.genesis_balances).map_err(|error| {
+            api_error(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!("peer chain/state rejected: {error}"),
+            )
+        })?;
+
+    let mut snapshot = state.snapshot.lock().await;
+    if bundle.genesis_balances != snapshot.genesis_balances {
+        return Err(api_error(
+            StatusCode::CONFLICT,
+            "peer genesis allocations differ; automatic state merge is disabled",
+        ));
+    }
+    let choice = choose_chain(
+        NETWORK_ID,
+        &snapshot.chain,
+        &bundle.network_id,
+        &bundle.chain,
+    )
+    .map_err(|error| {
+        api_error(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            format!("peer chain selection failed: {error:?}"),
+        )
+    })?;
+    let adopted = choice == ForkChoice::AdoptCandidate;
+    if adopted {
+        let next = NodeSnapshot {
+            chain: bundle.chain,
+            ledger: candidate_ledger,
+            genesis_balances: snapshot.genesis_balances.clone(),
+        };
+        save_snapshot(state.data_file.as_path(), &next)?;
+        *snapshot = next;
+    }
+    let tip = snapshot
+        .chain
+        .blocks
+        .last()
+        .expect("validated local chain is non-empty");
+    Ok(Json(PeerSyncResponse {
+        adopted,
+        height: tip.index,
+        tip_hash: tip.hash.clone(),
+        message: "Experimental manual chain sync only; deterministic fork choice is not consensus or finality",
+    }))
+}
+
 async fn get_chain(State(state): State<AppState>) -> Json<Chain> {
     Json(state.snapshot.lock().await.chain.clone())
 }
 
 async fn get_accounts(State(state): State<AppState>) -> Json<AccountsResponse> {
     let snapshot = state.snapshot.lock().await;
-    Json(AccountsResponse { balances: snapshot.ledger.balances.clone(), nonces: snapshot.ledger.nonces.clone() })
+    Json(AccountsResponse {
+        balances: snapshot.ledger.balances.clone(),
+        nonces: snapshot.ledger.nonces.clone(),
+    })
 }
 
-async fn dev_fund(State(state): State<AppState>, Json(request): Json<FundRequest>) -> Result<Json<AccountsResponse>, ApiFailure> {
+async fn dev_fund(
+    State(state): State<AppState>,
+    Json(request): Json<FundRequest>,
+) -> Result<Json<AccountsResponse>, ApiFailure> {
     if !state.dev_funding_enabled {
         return Err(api_error(StatusCode::FORBIDDEN, "development funding is disabled; set QUN_ENABLE_DEV_FUNDING=true for local testing only"));
     }
     if request.amount == 0 || request.address.trim().is_empty() {
-        return Err(api_error(StatusCode::BAD_REQUEST, "address must be non-empty and amount must be greater than zero"));
+        return Err(api_error(
+            StatusCode::BAD_REQUEST,
+            "address must be non-empty and amount must be greater than zero",
+        ));
     }
     let mut snapshot = state.snapshot.lock().await;
+    if snapshot.chain.blocks.len() > 1 {
+        return Err(api_error(
+            StatusCode::CONFLICT,
+            "development funding is only allowed before the first block; reset the local test database to change genesis allocations",
+        ));
+    }
     let mut next = snapshot.clone();
-    next.ledger.set_genesis_balance(request.address, request.amount)
-        .map_err(|error| api_error(StatusCode::BAD_REQUEST, format!("invalid funding request: {error:?}")))?;
+    next.genesis_balances
+        .insert(request.address.clone(), request.amount);
+    next.ledger = replay_ledger(&next.chain, &next.genesis_balances).map_err(|error| {
+        api_error(
+            StatusCode::BAD_REQUEST,
+            format!("invalid genesis allocation: {error}"),
+        )
+    })?;
     save_snapshot(state.data_file.as_path(), &next)?;
     *snapshot = next;
-    Ok(Json(AccountsResponse { balances: snapshot.ledger.balances.clone(), nonces: snapshot.ledger.nonces.clone() }))
+    Ok(Json(AccountsResponse {
+        balances: snapshot.ledger.balances.clone(),
+        nonces: snapshot.ledger.nonces.clone(),
+    }))
 }
 
 async fn get_block(
@@ -218,7 +419,8 @@ async fn get_block(
     Path(index): Path<u64>,
 ) -> Result<Json<qun_core::Block>, ApiFailure> {
     let snapshot = state.snapshot.lock().await;
-    snapshot.chain
+    snapshot
+        .chain
         .blocks
         .iter()
         .find(|block| block.index == index)
@@ -233,7 +435,10 @@ async fn dev_mine_signed(
     Json(request): Json<SignedMineRequest>,
 ) -> Result<(StatusCode, Json<qun_core::Block>), ApiFailure> {
     if request.signed_transactions.is_empty() {
-        return Err(api_error(StatusCode::BAD_REQUEST, "signed_transactions must not be empty"));
+        return Err(api_error(
+            StatusCode::BAD_REQUEST,
+            "signed_transactions must not be empty",
+        ));
     }
     if request.signed_transactions.len() > MAX_TRANSACTIONS_PER_BLOCK {
         return Err(api_error(
@@ -243,27 +448,41 @@ async fn dev_mine_signed(
     }
 
     for (position, signed) in request.signed_transactions.iter().enumerate() {
-        signed.verify().map_err(|error| api_error(
-            StatusCode::UNPROCESSABLE_ENTITY,
-            format!("signed transaction {position} failed signature verification: {error:?}"),
-        ))?;
+        signed.verify_for_network(NETWORK_ID).map_err(|error| {
+            api_error(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!("signed transaction {position} failed signature verification: {error:?}"),
+            )
+        })?;
     }
 
     let timestamp = unix_timestamp()?;
     let mut snapshot = state.snapshot.lock().await;
     let mut next = snapshot.clone();
     for (position, signed) in request.signed_transactions.iter().enumerate() {
-        next.ledger.apply(&signed.transaction).map_err(|error| api_error(
-            StatusCode::UNPROCESSABLE_ENTITY,
-            format!("signed transaction {position} rejected by ledger: {error:?}"),
-        ))?;
+        next.ledger.apply(&signed.transaction).map_err(|error| {
+            api_error(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!("signed transaction {position} rejected by ledger: {error:?}"),
+            )
+        })?;
     }
-    let block = next.chain.append_signed(timestamp, request.signed_transactions)
-        .map_err(|error| api_error(StatusCode::UNPROCESSABLE_ENTITY, format!("signed block rejected: {error:?}")))?
+    let block = next
+        .chain
+        .append_signed(timestamp, request.signed_transactions)
+        .map_err(|error| {
+            api_error(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!("signed block rejected: {error:?}"),
+            )
+        })?
         .clone();
-    next.chain.validate().map_err(|error| api_error(
-        StatusCode::INTERNAL_SERVER_ERROR, format!("new signed block failed validation: {error:?}"),
-    ))?;
+    next.chain.validate().map_err(|error| {
+        api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("new signed block failed validation: {error:?}"),
+        )
+    })?;
     save_snapshot(state.data_file.as_path(), &next)?;
     *snapshot = next;
     Ok((StatusCode::CREATED, Json(block)))
@@ -288,10 +507,20 @@ async fn dev_mine(
             format!("transaction {position} rejected by demo ledger: {error:?}; sender identity is NOT cryptographically authenticated")))?;
     }
     next.chain.append(timestamp, request.transactions);
-    next.chain.validate().map_err(|error| api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("new block failed validation: {error:?}")))?;
+    next.chain.validate().map_err(|error| {
+        api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("new block failed validation: {error:?}"),
+        )
+    })?;
     save_snapshot(state.data_file.as_path(), &next)?;
     *snapshot = next;
-    let block = snapshot.chain.blocks.last().expect("append always creates a block").clone();
+    let block = snapshot
+        .chain
+        .blocks
+        .last()
+        .expect("append always creates a block")
+        .clone();
     Ok((StatusCode::CREATED, Json(block)))
 }
 
@@ -305,14 +534,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         env::var("QUN_DATA_FILE").unwrap_or_else(|_| "data/qun-chain.json".to_owned()),
     );
 
-    let snapshot = load_snapshot(&data_file).map_err(|error| format!("cannot start QUN node: {error}"))?;
-    let dev_funding_enabled = env::var("QUN_ENABLE_DEV_FUNDING").map(|v| v == "true" || v == "1").unwrap_or(false);
-    let state = AppState { snapshot: Arc::new(Mutex::new(snapshot)), data_file: Arc::new(data_file.clone()), dev_funding_enabled };
+    let snapshot =
+        load_snapshot(&data_file).map_err(|error| format!("cannot start QUN node: {error}"))?;
+    let dev_funding_enabled = env::var("QUN_ENABLE_DEV_FUNDING")
+        .map(|v| v == "true" || v == "1")
+        .unwrap_or(false);
+    let state = AppState {
+        snapshot: Arc::new(Mutex::new(snapshot)),
+        data_file: Arc::new(data_file.clone()),
+        dev_funding_enabled,
+    };
 
     let app = Router::new()
         .route("/", get(dashboard))
         .route("/health", get(health))
         .route("/chain", get(get_chain))
+        .route("/peer/export", get(peer_export))
+        .route("/peer/sync", post(peer_sync))
         .route("/accounts", get(get_accounts))
         .route("/blocks/:index", get(get_block))
         .route("/dev/mine", post(dev_mine))
@@ -329,7 +567,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-
 #[cfg(test)]
 mod persistence_tests {
     use super::*;
@@ -345,10 +582,14 @@ mod persistence_tests {
             amount: 3,
             nonce: 1,
         };
-        let signature = signing_key.sign(&qun_core::SignedTransaction::signing_payload(&transaction));
+        let network_id = NETWORK_ID.to_owned();
+        let signature = signing_key.sign(
+            &qun_core::SignedTransaction::signing_payload_for_network(&network_id, &transaction),
+        );
         let signed = qun_core::SignedTransaction {
             transaction,
             public_key,
+            network_id,
             signature: hex::encode(signature.to_bytes()),
         };
 
@@ -362,15 +603,34 @@ mod persistence_tests {
         ));
 
         let mut snapshot = NodeSnapshot::default();
-        snapshot.chain.append_signed(1, vec![signed]).expect("valid signature should append");
-        assert!(save_snapshot(&path, &snapshot).is_ok(), "valid snapshot should persist");
+        snapshot
+            .genesis_balances
+            .insert(signed.transaction.from.clone(), 3);
+        snapshot
+            .ledger
+            .set_genesis_balance(signed.transaction.from.clone(), 3)
+            .expect("test genesis funding");
+        snapshot
+            .chain
+            .append_signed(1, vec![signed])
+            .expect("valid signature should append");
+        snapshot.ledger = replay_ledger(&snapshot.chain, &snapshot.genesis_balances)
+            .expect("test chain should replay");
+        assert!(
+            save_snapshot(&path, &snapshot).is_ok(),
+            "valid snapshot should persist"
+        );
 
         let loaded = load_snapshot(&path).expect("persisted signed chain should validate");
         assert_eq!(loaded.chain, snapshot.chain);
 
-        let mut tampered = loaded;
-        tampered.chain.blocks[1].signed_transactions[0].signature = "00".repeat(64);
-        assert!(save_snapshot(&path, &tampered).is_ok(), "test fixture should be writable");
+        let mut tampered: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&path).expect("read test snapshot"))
+                .expect("decode test snapshot");
+        tampered["chain"]["blocks"][1]["signed_transactions"][0]["signature"] =
+            serde_json::Value::String("00".repeat(64));
+        std::fs::write(&path, serde_json::to_vec(&tampered).unwrap())
+            .expect("write tampered fixture directly");
         assert!(
             load_snapshot(&path).is_err(),
             "a persisted chain with a modified signature must be rejected"
