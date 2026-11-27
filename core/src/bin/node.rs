@@ -61,6 +61,9 @@ struct AppState {
 struct NodeSnapshot {
     chain: Chain,
     ledger: LedgerState,
+    /// Operator-configured local development allocations; immutable after block 0.
+    #[serde(default)]
+    genesis_balances: std::collections::BTreeMap<String, u64>,
 }
 
 impl Default for NodeSnapshot {
@@ -68,6 +71,7 @@ impl Default for NodeSnapshot {
         Self {
             chain: Chain::new(),
             ledger: LedgerState::default(),
+            genesis_balances: std::collections::BTreeMap::new(),
         }
     }
 }
@@ -135,37 +139,52 @@ fn unix_timestamp() -> Result<u64, ApiFailure> {
 }
 
 fn save_snapshot(path: &FsPath, snapshot: &NodeSnapshot) -> Result<(), ApiFailure> {
-    let bytes = serde_json::to_vec_pretty(snapshot).map_err(|error| {
-        api_error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("serialize node snapshot: {error}"),
-        )
+    let replayed = replay_ledger(&snapshot.chain, &snapshot.genesis_balances).map_err(|error| {
+        api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("snapshot chain/state is invalid: {error}"))
     })?;
-
+    if replayed != snapshot.ledger {
+        return Err(api_error(StatusCode::INTERNAL_SERVER_ERROR, "snapshot ledger does not match replayed chain state"));
+    }
+    let bytes = serde_json::to_vec_pretty(snapshot).map_err(|error| {
+        api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("serialize node snapshot: {error}"))
+    })?;
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|error| {
-            api_error(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("create data directory: {error}"),
-            )
+            api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("create data directory: {error}"))
         })?;
     }
-
-    // Write a temporary file first, then atomically replace the previous snapshot.
     let temporary = path.with_extension("json.tmp");
     std::fs::write(&temporary, bytes).map_err(|error| {
-        api_error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("write temporary snapshot: {error}"),
-        )
+        api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("write temporary snapshot: {error}"))
     })?;
     std::fs::rename(&temporary, path).map_err(|error| {
-        api_error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("replace node snapshot file: {error}"),
-        )
+        api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("replace node snapshot file: {error}"))
     })?;
     Ok(())
+}
+
+fn replay_ledger(
+    chain: &Chain,
+    genesis_balances: &std::collections::BTreeMap<String, u64>,
+) -> Result<LedgerState, String> {
+    chain.validate().map_err(|error| format!("chain integrity validation failed: {error:?}"))?;
+    let mut ledger = LedgerState::default();
+    for (address, amount) in genesis_balances {
+        ledger.set_genesis_balance(address.clone(), *amount)
+            .map_err(|error| format!("invalid genesis allocation: {error:?}"))?;
+    }
+    for (block_index, block) in chain.blocks.iter().enumerate().skip(1) {
+        for (position, transaction) in block.transactions.iter().enumerate() {
+            if !block.signed_transactions.is_empty() {
+                let signed = block.signed_transactions.get(position)
+                    .ok_or_else(|| format!("signed transaction missing in block {block_index}"))?;
+                signed.verify().map_err(|error| format!("signature invalid in block {block_index}: {error:?}"))?;
+            }
+            ledger.apply(transaction)
+                .map_err(|error| format!("invalid state transition in block {block_index}: {error:?}"))?;
+        }
+    }
+    Ok(ledger)
 }
 
 fn load_snapshot(path: &FsPath) -> Result<NodeSnapshot, String> {
@@ -177,21 +196,19 @@ fn load_snapshot(path: &FsPath) -> Result<NodeSnapshot, String> {
         Ok(snapshot) => snapshot,
         Err(_) => {
             let chain: Chain = serde_json::from_slice(&bytes).map_err(|error| {
-                format!(
-                    "parse {} as snapshot or legacy chain: {error}",
-                    path.display()
-                )
+                format!("parse {} as snapshot or legacy chain: {error}", path.display())
             })?;
             NodeSnapshot {
                 chain,
                 ledger: LedgerState::default(),
+                genesis_balances: std::collections::BTreeMap::new(),
             }
         }
     };
-    snapshot
-        .chain
-        .validate()
-        .map_err(|error| format!("stored chain failed integrity validation: {error:?}"))?;
+    let replayed = replay_ledger(&snapshot.chain, &snapshot.genesis_balances)?;
+    if replayed != snapshot.ledger {
+        return Err("stored ledger does not match state replay from genesis allocations".to_owned());
+    }
     Ok(snapshot)
 }
 
@@ -229,21 +246,19 @@ async fn dev_fund(
         return Err(api_error(StatusCode::FORBIDDEN, "development funding is disabled; set QUN_ENABLE_DEV_FUNDING=true for local testing only"));
     }
     if request.amount == 0 || request.address.trim().is_empty() {
-        return Err(api_error(
-            StatusCode::BAD_REQUEST,
-            "address must be non-empty and amount must be greater than zero",
-        ));
+        return Err(api_error(StatusCode::BAD_REQUEST, "address must be non-empty and amount must be greater than zero"));
     }
     let mut snapshot = state.snapshot.lock().await;
+    if snapshot.chain.blocks.len() > 1 {
+        return Err(api_error(
+            StatusCode::CONFLICT,
+            "development funding is only allowed before the first block; reset the local test database to change genesis allocations",
+        ));
+    }
     let mut next = snapshot.clone();
-    next.ledger
-        .set_genesis_balance(request.address, request.amount)
-        .map_err(|error| {
-            api_error(
-                StatusCode::BAD_REQUEST,
-                format!("invalid funding request: {error:?}"),
-            )
-        })?;
+    next.genesis_balances.insert(request.address.clone(), request.amount);
+    next.ledger = replay_ledger(&next.chain, &next.genesis_balances)
+        .map_err(|error| api_error(StatusCode::BAD_REQUEST, format!("invalid genesis allocation: {error}")))?;
     save_snapshot(state.data_file.as_path(), &next)?;
     *snapshot = next;
     Ok(Json(AccountsResponse {
@@ -436,10 +451,15 @@ mod persistence_tests {
         ));
 
         let mut snapshot = NodeSnapshot::default();
+        snapshot.genesis_balances.insert(signed.transaction.from.clone(), 3);
+        snapshot.ledger.set_genesis_balance(signed.transaction.from.clone(), 3)
+            .expect("test genesis funding");
         snapshot
             .chain
             .append_signed(1, vec![signed])
             .expect("valid signature should append");
+        snapshot.ledger = replay_ledger(&snapshot.chain, &snapshot.genesis_balances)
+            .expect("test chain should replay");
         assert!(
             save_snapshot(&path, &snapshot).is_ok(),
             "valid snapshot should persist"
@@ -448,12 +468,13 @@ mod persistence_tests {
         let loaded = load_snapshot(&path).expect("persisted signed chain should validate");
         assert_eq!(loaded.chain, snapshot.chain);
 
-        let mut tampered = loaded;
-        tampered.chain.blocks[1].signed_transactions[0].signature = "00".repeat(64);
-        assert!(
-            save_snapshot(&path, &tampered).is_ok(),
-            "test fixture should be writable"
-        );
+        let mut tampered: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&path).expect("read test snapshot"))
+                .expect("decode test snapshot");
+        tampered["chain"]["blocks"][1]["signed_transactions"][0]["signature"] =
+            serde_json::Value::String("00".repeat(64));
+        std::fs::write(&path, serde_json::to_vec(&tampered).unwrap())
+            .expect("write tampered fixture directly");
         assert!(
             load_snapshot(&path).is_err(),
             "a persisted chain with a modified signature must be rejected"
