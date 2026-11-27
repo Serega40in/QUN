@@ -16,6 +16,9 @@ pub struct SignedTransaction {
     pub transaction: Transaction,
     /// Lowercase hexadecimal Ed25519 public key; also the sender address.
     pub public_key: String,
+    /// Network domain for the signed payload. Empty is legacy-only and must not be accepted by nodes.
+    #[serde(default)]
+    pub network_id: String,
     /// Lowercase hexadecimal Ed25519 signature.
     pub signature: String,
 }
@@ -25,6 +28,7 @@ pub enum SignatureError {
     InvalidPublicKeyEncoding,
     InvalidPublicKey,
     SenderDoesNotMatchPublicKey,
+    NetworkMismatch,
     InvalidSignatureEncoding,
     InvalidSignature,
 }
@@ -36,7 +40,21 @@ impl SignedTransaction {
             .expect("serializing a fixed QUN transaction payload must succeed")
     }
 
-    /// Verify sender ownership and the Ed25519 signature over the transaction fields.
+    /// Canonical network-bound payload. The network ID is included in signed bytes.
+    pub fn signing_payload_for_network(network_id: &str, tx: &Transaction) -> Vec<u8> {
+        serde_json::to_vec(&("QUN_TX_V2", network_id, &tx.from, &tx.to, tx.amount, tx.nonce))
+            .expect("serializing a fixed QUN transaction payload must succeed")
+    }
+
+    /// Verify the transaction against a node's configured network ID.
+    pub fn verify_for_network(&self, expected_network_id: &str) -> Result<(), SignatureError> {
+        if self.network_id.is_empty() || self.network_id != expected_network_id {
+            return Err(SignatureError::NetworkMismatch);
+        }
+        self.verify()
+    }
+
+    /// Verify sender ownership and the Ed25519 signature. Empty network IDs are legacy V1.
     pub fn verify(&self) -> Result<(), SignatureError> {
         use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 
@@ -54,8 +72,13 @@ impl SignedTransaction {
             hex::decode(&self.signature).map_err(|_| SignatureError::InvalidSignatureEncoding)?;
         let signature = Signature::from_slice(&signature_bytes)
             .map_err(|_| SignatureError::InvalidSignatureEncoding)?;
+        let payload = if self.network_id.is_empty() {
+            Self::signing_payload(&self.transaction)
+        } else {
+            Self::signing_payload_for_network(&self.network_id, &self.transaction)
+        };
         verifying_key
-            .verify(&Self::signing_payload(&self.transaction), &signature)
+            .verify(&payload, &signature)
             .map_err(|_| SignatureError::InvalidSignature)
     }
 }
@@ -365,6 +388,7 @@ mod tests {
         let signed = SignedTransaction {
             transaction,
             public_key,
+            network_id: String::new(),
             signature: hex::encode(signature.to_bytes()),
         };
         assert_eq!(signed.verify(), Ok(()));
@@ -390,6 +414,7 @@ mod tests {
         let signed = SignedTransaction {
             transaction,
             public_key,
+            network_id: String::new(),
             signature: hex::encode(signature.to_bytes()),
         };
         assert_eq!(
@@ -414,6 +439,7 @@ mod tests {
         let signed = SignedTransaction {
             transaction,
             public_key,
+            network_id: String::new(),
             signature: hex::encode(signature.to_bytes()),
         };
 
