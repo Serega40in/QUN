@@ -157,25 +157,43 @@ fn unix_timestamp() -> Result<u64, ApiFailure> {
 
 fn save_snapshot(path: &FsPath, snapshot: &NodeSnapshot) -> Result<(), ApiFailure> {
     let replayed = replay_ledger(&snapshot.chain, &snapshot.genesis_balances).map_err(|error| {
-        api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("snapshot chain/state is invalid: {error}"))
+        api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("snapshot chain/state is invalid: {error}"),
+        )
     })?;
     if replayed != snapshot.ledger {
-        return Err(api_error(StatusCode::INTERNAL_SERVER_ERROR, "snapshot ledger does not match replayed chain state"));
+        return Err(api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "snapshot ledger does not match replayed chain state",
+        ));
     }
     let bytes = serde_json::to_vec_pretty(snapshot).map_err(|error| {
-        api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("serialize node snapshot: {error}"))
+        api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("serialize node snapshot: {error}"),
+        )
     })?;
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|error| {
-            api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("create data directory: {error}"))
+            api_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("create data directory: {error}"),
+            )
         })?;
     }
     let temporary = path.with_extension("json.tmp");
     std::fs::write(&temporary, bytes).map_err(|error| {
-        api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("write temporary snapshot: {error}"))
+        api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("write temporary snapshot: {error}"),
+        )
     })?;
     std::fs::rename(&temporary, path).map_err(|error| {
-        api_error(StatusCode::INTERNAL_SERVER_ERROR, format!("replace node snapshot file: {error}"))
+        api_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("replace node snapshot file: {error}"),
+        )
     })?;
     Ok(())
 }
@@ -184,21 +202,29 @@ fn replay_ledger(
     chain: &Chain,
     genesis_balances: &std::collections::BTreeMap<String, u64>,
 ) -> Result<LedgerState, String> {
-    chain.validate().map_err(|error| format!("chain integrity validation failed: {error:?}"))?;
+    chain
+        .validate()
+        .map_err(|error| format!("chain integrity validation failed: {error:?}"))?;
     let mut ledger = LedgerState::default();
     for (address, amount) in genesis_balances {
-        ledger.set_genesis_balance(address.clone(), *amount)
+        ledger
+            .set_genesis_balance(address.clone(), *amount)
             .map_err(|error| format!("invalid genesis allocation: {error:?}"))?;
     }
     for (block_index, block) in chain.blocks.iter().enumerate().skip(1) {
         for (position, transaction) in block.transactions.iter().enumerate() {
             if !block.signed_transactions.is_empty() {
-                let signed = block.signed_transactions.get(position)
+                let signed = block
+                    .signed_transactions
+                    .get(position)
                     .ok_or_else(|| format!("signed transaction missing in block {block_index}"))?;
-                signed.verify().map_err(|error| format!("signature invalid in block {block_index}: {error:?}"))?;
+                signed.verify().map_err(|error| {
+                    format!("signature invalid in block {block_index}: {error:?}")
+                })?;
             }
-            ledger.apply(transaction)
-                .map_err(|error| format!("invalid state transition in block {block_index}: {error:?}"))?;
+            ledger.apply(transaction).map_err(|error| {
+                format!("invalid state transition in block {block_index}: {error:?}")
+            })?;
         }
     }
     Ok(ledger)
@@ -213,7 +239,10 @@ fn load_snapshot(path: &FsPath) -> Result<NodeSnapshot, String> {
         Ok(snapshot) => snapshot,
         Err(_) => {
             let chain: Chain = serde_json::from_slice(&bytes).map_err(|error| {
-                format!("parse {} as snapshot or legacy chain: {error}", path.display())
+                format!(
+                    "parse {} as snapshot or legacy chain: {error}",
+                    path.display()
+                )
             })?;
             NodeSnapshot {
                 chain,
@@ -224,7 +253,9 @@ fn load_snapshot(path: &FsPath) -> Result<NodeSnapshot, String> {
     };
     let replayed = replay_ledger(&snapshot.chain, &snapshot.genesis_balances)?;
     if replayed != snapshot.ledger {
-        return Err("stored ledger does not match state replay from genesis allocations".to_owned());
+        return Err(
+            "stored ledger does not match state replay from genesis allocations".to_owned(),
+        );
     }
     Ok(snapshot)
 }
@@ -259,28 +290,58 @@ async fn peer_sync(
     Json(bundle): Json<PeerChainBundle>,
 ) -> Result<Json<PeerSyncResponse>, ApiFailure> {
     if bundle.network_id != NETWORK_ID {
-        return Err(api_error(StatusCode::CONFLICT, "peer network ID does not match this node"));
+        return Err(api_error(
+            StatusCode::CONFLICT,
+            "peer network ID does not match this node",
+        ));
     }
     if bundle.chain.blocks.len() > MAX_PEER_CHAIN_BLOCKS {
-        return Err(api_error(StatusCode::PAYLOAD_TOO_LARGE, "peer chain exceeds local block limit"));
+        return Err(api_error(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "peer chain exceeds local block limit",
+        ));
     }
     for (index, block) in bundle.chain.blocks.iter().enumerate().skip(1) {
         if block.transactions.len() > MAX_TRANSACTIONS_PER_BLOCK {
-            return Err(api_error(StatusCode::PAYLOAD_TOO_LARGE, format!("peer block {index} exceeds transaction limit")));
+            return Err(api_error(
+                StatusCode::PAYLOAD_TOO_LARGE,
+                format!("peer block {index} exceeds transaction limit"),
+            ));
         }
         if !block.transactions.is_empty() && block.signed_transactions.is_empty() {
-            return Err(api_error(StatusCode::UNPROCESSABLE_ENTITY, format!("peer block {index} contains unauthenticated demo transactions")));
+            return Err(api_error(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!("peer block {index} contains unauthenticated demo transactions"),
+            ));
         }
     }
-    let candidate_ledger = replay_ledger(&bundle.chain, &bundle.genesis_balances)
-        .map_err(|error| api_error(StatusCode::UNPROCESSABLE_ENTITY, format!("peer chain/state rejected: {error}")))?;
+    let candidate_ledger =
+        replay_ledger(&bundle.chain, &bundle.genesis_balances).map_err(|error| {
+            api_error(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!("peer chain/state rejected: {error}"),
+            )
+        })?;
 
     let mut snapshot = state.snapshot.lock().await;
     if bundle.genesis_balances != snapshot.genesis_balances {
-        return Err(api_error(StatusCode::CONFLICT, "peer genesis allocations differ; automatic state merge is disabled"));
+        return Err(api_error(
+            StatusCode::CONFLICT,
+            "peer genesis allocations differ; automatic state merge is disabled",
+        ));
     }
-    let choice = choose_chain(NETWORK_ID, &snapshot.chain, &bundle.network_id, &bundle.chain)
-        .map_err(|error| api_error(StatusCode::UNPROCESSABLE_ENTITY, format!("peer chain selection failed: {error:?}")))?;
+    let choice = choose_chain(
+        NETWORK_ID,
+        &snapshot.chain,
+        &bundle.network_id,
+        &bundle.chain,
+    )
+    .map_err(|error| {
+        api_error(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            format!("peer chain selection failed: {error:?}"),
+        )
+    })?;
     let adopted = choice == ForkChoice::AdoptCandidate;
     if adopted {
         let next = NodeSnapshot {
@@ -291,7 +352,11 @@ async fn peer_sync(
         save_snapshot(state.data_file.as_path(), &next)?;
         *snapshot = next;
     }
-    let tip = snapshot.chain.blocks.last().expect("validated local chain is non-empty");
+    let tip = snapshot
+        .chain
+        .blocks
+        .last()
+        .expect("validated local chain is non-empty");
     Ok(Json(PeerSyncResponse {
         adopted,
         height: tip.index,
@@ -320,7 +385,10 @@ async fn dev_fund(
         return Err(api_error(StatusCode::FORBIDDEN, "development funding is disabled; set QUN_ENABLE_DEV_FUNDING=true for local testing only"));
     }
     if request.amount == 0 || request.address.trim().is_empty() {
-        return Err(api_error(StatusCode::BAD_REQUEST, "address must be non-empty and amount must be greater than zero"));
+        return Err(api_error(
+            StatusCode::BAD_REQUEST,
+            "address must be non-empty and amount must be greater than zero",
+        ));
     }
     let mut snapshot = state.snapshot.lock().await;
     if snapshot.chain.blocks.len() > 1 {
@@ -330,9 +398,14 @@ async fn dev_fund(
         ));
     }
     let mut next = snapshot.clone();
-    next.genesis_balances.insert(request.address.clone(), request.amount);
-    next.ledger = replay_ledger(&next.chain, &next.genesis_balances)
-        .map_err(|error| api_error(StatusCode::BAD_REQUEST, format!("invalid genesis allocation: {error}")))?;
+    next.genesis_balances
+        .insert(request.address.clone(), request.amount);
+    next.ledger = replay_ledger(&next.chain, &next.genesis_balances).map_err(|error| {
+        api_error(
+            StatusCode::BAD_REQUEST,
+            format!("invalid genesis allocation: {error}"),
+        )
+    })?;
     save_snapshot(state.data_file.as_path(), &next)?;
     *snapshot = next;
     Ok(Json(AccountsResponse {
@@ -527,8 +600,12 @@ mod persistence_tests {
         ));
 
         let mut snapshot = NodeSnapshot::default();
-        snapshot.genesis_balances.insert(signed.transaction.from.clone(), 3);
-        snapshot.ledger.set_genesis_balance(signed.transaction.from.clone(), 3)
+        snapshot
+            .genesis_balances
+            .insert(signed.transaction.from.clone(), 3);
+        snapshot
+            .ledger
+            .set_genesis_balance(signed.transaction.from.clone(), 3)
             .expect("test genesis funding");
         snapshot
             .chain
