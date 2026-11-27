@@ -21,6 +21,10 @@ QUN Core is the intended sovereign-chain implementation. A local chain prototype
 
 TON Connect and TON contracts provide a separate TON integration path. They do not automatically make TON transactions transactions on QUN Core. Do not bridge assets or present the two ledgers as interchangeable until a separately reviewed bridge design, replay protection, supply accounting, and recovery process exist.
 
+## Current implementation note (2026-11-27)
+
+The Rust core now exposes an **experimental deterministic chain-selection primitive**: it validates both candidate chains, rejects differing configured network IDs, prefers the greater height, and uses the lexicographically smaller tip hash as a deterministic equal-height tie-break. Unit tests cover those rules. This is only a deterministic selection rule for a future sync prototype; it is **not** a secure consensus algorithm, does not authenticate peers, does not prove a chain's state transitions are valid against a common immutable genesis, and provides no finality or Sybil resistance. Do not connect it to automatic live-network reorganization until the genesis/state replay format and consensus threat model are implemented and reviewed.
+
 ## Evidence required before marking a gate complete
 
 For each gate, attach the CI run or test report, exact commit SHA, configuration/genesis hash where relevant, and the commands used. Do not infer success from a workflow being configured; inspect its completed run. Never commit seed phrases, private keys, funded keys, or production secrets.
