@@ -230,3 +230,38 @@ fn valid_signed_transaction_updates_chain_and_ledger() {
         "balances and nonces must survive node restart"
     );
 }
+
+
+#[test]
+fn two_nodes_sync_valid_signed_chain_and_reject_wrong_network() {
+    let mut source = TestNode::start();
+    let mut target = TestNode::start();
+    let key = SigningKey::from_bytes(&[77_u8; 32]);
+    let address = hex::encode(key.verifying_key().as_bytes());
+
+    let (source_fund, _) =
+        source.post("/dev/fund", &json!({"address": address, "amount": 10}));
+    let (target_fund, _) =
+        target.post("/dev/fund", &json!({"address": address, "amount": 10}));
+    assert_eq!(source_fund, 200);
+    assert_eq!(target_fund, 200);
+
+    let signed = signed_transaction(&key, "peer-sync-recipient", 4, 1);
+    let (status, _) = source.post("/dev/mine-signed", &submit(signed));
+    assert_eq!(status, 201);
+
+    let bundle = source.get("/peer/export").expect("export peer bundle");
+    let (sync_status, sync_result) = target.post("/peer/sync", &bundle);
+    assert_eq!(sync_status, 200, "valid same-network chain should sync");
+    assert_eq!(sync_result["adopted"], true);
+    assert_eq!(target.get("/chain").unwrap(), source.get("/chain").unwrap());
+
+    let accounts = target.get("/accounts").unwrap();
+    assert_eq!(accounts["balances"][address], 6);
+    assert_eq!(accounts["balances"]["peer-sync-recipient"], 4);
+
+    let mut wrong_network = bundle;
+    wrong_network["network_id"] = json!("qun-another-network");
+    let (status, _) = target.post("/peer/sync", &wrong_network);
+    assert_eq!(status, 409, "cross-network sync must be rejected");
+}
