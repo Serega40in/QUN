@@ -142,10 +142,12 @@ fn signed_transaction(key: &SigningKey, to: &str, amount: u64, nonce: u64) -> Si
         amount,
         nonce,
     };
-    let signature = key.sign(&SignedTransaction::signing_payload(&transaction));
+    let network_id = "qun-local-dev-v0".to_owned();
+    let signature = key.sign(&SignedTransaction::signing_payload_for_network(&network_id, &transaction));
     SignedTransaction {
         transaction,
         public_key,
+        network_id,
         signature: hex::encode(signature.to_bytes()),
     }
 }
