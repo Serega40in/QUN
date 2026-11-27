@@ -40,7 +40,7 @@ let wallet=null;
 const toHex=bytes=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
 el('create-wallet').addEventListener('click',async()=>{try{el('message').textContent='Создаём Ed25519-ключ…';wallet=await crypto.subtle.generateKey({name:'Ed25519'},true,['sign','verify']);const raw=await crypto.subtle.exportKey('raw',wallet.publicKey);wallet.address=toHex(raw);el('wallet-address').textContent='Адрес: '+wallet.address;el('fund').disabled=false;el('submit').disabled=false;el('message').textContent='Ключ создан. Закрытие или перезагрузка вкладки удалит его.';await refresh()}catch(err){wallet=null;el('message').textContent='Браузер не поддержал Ed25519 WebCrypto: '+err.message;el('message').className='status error'}});
 el('fund').addEventListener('click',async()=>{if(!wallet)return;try{await request('/dev/fund',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({address:wallet.address,amount:1000})});el('message').textContent='Выдано 1000 тестовых единиц для текущего ключа';await refresh()}catch(err){el('message').textContent=err.message;el('message').className='status error'}});
-el('txform').addEventListener('submit',async e=>{e.preventDefault();if(!wallet)throw new Error('Сначала создайте ключ в браузере.');const b=el('submit');b.disabled=true;el('message').textContent='Подписываем транзакцию и отправляем узлу…';el('message').className='status';try{const a=await request('/accounts');const tx={from:wallet.address,to:el('to').value.trim(),amount:Number(el('amount').value),nonce:(a.nonces[wallet.address]||0)+1};if(!tx.to||!Number.isSafeInteger(tx.amount)||tx.amount<1)throw new Error('Проверьте адрес получателя и сумму.');const payload=new TextEncoder().encode(JSON.stringify(['QUN_TX_V1',tx.from,tx.to,tx.amount,tx.nonce]));const signature=await crypto.subtle.sign({name:'Ed25519'},wallet.privateKey,payload);const signed={transaction:tx,public_key:wallet.address,signature:toHex(signature)};const block=await request('/dev/mine-signed',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({signed_transactions:[signed]})});el('message').textContent='Подписанная транзакция включена в блок #'+block.index;await refresh()}catch(err){el('message').textContent=err.message;el('message').className='status error'}finally{b.disabled=!wallet}});
+el('txform').addEventListener('submit',async e=>{e.preventDefault();if(!wallet)throw new Error('Сначала создайте ключ в браузере.');const b=el('submit');b.disabled=true;el('message').textContent='Подписываем транзакцию и отправляем узлу…';el('message').className='status';try{const a=await request('/accounts');const tx={from:wallet.address,to:el('to').value.trim(),amount:Number(el('amount').value),nonce:(a.nonces[wallet.address]||0)+1};if(!tx.to||!Number.isSafeInteger(tx.amount)||tx.amount<1)throw new Error('Проверьте адрес получателя и сумму.');const payload=new TextEncoder().encode(JSON.stringify(['QUN_TX_V2','qun-local-dev-v0',tx.from,tx.to,tx.amount,tx.nonce]));const signature=await crypto.subtle.sign({name:'Ed25519'},wallet.privateKey,payload);const signed={transaction:tx,public_key:wallet.address,network_id:'qun-local-dev-v0',signature:toHex(signature)};const block=await request('/dev/mine-signed',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({signed_transactions:[signed]})});el('message').textContent='Подписанная транзакция включена в блок #'+block.index;await refresh()}catch(err){el('message').textContent=err.message;el('message').className='status error'}finally{b.disabled=!wallet}});
 refresh();
 </script></body></html>"#;
 
@@ -218,7 +218,7 @@ fn replay_ledger(
                     .signed_transactions
                     .get(position)
                     .ok_or_else(|| format!("signed transaction missing in block {block_index}"))?;
-                signed.verify().map_err(|error| {
+                signed.verify_for_network(NETWORK_ID).map_err(|error| {
                     format!("signature invalid in block {block_index}: {error:?}")
                 })?;
             }
@@ -448,7 +448,7 @@ async fn dev_mine_signed(
     }
 
     for (position, signed) in request.signed_transactions.iter().enumerate() {
-        signed.verify().map_err(|error| {
+        signed.verify_for_network(NETWORK_ID).map_err(|error| {
             api_error(
                 StatusCode::UNPROCESSABLE_ENTITY,
                 format!("signed transaction {position} failed signature verification: {error:?}"),
@@ -582,11 +582,14 @@ mod persistence_tests {
             amount: 3,
             nonce: 1,
         };
-        let signature =
-            signing_key.sign(&qun_core::SignedTransaction::signing_payload(&transaction));
+        let network_id = NETWORK_ID.to_owned();
+        let signature = signing_key.sign(
+            &qun_core::SignedTransaction::signing_payload_for_network(&network_id, &transaction),
+        );
         let signed = qun_core::SignedTransaction {
             transaction,
             public_key,
+            network_id,
             signature: hex::encode(signature.to_bytes()),
         };
 
