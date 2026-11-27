@@ -252,3 +252,58 @@ async fn main() {
         std::process::exit(1);
     });
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ed25519_dalek::{Signer, SigningKey};
+
+    #[test]
+    fn persisted_state_reloads_and_replays_signed_transfers() {
+        let signing_key = SigningKey::from_bytes(&[7u8; 32]);
+        let address = hex::encode(signing_key.verifying_key().to_bytes());
+        let mut genesis = BTreeMap::new();
+        genesis.insert(address.clone(), 10);
+
+        let transaction = qun_core::Transaction {
+            from: address.clone(),
+            to: "recipient".to_owned(),
+            amount: 3,
+            nonce: 1,
+        };
+        let signature = signing_key.sign(&SignedTransaction::signing_payload(&transaction));
+        let signed = SignedTransaction {
+            transaction,
+            public_key: address.clone(),
+            signature: hex::encode(signature.to_bytes()),
+        };
+        let mut chain = Chain::new();
+        chain.append_signed(1, vec![signed]).expect("valid signed transaction");
+
+        let path = env::temp_dir().join(format!(
+            "qun-node-state-{}-{}.json",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let saved = PersistedState { chain, genesis_balances: genesis };
+        persist_atomically(&path, &saved).expect("persist state");
+
+        let bytes = fs::read(&path).expect("read persisted state");
+        let loaded: PersistedState = serde_json::from_slice(&bytes).expect("decode state");
+        let ledger = ledger_from_chain(&loaded.chain, &loaded.genesis_balances)
+            .expect("replay saved chain");
+        assert_eq!(ledger.balances.get(&address), Some(&7));
+        assert_eq!(ledger.balances.get("recipient"), Some(&3));
+        assert_eq!(ledger.nonces.get(&address), Some(&1));
+        fs::remove_file(path).expect("cleanup temporary state file");
+    }
+
+    #[test]
+    fn saved_chain_rejects_tampered_block_hash() {
+        let mut chain = Chain::new();
+        chain.append(1, vec![]);
+        chain.blocks[1].hash = "tampered".to_owned();
+        assert!(ledger_from_chain(&chain, &BTreeMap::new()).is_err());
+    }
+}
