@@ -1,0 +1,41 @@
+name: Build QUN OS ISO
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "qun-os/**"
+      - ".github/workflows/qun-os-build.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qun-os-iso-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install live-build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y live-build debootstrap squashfs-tools xorriso
+          
+      - name: Build ISO
+        run: sudo bash qun-os/build.sh
+
+      - name: Upload ISO and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: qun-os-live-iso
+          path: |
+            qun-os/qun-os-live-amd64.iso
+            qun-os/qun-os-live-amd64.iso.sha256
+          if-no-files-found: error
+          retention-days: 14
